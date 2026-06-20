@@ -1,0 +1,28 @@
+# ── Flutter / Dart ──────────────────────────────────────────
+pokebid_flutter/.dart_tool/
+pokebid_flutter/.idea/
+pokebid_flutter/build/
+pokebid_flutter/.flutter-plugins
+pokebid_flutter/.flutter-plugins-dependencies
+pokebid_flutter/**/.dart_tool/
+**/*.iml
+.idea/
+
+# ── 密鑰設定（請勿上傳；用 env.example.json 當範本）──────────────
+pokebid_flutter/env.json
+env.json
+
+# ── 一次性腳本與輸出（含密鑰，請勿上傳）────────────────────────
+harvest_*.ps1
+harvest_*progress*.txt
+migrate_*.ps1
+migrate_*progress*.txt
+sp_cards.json
+
+# ── Supabase CLI 暫存 ───────────────────────────────────────
+supabase/.temp/
+
+# ── OS / 編輯器 ─────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.log
