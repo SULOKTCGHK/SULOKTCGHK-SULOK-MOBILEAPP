@@ -23,4 +23,20 @@ class AdminService {
 
   // Call on logout so cache is cleared
   static void clearCache() => _cached = null;
+
+  // ── 帳號管理（讀取）────────────────────────────────────────────────────────
+  static Future<List<Map<String, dynamic>>> listProfiles({String? search}) async {
+    try {
+      var q = _client.from('profiles').select(
+          'id, username, display_name, avatar_emoji, phone_verified, ig_handle, created_at');
+      if (search != null && search.trim().isNotEmpty) {
+        final s = '%${search.trim()}%';
+        q = q.or('username.ilike.$s,display_name.ilike.$s');
+      }
+      final res = await q.order('created_at', ascending: false).limit(200);
+      return List<Map<String, dynamic>>.from(res);
+    } catch (_) {
+      return [];
+    }
+  }
 }

@@ -18,6 +18,8 @@ import '../widgets/verified_badge.dart';
 import '../widgets/ig_link.dart';
 import '../widgets/login_required.dart';
 import 'phone_verify_screen.dart';
+import 'admin/admin_screen.dart';
+import '../services/admin_service.dart';
 import '../services/notification_service.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -36,6 +38,7 @@ class _ProfileScreenState extends State<ProfileScreen>
   List<Map<String, dynamic>> _collection = [];
   int _collectionValue = 0;
   Map<String, dynamic> _summary = {};
+  bool _isAdmin = false;
   bool _loadingCollection = false;
   bool _refreshingMarket = false;
   int _colTab = 0; // 0 持有中 / 1 已售出
@@ -56,6 +59,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     _loadCollection();
     _loadMyListings();
     _loadProfile();
+    AdminService.isAdmin().then((v) { if (mounted) setState(() => _isAdmin = v); });
     // Reload data when switching tabs
     _tabCtrl.addListener(() {
       if (_tabCtrl.index == 0) _loadMyListings();
@@ -876,6 +880,17 @@ class _ProfileScreenState extends State<ProfileScreen>
               if (ok == true) _loadProfile();
             },
           ),
+          if (_isAdmin) ...[
+            const Divider(height: 0.5, color: Color(0xFFF3F4F6)),
+            _arrowTile(
+              icon: Icons.admin_panel_settings_outlined,
+              iconColor: const Color(0xFFE8A52A),
+              title: '管理後台',
+              trailing: '',
+              onTap: () => Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const AdminScreen())),
+            ),
+          ],
         ]),
 
         const SizedBox(height: 16),
@@ -1080,7 +1095,7 @@ class _ProfileScreenState extends State<ProfileScreen>
             const Text('選擇語言', style: TextStyle(fontSize: 16,
                 fontWeight: FontWeight.w600, color: Color(0xFF111827))),
             const SizedBox(height: 12),
-            ...['繁體中文', '简体中文', '日本語', 'English'].map((lang) =>
+            ...['繁體中文', 'English'].map((lang) =>
                 GestureDetector(
                   onTap: () {
                     setState(() => _language = lang);

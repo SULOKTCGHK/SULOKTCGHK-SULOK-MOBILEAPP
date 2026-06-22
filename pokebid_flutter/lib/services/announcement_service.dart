@@ -10,6 +10,7 @@ class Announcement {
   final String? imageUrl;
   final List<String> bodyImageUrls;
   final int sortOrder;
+  final bool isActive;
   final DateTime createdAt;
 
   const Announcement({
@@ -22,6 +23,7 @@ class Announcement {
     this.imageUrl,
     this.bodyImageUrls = const [],
     required this.sortOrder,
+    this.isActive = true,
     required this.createdAt,
   });
 
@@ -38,6 +40,7 @@ class Announcement {
             .toList() ??
         [],
     sortOrder: (r['sort_order'] as int?) ?? 0,
+    isActive: r['is_active'] as bool? ?? true,
     createdAt: DateTime.parse(r['created_at'] as String),
   );
 }
@@ -57,5 +60,24 @@ class AnnouncementService {
     } catch (_) {
       return [];
     }
+  }
+
+  // ── Admin ─────────────────────────────────────────────────────────────────
+  static Future<List<Announcement>> getAllForAdmin() async {
+    try {
+      final res = await _client.from('announcements').select()
+          .order('created_at', ascending: false);
+      return (res as List).map((r) => Announcement.fromRow(r)).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  static Future<void> setActive(String id, bool active) async {
+    try { await _client.from('announcements').update({'is_active': active}).eq('id', id); } catch (_) {}
+  }
+
+  static Future<void> deleteAnnouncement(String id) async {
+    try { await _client.from('announcements').delete().eq('id', id); } catch (_) {}
   }
 }

@@ -5,6 +5,7 @@ import '../services/announcement_service.dart';
 import '../services/admin_service.dart';
 import 'card_detail_screen.dart';
 import 'announcement_detail_screen.dart';
+import 'nearby_shops_screen.dart';
 import 'admin/post_announcement_sheet.dart';
 import 'conversations_list_screen.dart';
 import '../widgets/notification_bell.dart';
@@ -197,6 +198,40 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
 
           const SizedBox(height: 8),
+
+          // ── 附近卡鋪入口 ────────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+            child: GestureDetector(
+              onTap: () => Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const NearbyShopsScreen())),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFE5E7EB), width: 0.5),
+                ),
+                child: Row(children: [
+                  Container(
+                    width: 38, height: 38,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE8A52A).withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(10)),
+                    child: const Icon(Icons.storefront, color: Color(0xFFE8A52A), size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text('附近卡鋪',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF111827))),
+                    Text('找出離你最近的實體卡店',
+                        style: TextStyle(fontSize: 11.5, color: Color(0xFF9CA3AF))),
+                  ])),
+                  const Icon(Icons.chevron_right, color: Color(0xFF9CA3AF), size: 20),
+                ]),
+              ),
+            ),
+          ),
 
           // ── Latest Listings ────────────────────────────────────────────
           Padding(
