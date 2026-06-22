@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'currency_service.dart';
+import 'api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
@@ -137,15 +139,109 @@ class SupabaseService {
     } catch (_) {}
   }
 
-  static Future<void> removeFromCollection(String cardId) async {
+  /// 加入分級收藏（含成本價、當前市價快照）
+  static Future<void> addGradedToCollection(
+    Map<String, dynamic> card, {
+    required String grade,
+    required num costHkd,
+    required num marketJpy,
+  }) async {
+    final userId = await getUserId();
+    try {
+      await _client.from('collection').upsert({
+        ...card,
+        'user_id': userId,
+        'grade': grade,
+        'cost_hkd': costHkd,
+        'market_jpy': marketJpy.round(),
+        'added_at': DateTime.now().toIso8601String(),
+      }, onConflict: 'user_id,card_id,grade');
+    } catch (_) {}
+  }
+
+  static Future<void> removeFromCollection(String cardId, {String? grade}) async {
+    final userId = await getUserId();
+    try {
+      var q = _client.from('collection').delete().eq('user_id', userId).eq('card_id', cardId);
+      if (grade != null) q = q.eq('grade', grade);
+      await q;
+    } catch (_) {}
+  }
+
+  /// 標記某收藏為「已售出」，記錄售價與售出時間
+  static Future<void> markSold(String cardId, String grade, num soldPriceHkd) async {
     final userId = await getUserId();
     try {
       await _client
           .from('collection')
-          .delete()
+          .update({
+            'status': 'sold',
+            'sold_price_hkd': soldPriceHkd,
+            'sold_at': DateTime.now().toIso8601String(),
+          })
           .eq('user_id', userId)
-          .eq('card_id', cardId);
+          .eq('card_id', cardId)
+          .eq('grade', grade);
     } catch (_) {}
+  }
+
+  /// 收藏盈虧摘要（港幣）：持有市值/未實現盈虧 + 已售出/已實現盈虧
+  static Future<Map<String, dynamic>> getCollectionSummary() async {
+    final items = await getCollection();
+    final rate = await CurrencyService.jpyToHkd();
+    double holdCost = 0, holdValue = 0, realized = 0;
+    int holdCount = 0, soldCount = 0;
+    for (final it in items) {
+      final sold = (it['status'] as String?) == 'sold';
+      final cost = ((it['cost_hkd'] as num?)?.toDouble() ?? 0);
+      if (sold) {
+        realized += ((it['sold_price_hkd'] as num?)?.toDouble() ?? 0) - cost;
+        soldCount++;
+      } else {
+        holdCost += cost;
+        holdValue += ((it['market_jpy'] as num?)?.toDouble() ?? 0) * rate;
+        holdCount++;
+      }
+    }
+    final pl = holdValue - holdCost;
+    return {
+      'cost': holdCost,
+      'value': holdValue,
+      'pl': pl,
+      'plPct': holdCost > 0 ? (pl / holdCost * 100) : 0.0,
+      'realized': realized,
+      'rate': rate,
+      'count': holdCount,
+      'soldCount': soldCount,
+    };
+  }
+
+  /// 更新所有收藏的當前市價（重抓 SNKRDUNK），回傳更新筆數
+  static Future<int> refreshCollectionMarket() async {
+    final userId = await getUserId();
+    final items = await getCollection();
+    int updated = 0;
+    for (final it in items) {
+      if ((it['status'] as String?) == 'sold') continue;
+      final grade = (it['grade'] as String?) ?? 'RAW';
+      final data = await PokemonApiService.getSnkrdunkPrice(
+          it['card_id'] as String, it['card_name'] as String? ?? '', it['number'] as String?);
+      if (data == null) continue;
+      final key = grade == 'PSA10' ? 'psa10' : grade == 'PSA9' ? 'psa9' : 'raw';
+      final g = data[key] as Map<String, dynamic>?;
+      final mj = (g?['avg'] as num?)?.round();
+      if (mj == null) continue;
+      try {
+        await _client
+            .from('collection')
+            .update({'market_jpy': mj})
+            .eq('user_id', userId)
+            .eq('card_id', it['card_id'])
+            .eq('grade', grade);
+        updated++;
+      } catch (_) {}
+    }
+    return updated;
   }
 
   static Future<List<Map<String, dynamic>>> getCollection() async {
@@ -185,6 +281,39 @@ class SupabaseService {
     } catch (_) {
       return false;
     }
+  }
+
+  // ── SNKRDUNK 成交價快取 ─────────────────────────────────────────────────
+  /// 取快取（1 天內視為新鮮）；回傳 payload（可能含 matched:false），過期/無 → null
+  static Future<Map<String, dynamic>?> getSnkrCache(String cardId) async {
+    try {
+      final res = await _client
+          .from('snkrdunk_prices')
+          .select()
+          .eq('card_id', cardId)
+          .limit(1);
+      if (res.isEmpty) return null;
+      final row = res.first;
+      final fetchedAt = DateTime.tryParse(row['fetched_at'] ?? '');
+      if (fetchedAt == null ||
+          DateTime.now().difference(fetchedAt).inHours >= 24) return null;
+      final p = row['payload'];
+      if (p is Map) return Map<String, dynamic>.from(p);
+      if (p is String) return jsonDecode(p) as Map<String, dynamic>;
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static Future<void> saveSnkrCache(String cardId, Map<String, dynamic> payload) async {
+    try {
+      await _client.from('snkrdunk_prices').upsert({
+        'card_id': cardId,
+        'payload': payload,
+        'fetched_at': DateTime.now().toIso8601String(),
+      });
+    } catch (_) {}
   }
 
   // ── Transactions ──────────────────────────────────────────────────────────

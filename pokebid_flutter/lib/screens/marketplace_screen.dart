@@ -315,7 +315,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
               const SizedBox(height: 16),
 
               // 價格區間
-              const Text('價格區間 (NT\$)',
+              const Text('價格區間 (HK\$)',
                   style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
                       color: Color(0xFF374151))),
               const SizedBox(height: 8),

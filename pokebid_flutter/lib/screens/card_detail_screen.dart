@@ -227,7 +227,7 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       const Text('直購價', style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))),
                       const SizedBox(height: 4),
-                      Text('NT\$ ${_formatPrice(_price)}',
+                      Text('HK\$ ${_formatPrice(_price)}',
                           style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w700,
                               color: Color(0xFF16A34A))),
                     ]),
@@ -461,10 +461,10 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
                         const SizedBox(width: 8),
                         Expanded(child: Text(
                           _myOffer!.status == 'accepted'
-                              ? '賣家已接受你的出價 NT\$${_formatPrice(_myOffer!.amount)}！請前往聊天室溝通交易'
+                              ? '賣家已接受你的出價 HK\$${_formatPrice(_myOffer!.amount)}！請前往聊天室溝通交易'
                               : _myOffer!.status == 'rejected'
-                              ? '你的出價 NT\$${_formatPrice(_myOffer!.amount)} 已被拒絕'
-                              : '你已出價 NT\$${_formatPrice(_myOffer!.amount)}，等待賣家回覆',
+                              ? '你的出價 HK\$${_formatPrice(_myOffer!.amount)} 已被拒絕'
+                              : '你已出價 HK\$${_formatPrice(_myOffer!.amount)}，等待賣家回覆',
                           style: TextStyle(
                             fontSize: 13,
                             color: _myOffer!.status == 'accepted'
@@ -660,7 +660,7 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             elevation: 0,
           ),
-          child: Text('NT\$${_formatPrice(_price)}',
+          child: Text('HK\$${_formatPrice(_price)}',
               style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
         ),
       ),

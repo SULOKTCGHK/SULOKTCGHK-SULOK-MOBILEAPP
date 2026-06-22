@@ -104,7 +104,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
             ]),
             if (w.maxPrice != null) ...[
               const SizedBox(height: 4),
-              Text('預算上限 NT\$${w.maxPrice}',
+              Text('預算上限 HK\$${w.maxPrice}',
                   style: const TextStyle(fontSize: 12, color: Color(0xFF16A34A),
                       fontWeight: FontWeight.w600)),
             ],

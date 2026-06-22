@@ -447,7 +447,7 @@ class _PostListingSheetState extends State<PostListingSheet> {
                       ],
 
                       // Price
-                      _label('直購價格 (NT\$)'),
+                      _label('直購價格 (HK\$)'),
                       _textField(_priceCtrl, '0', isNumber: true),
                       const SizedBox(height: 14),
 

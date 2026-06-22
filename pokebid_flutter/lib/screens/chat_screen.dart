@@ -255,7 +255,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   Text(widget.card!.name,
                       style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500,
                           color: Color(0xFF111827))),
-                  Text('${widget.card!.grade} · NT\$ ${_formatPrice(widget.card!.price)}',
+                  Text('${widget.card!.grade} · HK\$ ${_formatPrice(widget.card!.price)}',
                       style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF))),
                 ])),
                 Container(

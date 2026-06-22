@@ -39,7 +39,7 @@ class WishlistItem {
     if (setId != null && setId!.isNotEmpty) parts.add(setId!.toUpperCase());
     if (cardNumber != null && cardNumber!.isNotEmpty) parts.add('#$cardNumber');
     var s = parts.isEmpty ? '任意卡片' : parts.join(' ');
-    if (maxPrice != null) s += '　≤ NT\$$maxPrice';
+    if (maxPrice != null) s += '　≤ HK\$$maxPrice';
     return s;
   }
 }
@@ -124,7 +124,7 @@ class WishlistService {
             userId: w.userId,
             type: 'wishlist_match',
             title: '你的願望清單有新上架 🎯',
-            body: '「${card.name}」NT\$${card.price} 符合你想要的卡片',
+            body: '「${card.name}」HK\$${card.price} 符合你想要的卡片',
             listingId: card.supabaseId,
           );
         }

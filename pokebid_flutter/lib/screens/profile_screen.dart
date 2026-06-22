@@ -30,7 +30,10 @@ class _ProfileScreenState extends State<ProfileScreen>
   String _language = '繁體中文';
   List<Map<String, dynamic>> _collection = [];
   int _collectionValue = 0;
+  Map<String, dynamic> _summary = {};
   bool _loadingCollection = false;
+  bool _refreshingMarket = false;
+  int _colTab = 0; // 0 持有中 / 1 已售出
 
   // Real profile
   UserProfile? _profile;
@@ -48,9 +51,10 @@ class _ProfileScreenState extends State<ProfileScreen>
     _loadCollection();
     _loadMyListings();
     _loadProfile();
-    // Reload listings when switching to tab 0
+    // Reload data when switching tabs
     _tabCtrl.addListener(() {
       if (_tabCtrl.index == 0) _loadMyListings();
+      if (_tabCtrl.index == 1) _loadCollection();
     });
   }
 
@@ -133,7 +137,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           Text('編輯「${card.name}」',
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
           const SizedBox(height: 20),
-          const Text('價格 (NT\$)',
+          const Text('價格 (HK\$)',
               style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
                   color: Color(0xFF374151))),
           const SizedBox(height: 8),
@@ -142,7 +146,7 @@ class _ProfileScreenState extends State<ProfileScreen>
             autofocus: true,
             keyboardType: TextInputType.number,
             decoration: InputDecoration(
-              prefixText: 'NT\$ ',
+              prefixText: 'HK\$ ',
               filled: true, fillColor: const Color(0xFFF9FAFB),
               contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12),
@@ -205,12 +209,25 @@ class _ProfileScreenState extends State<ProfileScreen>
   Future<void> _loadCollection() async {
     setState(() => _loadingCollection = true);
     final items = await SupabaseService.getCollection();
-    final value = await SupabaseService.getCollectionTotalValue();
+    final summary = await SupabaseService.getCollectionSummary();
     if (mounted) setState(() {
       _collection = items;
-      _collectionValue = value;
+      _summary = summary;
+      _collectionValue = ((summary['value'] as num?) ?? 0).round();
       _loadingCollection = false;
     });
+  }
+
+  Future<void> _refreshMarket() async {
+    if (_refreshingMarket) return;
+    setState(() => _refreshingMarket = true);
+    final n = await SupabaseService.refreshCollectionMarket();
+    await _loadCollection();
+    if (mounted) {
+      setState(() => _refreshingMarket = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('已更新 $n 筆市價'), duration: const Duration(seconds: 2)));
+    }
   }
 
   String _fmt(int p) => p.toString().replaceAllMapped(
@@ -366,7 +383,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                   _divider(),
                   _statItem('收藏', '${_collection.length}'),
                   _divider(),
-                  _statItem('收藏價值', 'NT\$${_fmt(_collectionValue)}'),
+                  _statItem('收藏價值', 'HK\$${_fmt(_collectionValue)}'),
                 ]),
               ],
             ),
@@ -473,7 +490,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                     fontWeight: FontWeight.w500, color: Color(0xFF111827))),
                 Text('${card.grade} · ${card.timeInfo}',
                     style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))),
-                Text('NT\$${_fmt(card.price)}',
+                Text('HK\$${_fmt(card.price)}',
                     style: const TextStyle(fontSize: 13,
                         fontWeight: FontWeight.w700, color: Color(0xFF16A34A))),
               ])),
@@ -539,61 +556,237 @@ class _ProfileScreenState extends State<ProfileScreen>
             style: TextStyle(fontSize: 13, color: Color(0xFFD1D5DB))),
       ]));
     }
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: _collection.length,
-      itemBuilder: (_, i) {
-        final item = _collection[i];
-        final price = (item['estimated_price_ntd'] as int?) ?? 0;
-        return Container(
-          margin: const EdgeInsets.only(bottom: 10),
-          padding: const EdgeInsets.all(12),
+    final rate = (_summary['rate'] as num?)?.toDouble() ?? 0.0515;
+    final holding = _collection.where((e) => (e['status'] as String?) != 'sold').toList();
+    final sold = _collection.where((e) => (e['status'] as String?) == 'sold').toList();
+    final list = _colTab == 0 ? holding : sold;
+    return Column(children: [
+      _plSummaryCard(),
+      // 持有中 / 已售出 切換
+      Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+        child: Row(children: [
+          _colSeg('持有中 (${holding.length})', 0),
+          const SizedBox(width: 8),
+          _colSeg('已售出 (${sold.length})', 1),
+        ]),
+      ),
+      Expanded(
+        child: list.isEmpty
+            ? Center(child: Text(_colTab == 0 ? '無持有中收藏' : '尚無售出記錄',
+                style: const TextStyle(fontSize: 13, color: Color(0xFF9CA3AF))))
+            : ListView.builder(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                itemCount: list.length,
+                itemBuilder: (_, i) => _collectionItem(list[i], rate),
+              ),
+      ),
+    ]);
+  }
+
+  Widget _colSeg(String label, int idx) {
+    final sel = _colTab == idx;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _colTab = idx),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 7),
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: const Color(0xFFE5E7EB), width: 0.5),
-          ),
-          child: Row(children: [
-            Container(
-              width: 48, height: 48,
-              decoration: BoxDecoration(
-                color: const Color(0xFFFEF9EC),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Center(
-                  child: Text('🎴', style: TextStyle(fontSize: 24))),
-            ),
-            const SizedBox(width: 12),
-            Expanded(child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(item['card_name'] as String? ?? '',
-                  style: const TextStyle(fontSize: 14,
-                      fontWeight: FontWeight.w500, color: Color(0xFF111827))),
-              Text(item['set_name'] as String? ?? '',
-                  style: const TextStyle(fontSize: 12,
-                      color: Color(0xFF9CA3AF))),
-            ])),
-            Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-              if (price > 0)
-                Text('NT\$ ${_fmt(price)}',
-                    style: const TextStyle(fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: Color(0xFF16A34A))),
-              const SizedBox(height: 4),
-              GestureDetector(
-                onTap: () async {
-                  await SupabaseService.removeFromCollection(
-                      item['card_id'] as String);
-                  _loadCollection();
-                },
-                child: const Icon(Icons.bookmark_remove_outlined,
-                    size: 18, color: Color(0xFFD1D5DB)),
-              ),
-            ]),
-          ]),
-        );
-      },
+            color: sel ? const Color(0xFFE8A52A) : const Color(0xFFF3F4F6),
+            borderRadius: BorderRadius.circular(8)),
+          child: Text(label, textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700,
+                  color: sel ? Colors.white : const Color(0xFF6B7280))),
+        ),
+      ),
     );
+  }
+
+  Widget _collectionItem(Map<String, dynamic> item, double rate) {
+    final grade = (item['grade'] as String?) ?? 'RAW';
+    final costHkd = ((item['cost_hkd'] as num?)?.toDouble() ?? 0);
+    final isSold = (item['status'] as String?) == 'sold';
+    final soldHkd = ((item['sold_price_hkd'] as num?)?.toDouble() ?? 0);
+    final marketHkd = ((item['market_jpy'] as num?)?.toDouble() ?? 0) * rate;
+    // 已售出 → 已實現盈虧(售價-成本)；持有中 → 未實現(市值-成本)
+    final refVal = isSold ? soldHkd : marketHkd;
+    final pl = refVal - costHkd;
+    final up = pl >= 0;
+    final gradeColor = grade == 'PSA10'
+        ? const Color(0xFFE8A52A)
+        : grade == 'PSA9' ? const Color(0xFF2980B9) : const Color(0xFF6B7280);
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 0.5),
+      ),
+      child: Row(children: [
+        Container(
+          width: 48, height: 48,
+          decoration: BoxDecoration(color: const Color(0xFFFEF9EC), borderRadius: BorderRadius.circular(10)),
+          child: const Center(child: Text('🎴', style: TextStyle(fontSize: 24))),
+        ),
+        const SizedBox(width: 12),
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            Flexible(child: Text(item['card_name'] as String? ?? '',
+                maxLines: 1, overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Color(0xFF111827)))),
+            const SizedBox(width: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+              decoration: BoxDecoration(color: gradeColor.withOpacity(0.12), borderRadius: BorderRadius.circular(4)),
+              child: Text(grade == 'RAW' ? '生卡' : grade,
+                  style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: gradeColor)),
+            ),
+          ]),
+          const SizedBox(height: 2),
+          Text('成本 HK\$${_fmt(costHkd.round())}',
+              style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF))),
+          if (isSold)
+            Text('售出 ${(item['sold_at'] as String?)?.split('T').first ?? ''}',
+                style: const TextStyle(fontSize: 10.5, color: Color(0xFFB6BCC6))),
+        ])),
+        Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+          Text('HK\$${_fmt(refVal.round())}',
+              style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: Color(0xFF111827))),
+          Text('${up ? '+' : '-'}HK\$${_fmt(pl.abs().round())}',
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600,
+                  color: up ? const Color(0xFF16A34A) : const Color(0xFFDC2626))),
+          const SizedBox(height: 3),
+          Row(mainAxisSize: MainAxisSize.min, children: [
+            if (!isSold) ...[
+              GestureDetector(
+                onTap: () => _sellItem(item),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(color: const Color(0xFF16A34A), borderRadius: BorderRadius.circular(6)),
+                  child: const Text('售出', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, color: Colors.white)),
+                ),
+              ),
+              const SizedBox(width: 6),
+            ],
+            GestureDetector(
+              onTap: () async {
+                await SupabaseService.removeFromCollection(item['card_id'] as String, grade: grade);
+                _loadCollection();
+              },
+              child: const Icon(Icons.delete_outline, size: 16, color: Color(0xFFD1D5DB)),
+            ),
+          ]),
+        ]),
+      ]),
+    );
+  }
+
+  Future<void> _sellItem(Map<String, dynamic> item) async {
+    final rate = (_summary['rate'] as num?)?.toDouble() ?? 0.0515;
+    final marketHkd = (((item['market_jpy'] as num?)?.toDouble() ?? 0) * rate).round();
+    final costHkd = ((item['cost_hkd'] as num?)?.toDouble() ?? 0).round();
+    final ctrl = TextEditingController(text: marketHkd > 0 ? '$marketHkd' : '');
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('記錄售出　${item['card_name'] ?? ''}', style: const TextStyle(fontSize: 15)),
+        content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('成本 HK\$${_fmt(costHkd)}　·　參考市價 HK\$${_fmt(marketHkd)}',
+              style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
+          const SizedBox(height: 12),
+          TextField(
+            controller: ctrl,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: const InputDecoration(labelText: '實際售出價格', prefixText: 'HK\$ ', isDense: true),
+          ),
+        ]),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('取消')),
+          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('確認售出')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    final price = num.tryParse(ctrl.text.trim()) ?? 0;
+    await SupabaseService.markSold(
+        item['card_id'] as String, (item['grade'] as String?) ?? 'RAW', price);
+    await _loadCollection();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('已記錄售出'), duration: Duration(seconds: 2)));
+    }
+  }
+
+  Widget _plSummaryCard() {
+    final cost = ((_summary['cost'] as num?) ?? 0).round();
+    final value = ((_summary['value'] as num?) ?? 0).round();
+    final pl = ((_summary['pl'] as num?) ?? 0).round();
+    final plPct = ((_summary['plPct'] as num?) ?? 0).toDouble();
+    final up = pl >= 0;
+    final plColor = up ? const Color(0xFF16A34A) : const Color(0xFFDC2626);
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(colors: [Color(0xFF1F2937), Color(0xFF111827)],
+            begin: Alignment.topLeft, end: Alignment.bottomRight),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          const Text('收藏總市值', style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))),
+          const Spacer(),
+          GestureDetector(
+            onTap: _refreshMarket,
+            child: Row(children: [
+              _refreshingMarket
+                  ? const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 1.5, color: Color(0xFFE8A52A)))
+                  : const Icon(Icons.refresh, size: 14, color: Color(0xFFE8A52A)),
+              const SizedBox(width: 3),
+              const Text('更新市價', style: TextStyle(fontSize: 11, color: Color(0xFFE8A52A))),
+            ]),
+          ),
+        ]),
+        const SizedBox(height: 6),
+        Text('HK\$${_fmt(value)}',
+            style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: Colors.white)),
+        const SizedBox(height: 10),
+        Row(children: [
+          Expanded(child: _plMini('總成本', 'HK\$${_fmt(cost)}', Colors.white70)),
+          Expanded(child: _plMini('盈虧', '${up ? '+' : '-'}HK\$${_fmt(pl.abs())}', plColor)),
+          Expanded(child: _plMini('報酬率', '${up ? '+' : ''}${plPct.toStringAsFixed(1)}%', plColor)),
+        ]),
+        if (((_summary['soldCount'] as int?) ?? 0) > 0) ...[
+          const SizedBox(height: 10),
+          Container(height: 0.5, color: const Color(0xFF374151)),
+          const SizedBox(height: 8),
+          Builder(builder: (_) {
+            final realized = ((_summary['realized'] as num?) ?? 0).round();
+            final rUp = realized >= 0;
+            final rColor = rUp ? const Color(0xFF34D399) : const Color(0xFFF87171);
+            return Row(children: [
+              Text('已售出 ${_summary['soldCount']} 張', style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF))),
+              const Spacer(),
+              Text('已實現盈虧　${rUp ? '+' : '-'}HK\$${_fmt(realized.abs())}',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: rColor)),
+            ]);
+          }),
+        ],
+        const SizedBox(height: 4),
+        Text('市值依 SNKRDUNK 日本成交價　1 JPY ≈ ${(_summary['rate'] as num? ?? 0.0515).toStringAsFixed(4)} HKD',
+            style: const TextStyle(fontSize: 9.5, color: Color(0xFF6B7280))),
+      ]),
+    );
+  }
+
+  Widget _plMini(String label, String value, Color color) {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(label, style: const TextStyle(fontSize: 10, color: Color(0xFF9CA3AF))),
+      const SizedBox(height: 2),
+      Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: color)),
+    ]);
   }
 
   Widget _buildSettings() {

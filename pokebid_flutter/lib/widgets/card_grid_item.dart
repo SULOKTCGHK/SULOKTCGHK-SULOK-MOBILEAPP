@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/card_model.dart';
 import '../services/api_service.dart';
@@ -166,7 +166,7 @@ class _CardGridItemState extends State<CardGridItem> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'NT\$ ${_formatPrice(widget.card.price)}',
+                    'HK\$ ${_formatPrice(widget.card.price)}',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w500,

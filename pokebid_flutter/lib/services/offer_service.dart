@@ -65,7 +65,7 @@ class OfferService {
       userId: sellerId,
       type: 'offer_received',
       title: '收到新出價 💰',
-      body: '${_myName()} 出價 NT\$$amount',
+      body: '${_myName()} 出價 HK\$$amount',
       listingId: listingId,
     );
   }
@@ -116,7 +116,7 @@ class OfferService {
       userId: offer.buyerId,
       type: 'offer_accepted',
       title: '出價被接受了 🎉',
-      body: '你的出價 NT\$${offer.amount} 已被賣家接受，請前往聊天室完成交易',
+      body: '你的出價 HK\$${offer.amount} 已被賣家接受，請前往聊天室完成交易',
       listingId: offer.listingId,
     );
   }
@@ -138,7 +138,7 @@ class OfferService {
         userId: row['buyer_id'] as String,
         type: 'offer_rejected',
         title: '出價未被接受',
-        body: '你的出價 NT\$${row['amount']} 已被婉拒',
+        body: '你的出價 HK\$${row['amount']} 已被婉拒',
         listingId: row['listing_id'] as String?,
       );
     }

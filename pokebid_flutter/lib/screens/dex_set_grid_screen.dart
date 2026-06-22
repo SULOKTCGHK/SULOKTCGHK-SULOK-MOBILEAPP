@@ -105,6 +105,7 @@ class _DexSetGridScreenState extends State<DexSetGridScreen> {
     setId: r['set_id'] as String?, number: r['number'] as String?,
     supertype: r['supertype'] as String?,
     types: (r['types'] as String?)?.split(',').where((s) => s.isNotEmpty).toList() ?? [],
+    variant: r['variant'] as String?,
   );
 
   void _openCard(ApiCard card) async {
@@ -371,10 +372,14 @@ class _CardGridItem extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(6, 5, 6, 6),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(card.name,
+                Text(card.cleanName,
                     style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500,
                         color: Color(0xFF111827)),
                     maxLines: 1, overflow: TextOverflow.ellipsis),
+                if (variantLabelZh(card.variant).isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  _VariantBadge(label: variantLabelZh(card.variant)),
+                ],
                 const SizedBox(height: 4),
                 GestureDetector(
                   onTap: onToggle,
@@ -401,6 +406,36 @@ class _CardGridItem extends StatelessWidget {
       ),
     );
   }
+}
+
+// 球種/花紋小徽章
+class _VariantBadge extends StatelessWidget {
+  final String label;
+  const _VariantBadge({required this.label});
+
+  Color get _color {
+    switch (label) {
+      case '精靈球': return const Color(0xFFE74C3C);
+      case '大師球': return const Color(0xFF8E44AD);
+      case '超級球': return const Color(0xFF2980B9);
+      case '高級球': return const Color(0xFFD4A017);
+      case '速度球': return const Color(0xFF16A34A);
+      case '愛心球': return const Color(0xFFC0397A);
+      default: return const Color(0xFF6B7280);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+    decoration: BoxDecoration(
+      color: _color.withOpacity(0.12),
+      borderRadius: BorderRadius.circular(4),
+    ),
+    child: Text('● $label',
+        style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w600, color: _color),
+        maxLines: 1, overflow: TextOverflow.ellipsis),
+  );
 }
 
 class _GridShimmerItem extends StatelessWidget {

@@ -25,6 +25,22 @@ const Map<String, Map<String, String>> kPromoSetConfig = {
 // zh-tw set name cache: lowercased id → Traditional Chinese name
 Map<String, String> _zhTwSetNamesCache = {};
 
+/// 球種/花紋變體 → 繁中標籤（找不到時去掉 " Pattern" 原樣顯示）
+String variantLabelZh(String? variant) {
+  if (variant == null || variant.isEmpty) return '';
+  const map = {
+    'poke ball pattern': '精靈球',
+    'master ball pattern': '大師球',
+    'great ball pattern': '超級球',
+    'ultra ball pattern': '高級球',
+    'quick ball pattern': '速度球',
+    'love ball pattern': '愛心球',
+    'heal ball pattern': '治療球',
+    'energy symbol pattern': '能量符號',
+  };
+  return map[variant.toLowerCase()] ?? variant.replaceAll(RegExp(r'\s*Pattern$'), '');
+}
+
 class ApiCard {
   final String id;
   final String name;
@@ -36,6 +52,7 @@ class ApiCard {
   final String? number;      // localId — 系列內編號 e.g. "001"
   final String? supertype;   // category: Pokémon / Trainer / Energy
   final List<String> types;
+  final String? variant;     // 花紋/球種變體，如 "Poke Ball Pattern"
 
   ApiCard({
     required this.id,
@@ -48,7 +65,11 @@ class ApiCard {
     this.number,
     this.supertype,
     this.types = const [],
+    this.variant,
   });
+
+  /// 去掉名稱中的變體括號（顯示用）
+  String get cleanName => name.replaceAll(RegExp(r'\s*\([^)]*\)\s*$'), '').trim();
 
   factory ApiCard.fromJson(Map<String, dynamic> json, {String? setName, String? setId}) {
     final localId = json['localId']?.toString() ?? json['id']?.toString() ?? '';
@@ -253,6 +274,39 @@ class PokemonApiService {
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body) as Map<String, dynamic>;
         return ApiCard.fromJson(data, setId: setId);
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  /// 查 SNKRDUNK 日本市場成交價（含快取，1 天內讀 DB、過期才重查 Edge Function）
+  /// 回傳 matched 的資料；無配對回 null
+  static Future<Map<String, dynamic>?> getSnkrdunkPrice(
+      String cardId, String name, String? number) async {
+    // 1) 先讀快取
+    final cached = await SupabaseService.getSnkrCache(cardId);
+    if (cached != null) {
+      return cached['matched'] == true ? cached : null;
+    }
+    // 2) 過期/無 → 呼叫 Edge Function
+    final raw = await _fetchSnkrdunkRaw(name, number);
+    // 3) 寫回快取（連 matched:false 也存，避免每次重查未配對的卡）
+    await SupabaseService.saveSnkrCache(cardId, raw ?? {'matched': false});
+    return (raw != null && raw['matched'] == true) ? raw : null;
+  }
+
+  static Future<Map<String, dynamic>?> _fetchSnkrdunkRaw(String name, String? number) async {
+    try {
+      var n = name.replaceAll(RegExp(r'\s*\([^)]*\)\s*$'), '');
+      n = n.replaceAll(RegExp(r'\s*-\s*\S+$'), '').trim();
+      final uri = Uri.parse(
+        'https://ytlfarwaawxfvutviohe.supabase.co/functions/v1/snkrdunk-price'
+        '?name=${Uri.encodeQueryComponent(n)}'
+        '${(number != null && number.isNotEmpty) ? '&number=${Uri.encodeQueryComponent(number)}' : ''}',
+      );
+      final res = await http.get(uri);
+      if (res.statusCode == 200) {
+        return jsonDecode(res.body) as Map<String, dynamic>;
       }
     } catch (_) {}
     return null;

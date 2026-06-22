@@ -44,7 +44,12 @@ class _DexScreenState extends State<DexScreen> {
     'dp': '鑽石＆珍珠系列',
     'pt': '白金系列',
     'l': 'LEGEND 系列',
-    'adv': 'ADV 系列',
+    'adv': 'ADV（紅寶石）系列',
+    // 老世代（依發售日分組）
+    'classic1': '初代系列',
+    'neo': 'Neo（金銀）系列',
+    'ecard': 'e卡系列',
+    'pcg': 'PCG（EX）系列',
   };
 
   // 前綴別名 → 正規化（把同世代的不同代號併成一組）
@@ -78,7 +83,24 @@ class _DexScreenState extends State<DexScreen> {
     final id = s.id.toLowerCase().replaceAll('-pokemon-japan', '');
     final first = id.split('-').first;
     final pre = RegExp(r'^[a-z]+').firstMatch(first)?.group(0) ?? 'other';
-    return _seriesAlias[pre] ?? pre;
+    final aliased = _seriesAlias[pre] ?? pre;
+    // 認得的世代代號 → 直接用；認不出 → 依發售日分老世代
+    if (_seriesNames.containsKey(aliased) && aliased != 'classic1' &&
+        aliased != 'neo' && aliased != 'ecard' && aliased != 'pcg') {
+      return aliased;
+    }
+    return _eraKeyFromDate(s.releaseDate);
+  }
+
+  // 未知前綴 → 用發售日 (YYYY-MM) 分老世代
+  String _eraKeyFromDate(String? date) {
+    if (date == null || date.length < 7) return 'other';
+    final d = date.substring(0, 7);
+    if (d.compareTo('1999-07') < 0) return 'classic1';
+    if (d.compareTo('2001-11') < 0) return 'neo';
+    if (d.compareTo('2003-07') < 0) return 'ecard';
+    if (d.compareTo('2007-01') < 0) return 'pcg';
+    return 'other';
   }
 
   String _seriesName(String key) => _seriesNames[key] ?? '其他系列';
@@ -120,6 +142,7 @@ class _DexScreenState extends State<DexScreen> {
     setId: r['set_id'] as String?, number: r['number'] as String?,
     supertype: r['supertype'] as String?,
     types: (r['types'] as String?)?.split(',').where((s) => s.isNotEmpty).toList() ?? [],
+    variant: r['variant'] as String?,
   );
 
   @override
@@ -137,11 +160,11 @@ class _DexScreenState extends State<DexScreen> {
 
   Future<void> _loadCollectionStats() async {
     final ids = await SupabaseService.getCollectedCardIds();
-    final value = await SupabaseService.getCollectionTotalValue();
+    final summary = await SupabaseService.getCollectionSummary();
     if (mounted) setState(() {
       _collected = ids;
-      _totalValue = value;
-      _collectedCount = ids.length;
+      _totalValue = ((summary['value'] as num?) ?? 0).round();
+      _collectedCount = (summary['count'] as int?) ?? ids.length;
     });
   }
 
@@ -528,7 +551,7 @@ class _CollectionBanner extends StatelessWidget {
             ),
           ]),
           const SizedBox(height: 10),
-          Text('NT\$ ${formatPrice(totalValue)}',
+          Text('HK\$ ${formatPrice(totalValue)}',
               style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w700)),
           const SizedBox(height: 4),
           Text('以市場參考價計算',
@@ -594,7 +617,17 @@ class _SetTile extends StatelessWidget {
             Container(
               width: 44, height: 44,
               decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-              child: _SetBadge(setId: set.id, color: color),
+              child: (set.logoImage != null && set.logoImage!.isNotEmpty)
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: CachedNetworkImage(
+                        imageUrl: set.logoImage!,
+                        fit: BoxFit.contain,
+                        placeholder: (_, __) => _SetBadge(setId: set.id, color: color),
+                        errorWidget: (_, __, ___) => _SetBadge(setId: set.id, color: color),
+                      ),
+                    )
+                  : _SetBadge(setId: set.id, color: color),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -720,7 +753,7 @@ class _SearchCardTile extends StatelessWidget {
               if (card.rarity != null)
                 Text(card.rarity!, style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF))),
               if (card.estimatedPriceNTD > 0)
-                Text('NT\$ ${formatPrice(card.estimatedPriceNTD)}',
+                Text('HK\$ ${formatPrice(card.estimatedPriceNTD)}',
                     style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFF16A34A))),
             ]),
           ),

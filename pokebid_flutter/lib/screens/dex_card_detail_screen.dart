@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/api_service.dart';
 import '../services/supabase_service.dart';
+import '../services/currency_service.dart';
 
 class DexCardDetailScreen extends StatefulWidget {
   final ApiCard card;
@@ -27,6 +28,10 @@ class _DexCardDetailScreenState extends State<DexCardDetailScreen> {
   List<Map<String, dynamic>> _transactions = [];
   bool _showAddTx = false;
 
+  // SNKRDUNK 日本市場成交價
+  Map<String, dynamic>? _snkr;
+  bool _snkrLoading = true;
+
   final _gradeCtrl = TextEditingController();
   final _priceCtrl = TextEditingController();
   final _buyerCtrl = TextEditingController();
@@ -38,6 +43,64 @@ class _DexCardDetailScreenState extends State<DexCardDetailScreen> {
     _collected = widget.isCollected;
     _loadTransactions();
     _dateCtrl.text = _todayStr();
+    _loadSnkr();
+  }
+
+  Future<void> _loadSnkr() async {
+    setState(() => _snkrLoading = true);
+    final data = await PokemonApiService.getSnkrdunkPrice(widget.card.id, widget.card.name, widget.card.number);
+    if (mounted) setState(() { _snkr = data; _snkrLoading = false; });
+  }
+
+  Map<String, dynamic> _cardMap() => {
+        'card_id': widget.card.id,
+        'card_name': widget.card.cleanName,
+        'image_small': widget.card.imageSmall,
+        'rarity': widget.card.rarity,
+        'set_name': widget.card.setName,
+      };
+
+  // 把某分級（含成本價）加入收藏
+  Future<void> _addGradeToCollection(String gradeCode, String label, num marketJpy) async {
+    final rate = await CurrencyService.jpyToHkd();
+    final marketHkd = (marketJpy * rate).round();
+    final costCtrl = TextEditingController(text: marketHkd > 0 ? '$marketHkd' : '');
+    if (!mounted) return;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('收藏　${widget.card.cleanName}', style: const TextStyle(fontSize: 15)),
+        content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(color: const Color(0xFFE8A52A).withOpacity(0.12), borderRadius: BorderRadius.circular(6)),
+            child: Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFFB8860B))),
+          ),
+          const SizedBox(height: 10),
+          Text('當前市價：HK\$$marketHkd　(¥${marketJpy.toStringAsFixed(0)})',
+              style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
+          const SizedBox(height: 12),
+          TextField(
+            controller: costCtrl,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: const InputDecoration(labelText: '你的成本價', prefixText: 'HK\$ ', isDense: true),
+          ),
+        ]),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('取消')),
+          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('加入收藏')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    final cost = num.tryParse(costCtrl.text.trim()) ?? 0;
+    await SupabaseService.addGradedToCollection(_cardMap(),
+        grade: gradeCode, costHkd: cost, marketJpy: marketJpy);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('已收藏　$label　${widget.card.cleanName}'), duration: const Duration(seconds: 2)));
+    }
   }
 
   @override
@@ -108,12 +171,15 @@ class _DexCardDetailScreenState extends State<DexCardDetailScreen> {
       : _transactions.map((t) => (t['price_ntd'] as int?) ?? 0).reduce((a, b) => a < b ? a : b);
 
   Future<void> _openSnkrdunk() async {
-    final setId = widget.card.setId?.toUpperCase() ?? '';
-    final number = widget.card.number ?? '';
-    final query = '$setId $number'.trim();
-    final url = Uri.parse(
-      'https://snkrdunk.com/search?keywords=${Uri.encodeComponent(query)}',
-    );
+    // 有配對到就直連該卡，否則用搜尋
+    String urlStr = _snkr?['snkrUrl'] as String? ?? '';
+    if (urlStr.isEmpty) {
+      final setId = widget.card.setId?.toUpperCase() ?? '';
+      final number = widget.card.number ?? '';
+      final query = '$setId $number'.trim();
+      urlStr = 'https://snkrdunk.com/search?keywords=${Uri.encodeComponent(query)}';
+    }
+    final url = Uri.parse(urlStr);
     if (await canLaunchUrl(url)) {
       await launchUrl(url, mode: LaunchMode.externalApplication);
     }
@@ -230,7 +296,7 @@ class _DexCardDetailScreenState extends State<DexCardDetailScreen> {
               children: [
                 // 卡名
                 Text(
-                  card.name,
+                  card.cleanName,
                   style: const TextStyle(
                     fontSize: 22, fontWeight: FontWeight.w700, color: Color(0xFF111827)),
                 ),
@@ -254,6 +320,8 @@ class _DexCardDetailScreenState extends State<DexCardDetailScreen> {
                       _chip(card.rarity!, _rarityColor(card.rarity)),
                     if (card.number != null)
                       _chip('No.${card.number}', const Color(0xFF374151)),
+                    if (variantLabelZh(card.variant).isNotEmpty)
+                      _chip('● ${variantLabelZh(card.variant)}', const Color(0xFF8E44AD)),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -282,7 +350,7 @@ class _DexCardDetailScreenState extends State<DexCardDetailScreen> {
                         )
                       else ...[
                         Text(
-                          'NT\$ ${_fmt(_avgPrice)}',
+                          'HK\$ ${_fmt(_avgPrice)}',
                           style: const TextStyle(
                             fontSize: 28, fontWeight: FontWeight.w700, color: Color(0xFF16A34A)),
                         ),
@@ -306,54 +374,12 @@ class _DexCardDetailScreenState extends State<DexCardDetailScreen> {
                 ),
                 const SizedBox(height: 12),
 
-                // SNKRDUNK 跳轉按鈕
-                GestureDetector(
+                // SNKRDUNK 日本市場成交價（PSA10/PSA9/生卡）
+                _SnkrPriceCard(
+                  loading: _snkrLoading,
+                  data: _snkr,
                   onTap: _openSnkrdunk,
-                  child: Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: const Color(0xFFE5E7EB), width: 0.5),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF3F4F6),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Center(
-                            child: Text('🔍', style: TextStyle(fontSize: 18)),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        const Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'SNKRDUNK 市場成交參考',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                  color: Color(0xFF111827),
-                                ),
-                              ),
-                              SizedBox(height: 2),
-                              Text(
-                                '點擊查看日本市場近期成交價格',
-                                style: TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const Icon(Icons.open_in_new, size: 16, color: Color(0xFF9CA3AF)),
-                      ],
-                    ),
-                  ),
+                  onAddGrade: _addGradeToCollection,
                 ),
                 const SizedBox(height: 20),
 
@@ -518,7 +544,7 @@ class _DexCardDetailScreenState extends State<DexCardDetailScreen> {
                                   ),
                                   const SizedBox(width: 3),
                                   Text(
-                                    'NT\$ ${_fmt(price)}',
+                                    'HK\$ ${_fmt(price)}',
                                     style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w600,
@@ -573,7 +599,7 @@ class _DexCardDetailScreenState extends State<DexCardDetailScreen> {
         Text(label,
             style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.w500)),
         const SizedBox(height: 2),
-        Text('NT\$ ${_fmt(price)}',
+        Text('HK\$ ${_fmt(price)}',
             style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: color),
             overflow: TextOverflow.ellipsis),
       ],
@@ -602,6 +628,255 @@ class _DexCardDetailScreenState extends State<DexCardDetailScreen> {
     if (rarity.contains('◆◆') || rarity.contains('U')) return const Color(0xFF2980B9);
     return const Color(0xFF6B7280);
   }
+}
+
+// ── SNKRDUNK 日本市場成交價 ───────────────────────────────────────────────────
+class _SnkrPriceCard extends StatelessWidget {
+  final bool loading;
+  final Map<String, dynamic>? data;
+  final VoidCallback onTap;
+  final void Function(String gradeCode, String label, num marketJpy)? onAddGrade;
+
+  const _SnkrPriceCard({required this.loading, required this.data, required this.onTap, this.onAddGrade});
+
+  String _yen(num? v) => v == null ? '—' : '¥${v.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')}';
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFFFFBEB), Colors.white],
+          begin: Alignment.topLeft, end: Alignment.bottomRight),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE8A52A).withOpacity(0.35), width: 0.8),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        // header
+        Row(children: [
+          Container(width: 36, height: 36,
+            decoration: BoxDecoration(color: const Color(0xFFE8A52A), borderRadius: BorderRadius.circular(9)),
+            child: const Center(child: Text('🇯🇵', style: TextStyle(fontSize: 18)))),
+          const SizedBox(width: 10),
+          const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('SNKRDUNK 日本市場成交', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: Color(0xFF111827))),
+            Text('近期實際成交價（日圓）', style: TextStyle(fontSize: 10.5, color: Color(0xFF9CA3AF))),
+          ])),
+          GestureDetector(onTap: onTap, child: const Icon(Icons.open_in_new, size: 16, color: Color(0xFFE8A52A))),
+        ]),
+        const SizedBox(height: 12),
+
+        if (loading)
+          const Padding(padding: EdgeInsets.symmetric(vertical: 8),
+            child: Text('查詢中...', style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))))
+        else if (data == null)
+          const Padding(padding: EdgeInsets.symmetric(vertical: 8),
+            child: Text('SNKRDUNK 暫無此卡成交資料', style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))))
+        else ...[
+          // 三種分級價格
+          Row(children: [
+            Expanded(child: _gradeBox('PSA 10', 'PSA10', data!['psa10'], const Color(0xFFE8A52A))),
+            const SizedBox(width: 8),
+            Expanded(child: _gradeBox('PSA 9', 'PSA9', data!['psa9'], const Color(0xFF2980B9))),
+            const SizedBox(width: 8),
+            Expanded(child: _gradeBox('生卡', 'RAW', data!['raw'], const Color(0xFF6B7280))),
+          ]),
+          // PSA10 價格走勢圖（7日/30日）
+          if (data!['psa10'] is Map &&
+              (((data!['psa10'] as Map)['daily'] as List?)?.length ?? 0) >= 2)
+            _SnkrChart(
+              daily: (data!['psa10'] as Map)['daily'] as List,
+              chg7: (data!['psa10'] as Map)['chg7'] as num?,
+              chg30: (data!['psa10'] as Map)['chg30'] as num?,
+            ),
+          // 近期成交列表（PSA10 優先）
+          ...(_recentList()),
+        ],
+      ]),
+    );
+  }
+
+  Widget _gradeBox(String label, String gradeCode, dynamic g, Color color) {
+    final m = g as Map<String, dynamic>?;
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+      decoration: BoxDecoration(color: color.withOpacity(0.08), borderRadius: BorderRadius.circular(10)),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: color)),
+        const SizedBox(height: 2),
+        Text(m == null ? '—' : _yen(m['avg']),
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: color),
+            maxLines: 1, overflow: TextOverflow.ellipsis),
+        Text(m == null ? '無成交' : '${m['count']} 筆',
+            style: const TextStyle(fontSize: 9, color: Color(0xFF9CA3AF))),
+        if (m != null && onAddGrade != null) ...[
+          const SizedBox(height: 6),
+          GestureDetector(
+            onTap: () => onAddGrade!(gradeCode, label, (m['avg'] as num?) ?? 0),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 3),
+              decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(6)),
+              child: const Text('＋收藏', textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, color: Colors.white)),
+            ),
+          ),
+        ],
+      ]),
+    );
+  }
+
+  List<Widget> _recentList() {
+    final psa10 = data!['psa10'] as Map<String, dynamic>?;
+    final recent = (psa10?['recent'] as List?) ?? [];
+    if (recent.isEmpty) return [];
+    return [
+      const SizedBox(height: 12),
+      const Text('PSA 10 近期成交', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
+      const SizedBox(height: 6),
+      ...recent.take(5).map((r) {
+        final item = r as Map<String, dynamic>;
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 4),
+          child: Row(children: [
+            Expanded(child: Text('${item['date']}', style: const TextStyle(fontSize: 11.5, color: Color(0xFF9CA3AF)))),
+            Text(_yen(item['price'] as num?),
+                style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFFE8A52A))),
+          ]),
+        );
+      }),
+    ];
+  }
+}
+
+// ── SNKRDUNK PSA10 價格走勢圖（7日 / 30日）──────────────────────────────────
+class _SnkrChart extends StatefulWidget {
+  final List daily;
+  final num? chg7;
+  final num? chg30;
+  const _SnkrChart({required this.daily, this.chg7, this.chg30});
+  @override
+  State<_SnkrChart> createState() => _SnkrChartState();
+}
+
+class _SnkrChartState extends State<_SnkrChart> {
+  int _range = 30;
+
+  List<Map<String, dynamic>> _points() {
+    final cutoff = DateTime.now().subtract(Duration(days: _range + 1));
+    final out = <Map<String, dynamic>>[];
+    for (final e in widget.daily) {
+      final m = (e as Map).cast<String, dynamic>();
+      final d = DateTime.tryParse(m['d'] as String? ?? '');
+      if (d != null && d.isAfter(cutoff)) out.add(m);
+    }
+    return out;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final pts = _points();
+    if (pts.length < 2) return const SizedBox.shrink();
+    final chg = _range == 7 ? widget.chg7 : widget.chg30;
+    final values = pts.map((p) => (p['avg'] as num).toDouble()).toList();
+    final labels = pts.map((p) => (p['d'] as String).substring(5).replaceAll('-', '/')).toList();
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      const SizedBox(height: 14),
+      Row(children: [
+        const Text('PSA 10 價格走勢',
+            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
+        const SizedBox(width: 8),
+        if (chg != null)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: (chg >= 0 ? const Color(0xFF16A34A) : const Color(0xFFDC2626)).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(6)),
+            child: Text('${chg >= 0 ? '▲' : '▼'} ${chg.abs()}%',
+                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700,
+                    color: chg >= 0 ? const Color(0xFF16A34A) : const Color(0xFFDC2626))),
+          ),
+        const Spacer(),
+        _rangeBtn(7), const SizedBox(width: 4), _rangeBtn(30),
+      ]),
+      const SizedBox(height: 10),
+      SizedBox(height: 110, width: double.infinity,
+          child: CustomPaint(painter: _LinePainter(values, labels))),
+    ]);
+  }
+
+  Widget _rangeBtn(int d) {
+    final sel = _range == d;
+    return GestureDetector(
+      onTap: () => setState(() => _range = d),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+        decoration: BoxDecoration(
+          color: sel ? const Color(0xFFE8A52A) : const Color(0xFFF3F4F6),
+          borderRadius: BorderRadius.circular(6)),
+        child: Text('$d日',
+            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700,
+                color: sel ? Colors.white : const Color(0xFF6B7280))),
+      ),
+    );
+  }
+}
+
+class _LinePainter extends CustomPainter {
+  final List<double> values;
+  final List<String> labels;
+  _LinePainter(this.values, this.labels);
+
+  String _yen(double v) => '¥${v.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')}';
+
+  TextPainter _tp(String s, Color c) {
+    final t = TextPainter(
+        text: TextSpan(text: s, style: TextStyle(fontSize: 9, color: c)),
+        textDirection: TextDirection.ltr)..layout();
+    return t;
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (values.length < 2) return;
+    const lPad = 4.0, rPad = 4.0, tPad = 12.0, bPad = 14.0;
+    final w = size.width - lPad - rPad;
+    final h = size.height - tPad - bPad;
+    double minV = values[0], maxV = values[0];
+    for (final v in values) { if (v < minV) minV = v; if (v > maxV) maxV = v; }
+    final range = (maxV - minV).abs() < 1 ? 1.0 : (maxV - minV);
+    double px(int i) => lPad + w * (i / (values.length - 1));
+    double py(double v) => tPad + h * (1 - (v - minV) / range);
+
+    final line = Path();
+    final fill = Path()..moveTo(px(0), tPad + h)..lineTo(px(0), py(values[0]));
+    for (int i = 0; i < values.length; i++) {
+      final x = px(i), y = py(values[i]);
+      if (i == 0) { line.moveTo(x, y); } else { line.lineTo(x, y); fill.lineTo(x, y); }
+    }
+    fill..lineTo(px(values.length - 1), tPad + h)..close();
+
+    canvas.drawPath(fill, Paint()
+      ..shader = const LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter,
+          colors: [Color(0x33E8A52A), Color(0x00E8A52A)]).createShader(Rect.fromLTWH(0, tPad, size.width, h)));
+    canvas.drawPath(line, Paint()
+      ..color = const Color(0xFFE8A52A)..strokeWidth = 2
+      ..style = PaintingStyle.stroke..strokeJoin = StrokeJoin.round..strokeCap = StrokeCap.round);
+    canvas.drawCircle(Offset(px(values.length - 1), py(values.last)), 3, Paint()..color = const Color(0xFFE8A52A));
+
+    // 高/低價標籤（左上角堆疊）
+    _tp(_yen(maxV), const Color(0xFF9CA3AF)).paint(canvas, const Offset(lPad, 0));
+    final lo = _tp(_yen(minV), const Color(0xFF9CA3AF));
+    lo.paint(canvas, Offset(lPad, tPad + h - 8));
+    // 起訖日期（底部）
+    _tp(labels.first, const Color(0xFFB6BCC6)).paint(canvas, Offset(lPad, tPad + h + 2));
+    final last = _tp(labels.last, const Color(0xFFB6BCC6));
+    last.paint(canvas, Offset(size.width - rPad - last.width, tPad + h + 2));
+  }
+
+  @override
+  bool shouldRepaint(covariant _LinePainter old) => old.values != values;
 }
 
 // ── Add Transaction Form ──────────────────────────────────────────────────────
@@ -641,7 +916,7 @@ class _AddTxForm extends StatelessWidget {
             children: [
               Expanded(child: _field(gradeCtrl, '評級（如 PSA 10）')),
               const SizedBox(width: 8),
-              Expanded(child: _field(priceCtrl, '成交金額 NT\$', isNumber: true)),
+              Expanded(child: _field(priceCtrl, '成交金額 HK\$', isNumber: true)),
             ],
           ),
           const SizedBox(height: 8),

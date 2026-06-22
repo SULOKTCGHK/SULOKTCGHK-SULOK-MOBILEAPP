@@ -11,11 +11,14 @@ create table if not exists cached_cards (
   number              text,
   supertype           text,
   types               text,
+  variant             text,                -- 花紋/球種變體，如 "Poke Ball Pattern"（取自卡名括號）
+  language            text default 'ja',   -- ja = 日版, en = 英版
   estimated_price_ntd int default 0,
   cached_at           bigint
 );
 
 create index if not exists idx_cached_cards_set on cached_cards(set_id, number);
+create index if not exists idx_cached_cards_lang on cached_cards(language, set_id);
 
 alter table cached_cards enable row level security;
 drop policy if exists "all_cached_cards" on cached_cards;

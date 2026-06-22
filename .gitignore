@@ -17,6 +17,14 @@ harvest_*.ps1
 harvest_*progress*.txt
 migrate_*.ps1
 migrate_*progress*.txt
+pilot_*.ps1
+backup_db.ps1
+backup/
+*_export.json
+
+# scripts 真實環境變數（範本 .env.example 可上傳）
+scripts/.env
+.env
 sp_cards.json
 
 # ── Supabase CLI 暫存 ───────────────────────────────────────

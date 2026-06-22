@@ -423,7 +423,7 @@ class _GridListingCard extends StatelessWidget {
                     Text(card.grade,
                         style: const TextStyle(fontSize: 9, color: Color(0xFF9CA3AF)),
                         maxLines: 1, overflow: TextOverflow.ellipsis),
-                    Text('NT\$${formatPrice(card.price)}',
+                    Text('HK\$${formatPrice(card.price)}',
                         style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700,
                             color: Color(0xFF16A34A)),
                         maxLines: 1, overflow: TextOverflow.ellipsis),

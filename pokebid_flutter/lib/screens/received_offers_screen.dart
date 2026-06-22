@@ -33,7 +33,7 @@ class _ReceivedOffersScreenState extends State<ReceivedOffersScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('接受出價', style: TextStyle(fontWeight: FontWeight.w700)),
         content: Column(mainAxisSize: MainAxisSize.min, children: [
-          Text('接受 NT\$${_fmt(offer.amount)} 的出價？'),
+          Text('接受 HK\$${_fmt(offer.amount)} 的出價？'),
           const SizedBox(height: 8),
           const Text('商品將會自動下架，其他出價將被拒絕。\n接受後請在聊天室中與買家商討交易方式。',
               style: TextStyle(fontSize: 13, color: Color(0xFF6B7280))),
@@ -220,7 +220,7 @@ class _OfferCard extends StatelessWidget {
           const Text('出價金額', style: TextStyle(fontSize: 12,
               color: Color(0xFF9CA3AF))),
           const Spacer(),
-          Text('NT\$${formatPrice(offer.amount)}',
+          Text('HK\$${formatPrice(offer.amount)}',
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700,
                   color: Color(0xFF16A34A))),
         ]),

@@ -29,7 +29,7 @@ class _OfferSheetState extends State<OfferSheet> {
     }
     if (amount >= widget.card.price) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('出價需低於賣家定價 NT\$${_fmt(widget.card.price)}'),
+          content: Text('出價需低於賣家定價 HK\$${_fmt(widget.card.price)}'),
           backgroundColor: const Color(0xFFE74C3C)));
       return;
     }
@@ -113,14 +113,14 @@ class _OfferSheetState extends State<OfferSheet> {
                 children: [
               Text(card.name, style: const TextStyle(fontSize: 14,
                   fontWeight: FontWeight.w600, color: Color(0xFF111827))),
-              Text('${card.grade} · 賣家定價 NT\$${_fmt(card.price)}',
+              Text('${card.grade} · 賣家定價 HK\$${_fmt(card.price)}',
                   style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))),
             ])),
           ]),
         ),
         const SizedBox(height: 20),
 
-        const Text('你的出價 (NT\$)',
+        const Text('你的出價 (HK\$)',
             style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
                 color: Color(0xFF374151))),
         const SizedBox(height: 8),
@@ -134,7 +134,7 @@ class _OfferSheetState extends State<OfferSheet> {
           style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700,
               color: Color(0xFF111827)),
           decoration: InputDecoration(
-            prefixText: 'NT\$ ',
+            prefixText: 'HK\$ ',
             prefixStyle: const TextStyle(fontSize: 18, color: Color(0xFF6B7280)),
             hintText: '0',
             hintStyle: const TextStyle(color: Color(0xFFD1D5DB)),
@@ -159,8 +159,8 @@ class _OfferSheetState extends State<OfferSheet> {
           final tooHigh = amount != null && amount >= card.price;
           return Text(
             tooHigh
-                ? '出價需低於賣家定價 NT\$${_fmt(card.price)}'
-                : '賣家定價 NT\$${_fmt(card.price)}，你可以低於此金額出價',
+                ? '出價需低於賣家定價 HK\$${_fmt(card.price)}'
+                : '賣家定價 HK\$${_fmt(card.price)}，你可以低於此金額出價',
             style: TextStyle(
                 fontSize: 12,
                 color: tooHigh ? const Color(0xFFE74C3C) : const Color(0xFF9CA3AF)),
