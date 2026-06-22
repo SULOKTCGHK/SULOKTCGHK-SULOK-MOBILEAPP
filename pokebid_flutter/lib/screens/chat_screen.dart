@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../models/card_model.dart';
 import '../services/chat_service.dart';
 import 'card_detail_screen.dart';
+import 'legal_screen.dart';
 
 class ChatScreen extends StatefulWidget {
   final String sellerName;
@@ -34,6 +35,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   List<ChatMessage> _messages = [];
   String? _conversationId;
+  bool _showSafety = true;
   String? _myId;
   bool _loading = true;
   bool _sending = false;
@@ -230,6 +232,32 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
       body: Column(
         children: [
+          // 安全交易提示（可關閉）
+          if (_showSafety)
+            Container(
+              color: const Color(0xFFFFFBEB),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Row(children: [
+                const Icon(Icons.verified_user_outlined, size: 15, color: Color(0xFFB8860B)),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => LegalScreen.safety())),
+                    child: const Text.rich(TextSpan(children: [
+                      TextSpan(text: '平台不經手金流，請查看對方評價、慎防詐騙。',
+                          style: TextStyle(fontSize: 11.5, color: Color(0xFF92400E))),
+                      TextSpan(text: ' 安全提示 ›',
+                          style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFFB8860B))),
+                    ])),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => setState(() => _showSafety = false),
+                  child: const Padding(padding: EdgeInsets.only(left: 6),
+                      child: Icon(Icons.close, size: 14, color: Color(0xFFB8860B))),
+                ),
+              ]),
+            ),
           // Card reference (可點擊查看商品內容)
           if (widget.card != null)
             GestureDetector(
