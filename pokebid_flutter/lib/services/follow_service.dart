@@ -57,4 +57,32 @@ class FollowService {
         .eq('follower_id', myId);
     return (res as List).map((r) => r['seller_id'] as String).toList();
   }
+
+  // ── 我追蹤的賣家（含名稱/頭像）────────────────────────────────────────────
+  static Future<List<Map<String, dynamic>>> followedSellers() async {
+    final ids = await followedSellerIds();
+    if (ids.isEmpty) return [];
+    Map<String, Map<String, dynamic>> profiles = {};
+    try {
+      final res = await _client
+          .from('profiles')
+          .select('id, username, display_name, avatar_emoji')
+          .inFilter('id', ids);
+      for (final p in (res as List)) {
+        profiles[p['id'] as String] = Map<String, dynamic>.from(p);
+      }
+    } catch (_) {}
+    // 沒有 profile 的賣家也保留，用預設名
+    return ids.map((id) {
+      final p = profiles[id];
+      final name = (p?['display_name'] as String?)?.trim().isNotEmpty == true
+          ? p!['display_name'] as String
+          : (p?['username'] as String?) ?? '賣家';
+      return {
+        'id': id,
+        'name': name,
+        'avatar': (p?['avatar_emoji'] as String?) ?? '🎴',
+      };
+    }).toList();
+  }
 }

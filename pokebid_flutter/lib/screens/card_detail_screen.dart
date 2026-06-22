@@ -6,6 +6,7 @@ import '../widgets/card_type_icon.dart';
 import '../services/offer_service.dart';
 import '../services/auth_service.dart';
 import '../services/review_service.dart';
+import '../widgets/login_required.dart';
 import '../data/set_name_zh.dart';
 import 'chat_screen.dart';
 import 'offer_sheet.dart';
@@ -61,8 +62,10 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
     if (mounted) setState(() => _hasReviewed = done);
   }
 
-  void _openReview() {
+  void _openReview() async {
     if (widget.card.seller.id == null) return;
+    if (!await requireLogin(context, action: '撰寫評價')) return;
+    if (!mounted) return;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -82,8 +85,10 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
     if (mounted) setState(() => _myOffer = offer);
   }
 
-  void _openOffer() {
+  void _openOffer() async {
     if (widget.card.supabaseId == null || widget.card.seller.id == null) return;
+    if (!await requireLogin(context, action: '出價')) return;
+    if (!mounted) return;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -136,7 +141,9 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
     }
   }
 
-  void _openChat() {
+  void _openChat() async {
+    if (!await requireLogin(context, action: '聯絡賣家')) return;
+    if (!mounted) return;
     Navigator.push(
       context,
       MaterialPageRoute(

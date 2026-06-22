@@ -18,6 +18,7 @@ harvest_*progress*.txt
 migrate_*.ps1
 migrate_*progress*.txt
 pilot_*.ps1
+fix_logos.ps1
 backup_db.ps1
 backup/
 *_export.json
@@ -34,3 +35,6 @@ supabase/.temp/
 .DS_Store
 Thumbs.db
 *.log
+
+# 臨時診斷檔
+_diag*

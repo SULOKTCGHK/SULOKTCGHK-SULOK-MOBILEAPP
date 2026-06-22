@@ -8,6 +8,7 @@ import '../services/profile_service.dart';
 import '../models/card_model.dart';
 import 'auth/login_screen.dart';
 import 'received_offers_screen.dart';
+import 'followed_sellers_screen.dart';
 import 'card_detail_screen.dart';
 import 'edit_profile_screen.dart';
 import 'conversations_list_screen.dart';
@@ -819,6 +820,17 @@ class _ProfileScreenState extends State<ProfileScreen>
               NotificationService.markReadByTypes(['offer_received']);
               Navigator.push(context, MaterialPageRoute(
                   builder: (_) => const ReceivedOffersScreen()));
+            },
+          ),
+          const Divider(height: 0.5, color: Color(0xFFF3F4F6)),
+          _arrowTile(
+            icon: Icons.people_outline,
+            iconColor: const Color(0xFF16A34A),
+            title: '我追蹤的賣家',
+            trailing: '',
+            onTap: () {
+              Navigator.push(context, MaterialPageRoute(
+                  builder: (_) => const FollowedSellersScreen()));
             },
           ),
         ]),

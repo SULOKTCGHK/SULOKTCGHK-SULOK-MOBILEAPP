@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
+import '../widgets/login_required.dart';
 import '../services/api_service.dart';
 import '../services/supabase_service.dart';
 import 'dex_card_detail_screen.dart';
@@ -361,9 +362,28 @@ class _DexScreenState extends State<DexScreen> {
       if (sets.isEmpty)
         _emptyHint('尚無 PROMO 資料')
       else
-        ...sets.map((s) => _SetTile(set: s, collected: _collected,
-            onTap: () => _openSetGrid(s), formatPrice: _fmt)),
+        _setGrid(sets),
     ];
+  }
+
+  // 系列方格（卡盒圖 + 名字 + 年份），手機友善
+  Widget _setGrid(List<ApiSet> sets) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+      child: LayoutBuilder(builder: (ctx, c) {
+        const infoH = 60.0;
+        final cellW = (c.maxWidth - 10) / 2;
+        final ar = cellW / (cellW + infoH);
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2, crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: ar),
+          itemCount: sets.length,
+          itemBuilder: (_, i) => _SetCard(set: sets[i], onTap: () => _openSetGrid(sets[i])),
+        );
+      }),
+    );
   }
 
   // 卡盒/牌組：先選系列，再列出該系列的彈
@@ -401,8 +421,7 @@ class _DexScreenState extends State<DexScreen> {
               style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF111827))),
         ]),
       ),
-      ...sets.map((s) => _SetTile(set: s, collected: _collected,
-          onTap: () => _openSetGrid(s), formatPrice: _fmt)),
+      _setGrid(sets),
     ];
   }
 
@@ -489,6 +508,7 @@ class _DexScreenState extends State<DexScreen> {
       _toggleCollectById(card, !_collected.contains(card.id));
 
   Future<void> _toggleCollectById(ApiCard card, bool add) async {
+    if (add && !await requireLogin(context, action: '加入收藏')) return;
     if (add) {
       await SupabaseService.addToCollection({
         'card_id': card.id,
@@ -564,16 +584,11 @@ class _CollectionBanner extends StatelessWidget {
 
 // ── Set Tile ──────────────────────────────────────────────────────────────────
 
-class _SetTile extends StatelessWidget {
+class _SetCard extends StatelessWidget {
   final ApiSet set;
-  final Set<String> collected;
   final VoidCallback onTap;
-  final String Function(int) formatPrice;
 
-  const _SetTile({
-    required this.set, required this.collected,
-    required this.onTap, required this.formatPrice,
-  });
+  const _SetCard({required this.set, required this.onTap});
 
   Color _seriesColor(ApiSet s) {
     // 優先用 seriesId，再 fallback 到名稱關鍵字
@@ -602,61 +617,53 @@ class _SetTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = _seriesColor(set);
+    final year = (set.releaseDate ?? '').length >= 4 ? set.releaseDate!.substring(0, 4) : '';
+    final hasLogo = set.logoImage != null && set.logoImage!.isNotEmpty;
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
         decoration: BoxDecoration(
-          color: Colors.white, borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFE5E7EB), width: 0.5),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 4, offset: const Offset(0, 1))],
+          color: Colors.white, borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFEDEFF2), width: 1),
+          boxShadow: [BoxShadow(color: const Color(0xFF111827).withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 3))],
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Row(children: [
-            Container(
-              width: 44, height: 44,
-              decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-              child: (set.logoImage != null && set.logoImage!.isNotEmpty)
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: CachedNetworkImage(
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          // 卡盒圖（正方形）
+          AspectRatio(
+            aspectRatio: 1,
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Color(0xFFF9FAFB),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(13)),
+              ),
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(13)),
+                child: hasLogo
+                    ? CachedNetworkImage(
                         imageUrl: set.logoImage!,
                         fit: BoxFit.contain,
-                        placeholder: (_, __) => _SetBadge(setId: set.id, color: color),
-                        errorWidget: (_, __, ___) => _SetBadge(setId: set.id, color: color),
-                      ),
-                    )
-                  : _SetBadge(setId: set.id, color: color),
+                        placeholder: (_, __) => Center(child: _SetBadge(setId: set.id, color: color)),
+                        errorWidget: (_, __, ___) => Center(child: _SetBadge(setId: set.id, color: color)),
+                      )
+                    : Center(child: _SetBadge(setId: set.id, color: color)),
+              ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Row(children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: color.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                    child: Text(set.id.toUpperCase(),
-                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: color)),
-                  ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(set.displayName,
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF111827)),
-                        overflow: TextOverflow.ellipsis),
-                  ),
-                ]),
-                const SizedBox(height: 2),
-                Text('${set.releaseDate ?? ''} · ${set.total} 張',
-                    style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF))),
+          ),
+          // 名字 + 年份
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(9, 7, 9, 7),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
+                Text(set.displayName,
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF111827), height: 1.2),
+                    maxLines: 2, overflow: TextOverflow.ellipsis),
+                const SizedBox(height: 3),
+                Text('$year · ${set.total} 張',
+                    style: const TextStyle(fontSize: 10.5, color: Color(0xFF9CA3AF))),
               ]),
             ),
-            const Icon(Icons.chevron_right, color: Color(0xFF9CA3AF), size: 20),
-          ]),
-        ),
+          ),
+        ]),
       ),
     );
   }

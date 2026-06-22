@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../services/api_service.dart';
 import '../services/supabase_service.dart';
 import '../services/currency_service.dart';
+import '../widgets/login_required.dart';
 
 class DexCardDetailScreen extends StatefulWidget {
   final ApiCard card;
@@ -62,6 +63,8 @@ class _DexCardDetailScreenState extends State<DexCardDetailScreen> {
 
   // 把某分級（含成本價）加入收藏
   Future<void> _addGradeToCollection(String gradeCode, String label, num marketJpy) async {
+    if (!await requireLogin(context, action: '加入收藏')) return;
+    if (!mounted) return;
     final rate = await CurrencyService.jpyToHkd();
     final marketHkd = (marketJpy * rate).round();
     final costCtrl = TextEditingController(text: marketHkd > 0 ? '$marketHkd' : '');

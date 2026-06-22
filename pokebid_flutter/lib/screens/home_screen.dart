@@ -226,14 +226,18 @@ class _HomeScreenState extends State<HomeScreen> {
           else
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
-              child: GridView.builder(
+              child: LayoutBuilder(builder: (ctx, c) {
+                const infoH = 64.0; // 資訊區固定高度（名字+分級+價格）
+                final cellW = (c.maxWidth - 10) / 2; // 扣間距
+                final ar = cellW / (cellW + infoH);
+                return GridView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
                   crossAxisSpacing: 10,
                   mainAxisSpacing: 10,
-                  childAspectRatio: 0.75,
+                  childAspectRatio: ar,
                 ),
                 itemCount: widget.listings.take(6).length,
                 itemBuilder: (_, i) {
@@ -246,7 +250,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           card: card, isFavorited: false, onFavChanged: (_) {}))),
                   );
                 },
-              ),
+              );
+              }),
             ),
 
           const SizedBox(height: 20),
@@ -391,9 +396,9 @@ class _GridListingCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Photo area — takes most of the space
-            Expanded(
-              flex: 5,
+            // Photo area — 正方形
+            AspectRatio(
+              aspectRatio: 1,
               child: ClipRRect(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(11)),
                 child: card.imageUrls.isNotEmpty
@@ -409,22 +414,24 @@ class _GridListingCard extends StatelessWidget {
 
             // Info below
             Expanded(
-              flex: 3,
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(5, 5, 5, 5),
+                padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(card.name,
-                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600,
-                            color: Color(0xFF111827)),
-                        maxLines: 1, overflow: TextOverflow.ellipsis),
-                    Text(card.grade,
-                        style: const TextStyle(fontSize: 9, color: Color(0xFF9CA3AF)),
-                        maxLines: 1, overflow: TextOverflow.ellipsis),
+                    // 名字 + 分級標籤（同一行）
+                    Row(children: [
+                      Flexible(child: Text(card.name,
+                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700,
+                              color: Color(0xFF111827)),
+                          maxLines: 1, overflow: TextOverflow.ellipsis)),
+                      const SizedBox(width: 5),
+                      _gradeChip(card.grade),
+                    ]),
+                    const SizedBox(height: 6),
                     Text('HK\$${formatPrice(card.price)}',
-                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700,
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800,
                             color: Color(0xFF16A34A)),
                         maxLines: 1, overflow: TextOverflow.ellipsis),
                   ],
@@ -434,6 +441,18 @@ class _GridListingCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _gradeChip(String grade) {
+    final g = grade.toUpperCase();
+    final c = g.contains('10')
+        ? const Color(0xFFE8A52A)
+        : (g.contains('9') ? const Color(0xFF2980B9) : const Color(0xFF6B7280));
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+      decoration: BoxDecoration(color: c.withOpacity(0.12), borderRadius: BorderRadius.circular(4)),
+      child: Text(grade, style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w700, color: c)),
     );
   }
 

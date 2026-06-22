@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'currency_service.dart';
 import 'api_service.dart';
+import 'auth_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
@@ -10,7 +11,9 @@ class SupabaseService {
   static String? _userId;
 
   // ── User ID ───────────────────────────────────────────────────────────────
+  // 已登入 → 用登入帳號 uid（資料跨裝置綁定）；未登入瀏覽 → 暫時的裝置 UUID
   static Future<String> getUserId() async {
+    if (AuthService.isLoggedIn) return AuthService.userId;
     if (_userId != null) return _userId!;
     final prefs = await SharedPreferences.getInstance();
     _userId = prefs.getString('user_id');
@@ -20,6 +23,9 @@ class SupabaseService {
     }
     return _userId!;
   }
+
+  /// 是否為已登入帳號（寫入動作前可檢查）
+  static bool get isLoggedIn => AuthService.isLoggedIn;
 
   // ── Cached Sets ───────────────────────────────────────────────────────────
   static Future<List<Map<String, dynamic>>> getCachedSets() async {

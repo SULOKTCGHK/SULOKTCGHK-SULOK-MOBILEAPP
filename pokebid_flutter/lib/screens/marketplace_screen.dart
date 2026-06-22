@@ -239,13 +239,18 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                       Text(_query.isNotEmpty ? '找不到「$_query」相關商品' : '目前沒有掛售商品',
                           style: const TextStyle(color: Color(0xFF9CA3AF))),
                     ]))
-                : GridView.builder(
+                : LayoutBuilder(builder: (ctx, c) {
+                    // 圖片正方形 + 資訊區固定高度 → 適配不同手機寬度
+                    const infoH = 92.0;
+                    final cellW = (c.maxWidth - 32 - 10) / 2; // 扣左右padding(16+16)與間距(10)
+                    final ar = cellW / (cellW + infoH);
+                    return GridView.builder(
                     padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
                       crossAxisSpacing: 10,
                       mainAxisSpacing: 10,
-                      childAspectRatio: 0.54,
+                      childAspectRatio: ar,
                     ),
                     itemCount: _sorted.length,
                     itemBuilder: (_, i) {
@@ -277,7 +282,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                         )),
                       );
                     },
-                  ),
+                  );
+                  }),
           ),
         ],
       ),

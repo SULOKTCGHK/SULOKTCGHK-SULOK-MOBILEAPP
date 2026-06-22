@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/login_required.dart';
 import 'home_screen.dart';
 import 'marketplace_screen.dart';
 import 'post_listing_sheet.dart';
@@ -31,7 +32,9 @@ class _MainShellState extends State<MainShell> {
     if (mounted) setState(() { _listings = data; _loadingListings = false; });
   }
 
-  void _openPost() {
+  void _openPost() async {
+    if (!await requireLogin(context, action: '發佈商品')) return;
+    if (!mounted) return;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,

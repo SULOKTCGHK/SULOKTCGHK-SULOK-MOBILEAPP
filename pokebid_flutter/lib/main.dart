@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'screens/main_shell.dart';
 import 'screens/auth/login_screen.dart';
-import 'services/auth_service.dart';
 import 'services/api_service.dart';
+import 'services/profile_service.dart';
 import 'config/env.dart';
 
 void main() async {
@@ -58,9 +58,16 @@ class _AuthGateState extends State<AuthGate> {
   void initState() {
     super.initState();
     // Listen for auth state changes (login, logout, token refresh, deep link callback)
-    Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+    Supabase.instance.client.auth.onAuthStateChange.listen((data) async {
+      // 登入後確保已建立個人檔案（id = 帳號 uid）
+      if (data.session != null) {
+        await ProfileService.getOrCreateMyProfile();
+      }
       if (mounted) setState(() {});
     });
+    if (Supabase.instance.client.auth.currentSession != null) {
+      ProfileService.getOrCreateMyProfile();
+    }
   }
 
   @override

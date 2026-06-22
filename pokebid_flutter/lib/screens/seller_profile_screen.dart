@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/card_model.dart';
 import '../services/listing_service.dart';
 import '../services/follow_service.dart';
+import '../widgets/login_required.dart';
 import '../services/auth_service.dart';
 import '../services/supabase_service.dart';
 import '../services/review_service.dart';
@@ -82,6 +83,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
 
   Future<void> _toggleFollow() async {
     if (_myId == widget.sellerId) return;
+    if (!await requireLogin(context, action: '追蹤賣家')) return;
     setState(() => _followLoading = true);
     try {
       if (_following) {
@@ -408,25 +410,42 @@ class _ListingGridItem extends StatelessWidget {
         Expanded(
           flex: 3,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
+            padding: const EdgeInsets.fromLTRB(8, 7, 8, 7),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                Text(card.name,
-                    style: const TextStyle(fontSize: 12,
-                        fontWeight: FontWeight.w600, color: Color(0xFF111827)),
-                    maxLines: 1, overflow: TextOverflow.ellipsis),
-                Text(card.grade,
-                    style: const TextStyle(fontSize: 10, color: Color(0xFF9CA3AF))),
+                // 名字 + 分級標籤（同一行）
+                Row(children: [
+                  Flexible(child: Text(card.name,
+                      style: const TextStyle(fontSize: 12,
+                          fontWeight: FontWeight.w700, color: Color(0xFF111827)),
+                      maxLines: 1, overflow: TextOverflow.ellipsis)),
+                  const SizedBox(width: 5),
+                  _gradeChip(card.grade),
+                ]),
+                const SizedBox(height: 5),
                 Text('HK\$${formatPrice(card.price)}',
-                    style: const TextStyle(fontSize: 13,
-                        fontWeight: FontWeight.w700, color: Color(0xFF16A34A))),
+                    style: const TextStyle(fontSize: 14,
+                        fontWeight: FontWeight.w800, color: Color(0xFF16A34A))),
               ],
             ),
           ),
         ),
       ]),
+    );
+  }
+
+  Widget _gradeChip(String grade) {
+    final g = grade.toUpperCase();
+    final c = g.contains('10')
+        ? const Color(0xFFE8A52A)
+        : (g.contains('9') ? const Color(0xFF2980B9) : const Color(0xFF6B7280));
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+      decoration: BoxDecoration(color: c.withOpacity(0.12), borderRadius: BorderRadius.circular(4)),
+      child: Text(grade,
+          style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w700, color: c)),
     );
   }
 
