@@ -19,6 +19,7 @@ class _DexScreenState extends State<DexScreen> {
   List<ApiSet> _sets = [];
   Set<String> _collected = {};
   int _totalValue = 0;
+  Map<String, dynamic> _valueSeries = {};
   int _collectedCount = 0;
   bool _loadingSets = true;
   String? _error;
@@ -162,10 +163,12 @@ class _DexScreenState extends State<DexScreen> {
   Future<void> _loadCollectionStats() async {
     final ids = await SupabaseService.getCollectedCardIds();
     final summary = await SupabaseService.getCollectionSummary();
+    final series = await SupabaseService.getCollectionValueSeries();
     if (mounted) setState(() {
       _collected = ids;
       _totalValue = ((summary['value'] as num?) ?? 0).round();
       _collectedCount = (summary['count'] as int?) ?? ids.length;
+      _valueSeries = series;
     });
   }
 
@@ -317,21 +320,27 @@ class _DexScreenState extends State<DexScreen> {
   Widget _buildMainContent() {
     if (_loadingSets) {
       return ListView(children: [
-        _CollectionBanner(totalValue: _totalValue, collected: _collectedCount, formatPrice: _fmt),
+        _CollectionBanner(totalValue: _totalValue, collected: _collectedCount, formatPrice: _fmt,
+            points: (_valueSeries['points'] as List?)?.cast<double>() ?? const [],
+            chgPct: _valueSeries['chgPct'] as double?),
         const SizedBox(height: 12),
         ...List.generate(6, (_) => const _SetShimmer()),
       ]);
     }
     if (_error != null) {
       return ListView(children: [
-        _CollectionBanner(totalValue: _totalValue, collected: _collectedCount, formatPrice: _fmt),
+        _CollectionBanner(totalValue: _totalValue, collected: _collectedCount, formatPrice: _fmt,
+            points: (_valueSeries['points'] as List?)?.cast<double>() ?? const [],
+            chgPct: _valueSeries['chgPct'] as double?),
         _ErrorWidget(message: _error!, onRetry: _loadSets),
       ]);
     }
 
     return ListView(
       children: [
-        _CollectionBanner(totalValue: _totalValue, collected: _collectedCount, formatPrice: _fmt),
+        _CollectionBanner(totalValue: _totalValue, collected: _collectedCount, formatPrice: _fmt,
+            points: (_valueSeries['points'] as List?)?.cast<double>() ?? const [],
+            chgPct: _valueSeries['chgPct'] as double?),
 
         // ── 第一層：卡盒 / 牌組 / PROMO ─────────────────────────────────
         Padding(
@@ -531,8 +540,13 @@ class _CollectionBanner extends StatelessWidget {
   final int totalValue;
   final int collected;
   final String Function(int) formatPrice;
+  final List<double> points;
+  final double? chgPct;
 
-  const _CollectionBanner({required this.totalValue, required this.collected, required this.formatPrice});
+  const _CollectionBanner({
+    required this.totalValue, required this.collected, required this.formatPrice,
+    this.points = const [], this.chgPct,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -571,15 +585,61 @@ class _CollectionBanner extends StatelessWidget {
             ),
           ]),
           const SizedBox(height: 10),
-          Text('HK\$ ${formatPrice(totalValue)}',
-              style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w700)),
+          Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+            Text('HK\$ ${formatPrice(totalValue)}',
+                style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w700)),
+            const Spacer(),
+            if (chgPct != null)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.25), borderRadius: BorderRadius.circular(8)),
+                child: Text('${chgPct! >= 0 ? '▲' : '▼'} ${chgPct!.abs().toStringAsFixed(1)}%',
+                    style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
+              ),
+          ]),
+          if (points.length >= 2) ...[
+            const SizedBox(height: 10),
+            SizedBox(height: 40, width: double.infinity,
+                child: CustomPaint(painter: _SparklinePainter(points))),
+          ],
           const SizedBox(height: 4),
-          Text('以市場參考價計算',
+          Text(points.length >= 2 ? '以市場參考價計算（近 ${points.length} 日走勢）' : '以市場參考價計算',
               style: TextStyle(color: Colors.white.withOpacity(0.75), fontSize: 12)),
         ],
       ),
     );
   }
+}
+
+class _SparklinePainter extends CustomPainter {
+  final List<double> values;
+  _SparklinePainter(this.values);
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (values.length < 2) return;
+    double mn = values[0], mx = values[0];
+    for (final v in values) { if (v < mn) mn = v; if (v > mx) mx = v; }
+    final range = (mx - mn).abs() < 1 ? 1.0 : (mx - mn);
+    double px(int i) => size.width * (i / (values.length - 1));
+    double py(double v) => size.height * (1 - (v - mn) / range);
+    final line = Path();
+    final fill = Path()..moveTo(0, size.height);
+    for (int i = 0; i < values.length; i++) {
+      final x = px(i), y = py(values[i]);
+      if (i == 0) { line.moveTo(x, y); fill.lineTo(x, y); }
+      else { line.lineTo(x, y); fill.lineTo(x, y); }
+    }
+    fill..lineTo(size.width, size.height)..close();
+    canvas.drawPath(fill, Paint()
+      ..shader = LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter,
+          colors: [Colors.white.withOpacity(0.35), Colors.white.withOpacity(0.0)]).createShader(Offset.zero & size));
+    canvas.drawPath(line, Paint()
+      ..color = Colors.white..strokeWidth = 2
+      ..style = PaintingStyle.stroke..strokeJoin = StrokeJoin.round..strokeCap = StrokeCap.round);
+  }
+  @override
+  bool shouldRepaint(covariant _SparklinePainter old) => old.values != values;
 }
 
 // ── Set Tile ──────────────────────────────────────────────────────────────────

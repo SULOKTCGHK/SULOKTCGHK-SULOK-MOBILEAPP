@@ -222,6 +222,68 @@ class SupabaseService {
     };
   }
 
+  /// 收藏總市值的每日走勢（港幣）：用各卡 SNKRDUNK 每日均價加總（carry-forward）
+  /// 回傳 { points:[double], labels:[String], chgPct:double? }
+  static Future<Map<String, dynamic>> getCollectionValueSeries() async {
+    final items = (await getCollection())
+        .where((e) => (e['status'] as String?) != 'sold').toList();
+    if (items.isEmpty) return {'points': <double>[], 'labels': <String>[], 'chgPct': null};
+    final rate = await CurrencyService.jpyToHkd();
+    final ids = items.map((e) => e['card_id'] as String).toSet().toList();
+
+    List res = [];
+    try {
+      res = await _client.from('snkrdunk_prices').select('card_id,payload').inFilter('card_id', ids);
+    } catch (_) {}
+    final Map<String, dynamic> payloadByCard = {
+      for (final r in res) (r['card_id'] as String): r['payload']
+    };
+
+    // 每個 item -> 排序後的 (date, avgJpy)
+    final List<List<MapEntry<String, num>>> itemSeries = [];
+    final Set<String> allDates = {};
+    for (final it in items) {
+      final grade = (it['grade'] as String?) ?? 'RAW';
+      final key = grade == 'PSA10' ? 'psa10' : grade == 'PSA9' ? 'psa9' : 'raw';
+      final p = payloadByCard[it['card_id']];
+      final daily = (p is Map ? (p[key] is Map ? p[key]['daily'] : null) : null) as List?;
+      final entries = <MapEntry<String, num>>[];
+      if (daily != null) {
+        for (final d in daily) {
+          final ds = d['d'] as String?;
+          final av = d['avg'] as num?;
+          if (ds != null && av != null) { entries.add(MapEntry(ds, av)); allDates.add(ds); }
+        }
+        entries.sort((a, b) => a.key.compareTo(b.key));
+      }
+      itemSeries.add(entries);
+    }
+    if (allDates.length < 2) return {'points': <double>[], 'labels': <String>[], 'chgPct': null};
+
+    final dates = allDates.toList()..sort();
+    final points = <double>[];
+    for (final date in dates) {
+      double sumJpy = 0;
+      for (final entries in itemSeries) {
+        num? carry;
+        for (final e in entries) {
+          if (e.key.compareTo(date) <= 0) carry = e.value; else break;
+        }
+        if (carry != null) sumJpy += carry.toDouble();
+      }
+      points.add(sumJpy * rate);
+    }
+    double? chgPct;
+    if (points.length >= 2 && points.first > 0) {
+      chgPct = (points.last - points.first) / points.first * 100;
+    }
+    return {
+      'points': points,
+      'labels': dates.map((d) => d.substring(5).replaceAll('-', '/')).toList(),
+      'chgPct': chgPct,
+    };
+  }
+
   /// 更新所有收藏的當前市價（重抓 SNKRDUNK），回傳更新筆數
   static Future<int> refreshCollectionMarket() async {
     final userId = await getUserId();

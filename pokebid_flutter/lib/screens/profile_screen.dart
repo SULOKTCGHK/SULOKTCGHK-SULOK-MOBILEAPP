@@ -14,6 +14,10 @@ import 'edit_profile_screen.dart';
 import 'conversations_list_screen.dart';
 import 'legal_screen.dart';
 import '../widgets/unread_dot.dart';
+import '../widgets/verified_badge.dart';
+import '../widgets/ig_link.dart';
+import '../widgets/login_required.dart';
+import 'phone_verify_screen.dart';
 import '../services/notification_service.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -327,10 +331,21 @@ class _ProfileScreenState extends State<ProfileScreen>
                   Expanded(child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(displayName,
-                          style: const TextStyle(fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF111827))),
+                      Row(mainAxisSize: MainAxisSize.min, children: [
+                        Flexible(child: Text(displayName,
+                            style: const TextStyle(fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF111827)),
+                            maxLines: 1, overflow: TextOverflow.ellipsis)),
+                        if (_profile?.phoneVerified ?? false) ...[
+                          const SizedBox(width: 5),
+                          const VerifiedBadge(size: 14, showLabel: true),
+                        ],
+                        if ((_profile?.igHandle ?? '').trim().isNotEmpty) ...[
+                          const SizedBox(width: 5),
+                          IgLink(handle: _profile!.igHandle, size: 15),
+                        ],
+                      ]),
                       if (username.isNotEmpty) ...[
                         const SizedBox(height: 2),
                         Text('@$username',
@@ -846,6 +861,20 @@ class _ProfileScreenState extends State<ProfileScreen>
             title: '編輯個人資料',
             trailing: _profile != null ? '@${_profile!.username}' : '',
             onTap: _profile != null ? _openEditProfile : () {},
+          ),
+          const Divider(height: 0.5, color: Color(0xFFF3F4F6)),
+          _arrowTile(
+            icon: Icons.verified_outlined,
+            iconColor: const Color(0xFF2980B9),
+            title: '電話認證',
+            trailing: (_profile?.phoneVerified ?? false) ? '已認證 ✓' : '未認證',
+            onTap: () async {
+              if (!await requireLogin(context, action: '進行電話認證')) return;
+              if (!mounted) return;
+              final ok = await Navigator.push<bool>(context,
+                  MaterialPageRoute(builder: (_) => const PhoneVerifyScreen()));
+              if (ok == true) _loadProfile();
+            },
           ),
         ]),
 

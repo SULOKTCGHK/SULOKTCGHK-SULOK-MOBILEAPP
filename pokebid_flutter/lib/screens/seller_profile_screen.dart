@@ -4,7 +4,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/card_model.dart';
 import '../services/listing_service.dart';
 import '../services/follow_service.dart';
+import '../services/profile_service.dart';
 import '../widgets/login_required.dart';
+import '../widgets/verified_badge.dart';
+import '../widgets/ig_link.dart';
 import '../services/auth_service.dart';
 import '../services/supabase_service.dart';
 import '../services/review_service.dart';
@@ -34,6 +37,8 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
   String? _myId;
   SellerStats _stats = const SellerStats(0, 0);
   List<Review> _reviews = [];
+  bool _sellerVerified = false;
+  String _sellerIg = '';
 
   @override
   void initState() {
@@ -52,6 +57,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
       FollowService.followerCount(widget.sellerId),
       ReviewService.statsForSeller(widget.sellerId),
       ReviewService.getForSeller(widget.sellerId),
+      ProfileService.getProfile(widget.sellerId),
     ]);
 
     if (mounted) {
@@ -60,6 +66,9 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
         _followerCount = results[2] as int;
         _stats = results[3] as SellerStats;
         _reviews = results[4] as List<Review>;
+        final sp = results[5] as UserProfile?;
+        _sellerVerified = sp?.phoneVerified ?? false;
+        _sellerIg = sp?.igHandle ?? '';
         _loading = false;
       });
     }
@@ -153,9 +162,20 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
                       ),
                       const SizedBox(height: 12),
 
-                      Text(widget.sellerName,
-                          style: const TextStyle(fontSize: 18,
-                              fontWeight: FontWeight.w700, color: Color(0xFF111827))),
+                      Row(mainAxisAlignment: MainAxisAlignment.center, mainAxisSize: MainAxisSize.min, children: [
+                        Flexible(child: Text(widget.sellerName,
+                            style: const TextStyle(fontSize: 18,
+                                fontWeight: FontWeight.w700, color: Color(0xFF111827)),
+                            maxLines: 1, overflow: TextOverflow.ellipsis)),
+                        if (_sellerVerified) ...[
+                          const SizedBox(width: 5),
+                          const VerifiedBadge(size: 17),
+                        ],
+                        if (_sellerIg.trim().isNotEmpty) ...[
+                          const SizedBox(width: 5),
+                          IgLink(handle: _sellerIg, size: 15),
+                        ],
+                      ]),
                       const SizedBox(height: 4),
 
                       // Stats row

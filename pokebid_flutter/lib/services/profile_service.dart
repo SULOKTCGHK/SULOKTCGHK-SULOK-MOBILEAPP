@@ -8,6 +8,7 @@ class UserProfile {
   final String avatarEmoji;
   final String bio;
   final String igHandle;
+  final bool phoneVerified;
   final DateTime createdAt;
 
   const UserProfile({
@@ -17,6 +18,7 @@ class UserProfile {
     required this.avatarEmoji,
     required this.bio,
     required this.igHandle,
+    this.phoneVerified = false,
     required this.createdAt,
   });
 
@@ -27,6 +29,7 @@ class UserProfile {
     avatarEmoji: r['avatar_emoji'] as String? ?? '🎴',
     bio: r['bio'] as String? ?? '',
     igHandle: r['ig_handle'] as String? ?? '',
+    phoneVerified: r['phone_verified'] as bool? ?? false,
     createdAt: DateTime.parse(r['created_at'] as String),
   );
 }
@@ -112,6 +115,9 @@ class ProfileService {
       return false;
     }
   }
+
+  // 註：phone_verified 由 whatsapp-verify Edge Function 以 service role 設定，
+  // 不開放 client 直接寫入（防竄改）。
 
   // ── Check if username is taken ────────────────────────────────────────────
   static Future<bool> isUsernameTaken(String username, String myId) async {

@@ -280,6 +280,52 @@ class _BannerCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = _color;
+    final hasCover = announcement.imageUrl != null && announcement.imageUrl!.isNotEmpty;
+
+    // 有封面圖：整張用封面當背景 + 深色漸層 + 白字
+    if (hasCover) {
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 6),
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(16)),
+        child: Stack(fit: StackFit.expand, children: [
+          CachedNetworkImage(
+            imageUrl: announcement.imageUrl!,
+            fit: BoxFit.cover,
+            placeholder: (_, __) => Container(color: color.withOpacity(0.1)),
+            errorWidget: (_, __, ___) => Container(color: color.withOpacity(0.1)),
+          ),
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.bottomCenter, end: Alignment.topCenter,
+                colors: [Colors.black.withOpacity(0.75), Colors.black.withOpacity(0.1), Colors.transparent],
+              ),
+            ),
+          ),
+          Positioned(
+            left: 16, right: 16, bottom: 14,
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+              Row(children: [
+                Text(announcement.icon, style: const TextStyle(fontSize: 18)),
+                const SizedBox(width: 6),
+                Expanded(child: Text(announcement.title,
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white),
+                    maxLines: 1, overflow: TextOverflow.ellipsis)),
+              ]),
+              if (announcement.subtitle.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(announcement.subtitle,
+                    style: const TextStyle(fontSize: 12, color: Colors.white70),
+                    maxLines: 2, overflow: TextOverflow.ellipsis),
+              ],
+            ]),
+          ),
+        ]),
+      );
+    }
+
+    // 無封面：原本的色塊版
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 6),
       padding: const EdgeInsets.all(18),
