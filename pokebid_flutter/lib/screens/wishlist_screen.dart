@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/wishlist_service.dart';
 import '../services/api_service.dart';
+import '../widgets/login_required.dart';
 
 class WishlistScreen extends StatefulWidget {
   const WishlistScreen({super.key});
@@ -29,6 +30,48 @@ class _WishlistScreenState extends State<WishlistScreen> {
     _load();
   }
 
+  Future<void> _addWish() async {
+    if (!await requireLogin(context, action: '新增願望')) return;
+    if (!mounted) return;
+    final kwCtrl = TextEditingController();
+    final priceCtrl = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('新增願望', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+        content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const Text('輸入想要的卡片關鍵字（卡名），有符合的新上架會通知你。',
+              style: TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
+          const SizedBox(height: 12),
+          TextField(controller: kwCtrl, autofocus: true,
+            decoration: const InputDecoration(labelText: '關鍵字（卡名）', hintText: '例：Umbreon ex', isDense: true)),
+          const SizedBox(height: 10),
+          TextField(controller: priceCtrl, keyboardType: TextInputType.number,
+            decoration: const InputDecoration(labelText: '預算上限（選填）', prefixText: 'HK\$ ', isDense: true)),
+        ]),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('取消')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE8A52A)),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('加入', style: TextStyle(color: Colors.white))),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    final kw = kwCtrl.text.trim();
+    if (kw.isEmpty) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('請輸入關鍵字')));
+      return;
+    }
+    await WishlistService.add(keyword: kw, maxPrice: int.tryParse(priceCtrl.text.trim()));
+    _load();
+    if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('已加入願望清單'), duration: Duration(seconds: 2)));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -47,6 +90,12 @@ class _WishlistScreenState extends State<WishlistScreen> {
         ),
         title: const Text('願望清單',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Color(0xFF111827))),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: const Color(0xFFE8A52A),
+        onPressed: _addWish,
+        icon: const Icon(Icons.add, color: Colors.white),
+        label: const Text('新增願望', style: TextStyle(color: Colors.white)),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: Color(0xFFE8A52A), strokeWidth: 2))
@@ -68,7 +117,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
       Text('願望清單是空的',
           style: TextStyle(fontSize: 14, color: Color(0xFF9CA3AF))),
       SizedBox(height: 4),
-      Text('在掛售區用篩選條件加入想要的卡',
+      Text('點右下「＋新增願望」加入想要的卡',
           style: TextStyle(fontSize: 12, color: Color(0xFFD1D5DB))),
     ]),
   );

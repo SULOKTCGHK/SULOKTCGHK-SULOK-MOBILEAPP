@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'currency_service.dart';
 import 'api_service.dart';
@@ -26,6 +27,53 @@ class SupabaseService {
 
   /// 是否為已登入帳號（寫入動作前可檢查）
   static bool get isLoggedIn => AuthService.isLoggedIn;
+
+  // ── Admin 圖片管理 ─────────────────────────────────────────────────────────
+  /// 上傳圖片到 card-images bucket，回傳含版本參數的公開網址（admin 用）
+  static Future<String?> uploadAdminImage(Uint8List bytes, String path) async {
+    try {
+      await _client.storage.from('card-images').uploadBinary(
+            path, bytes,
+            fileOptions: const FileOptions(contentType: 'image/jpeg', upsert: true),
+          );
+      final url = _client.storage.from('card-images').getPublicUrl(path);
+      return '$url?v=${DateTime.now().millisecondsSinceEpoch}';
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static Future<bool> setSetLogo(String setId, String url) async {
+    try {
+      await _client.from('cached_sets').update({'logo_image': url}).eq('id', setId);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// 找出 image_small 為空（null）的卡片
+  static Future<List<Map<String, dynamic>>> getCardsMissingImage({int limit = 100}) async {
+    try {
+      final res = await _client.from('cached_cards')
+          .select('id, name, image_small, set_name, number')
+          .isFilter('image_small', null)
+          .limit(limit);
+      return List<Map<String, dynamic>>.from(res);
+    } catch (_) {
+      return [];
+    }
+  }
+
+  static Future<bool> setCardImage(String cardId, String url) async {
+    try {
+      await _client.from('cached_cards')
+          .update({'image_small': url, 'image_large': url}).eq('id', cardId);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
 
   // ── Cached Sets ───────────────────────────────────────────────────────────
   static Future<List<Map<String, dynamic>>> getCachedSets() async {

@@ -4,6 +4,7 @@ import '../../services/shop_service.dart';
 import '../../services/admin_service.dart';
 import 'post_announcement_sheet.dart';
 import 'shop_form_sheet.dart';
+import 'image_admin_tab.dart';
 
 class AdminScreen extends StatefulWidget {
   const AdminScreen({super.key});
@@ -12,7 +13,7 @@ class AdminScreen extends StatefulWidget {
 }
 
 class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStateMixin {
-  late final TabController _tab = TabController(length: 3, vsync: this);
+  late final TabController _tab = TabController(length: 4, vsync: this);
 
   @override
   void dispose() { _tab.dispose(); super.dispose(); }
@@ -30,11 +31,12 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
           labelColor: const Color(0xFFE8A52A),
           unselectedLabelColor: const Color(0xFF6B7280),
           indicatorColor: const Color(0xFFE8A52A),
-          tabs: const [Tab(text: '公告'), Tab(text: '卡鋪'), Tab(text: '帳號')],
+          isScrollable: true,
+          tabs: const [Tab(text: '公告'), Tab(text: '卡鋪'), Tab(text: '帳號'), Tab(text: '圖片')],
         ),
       ),
       body: TabBarView(controller: _tab, children: const [
-        _AnnouncementsTab(), _ShopsTab(), _AccountsTab(),
+        _AnnouncementsTab(), _ShopsTab(), _AccountsTab(), ImageAdminTab(),
       ]),
     );
   }
