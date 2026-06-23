@@ -33,8 +33,8 @@ class _NearbyShopsScreenState extends State<NearbyShopsScreen> {
   }
 
   Future<void> _openMaps(CardShop s) async {
-    final uri = Uri.parse(
-        'https://www.google.com/maps/search/?api=1&query=${s.lat},${s.lng}');
+    final name = Uri.encodeComponent(s.name);
+    final uri = Uri.parse('https://www.google.com/maps/search/$name/@${s.lat},${s.lng},15z');
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }

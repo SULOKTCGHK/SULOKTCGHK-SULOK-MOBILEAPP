@@ -75,6 +75,166 @@ class SupabaseService {
     }
   }
 
+  // 讀單張卡（含 psa_spec_id）
+  static Future<Map<String, dynamic>?> getCardById(String cardId) async {
+    try {
+      final res = await _client.from('cached_cards')
+          .select().eq('id', cardId).maybeSingle();
+      return res;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  // ── PSA Pop ───────────────────────────────────────────────────────────────
+
+  // 讀取緩存的 PSA pop（給卡片詳情頁用）
+  static Future<Map<String, dynamic>?> getPsaPop(String specId) async {
+    try {
+      final res = await _client
+          .from('psa_pop_cache')
+          .select()
+          .eq('spec_id', specId)
+          .maybeSingle();
+      return res;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  // 設定卡片的 psa_spec_id（admin 用）
+  static Future<bool> setCardSpecId(String cardId, String specId) async {
+    try {
+      await _client.from('cached_cards')
+          .update({'psa_spec_id': specId}).eq('id', cardId);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  // 觸發 edge function 抓取 PSA pop（admin 用，by specId）
+  static Future<Map<String, dynamic>?> fetchPsaPop(String specId) async {
+    try {
+      final res = await _client.functions.invoke(
+        'psa-pop', body: {'spec_id': specId});
+      if (res.status != 200) return null;
+      final data = res.data as Map<String, dynamic>?;
+      return data?['data'];
+    } catch (_) {
+      return null;
+    }
+  }
+
+  // 用 cert number 查 PSA pop（用戶上架時用，by certNumber）
+  // card_id 可選：有的話順便把 spec_id 寫入 cached_cards
+  static Future<bool> fetchPsaPopByCert(String certNumber,
+      {String? cardId, String? cachedCardId, String? setId, String? cardNumber}) async {
+    try {
+      final res = await _client.functions.invoke('psa-pop', body: {
+        'cert_number': certNumber,
+        if (cardId != null) 'card_id': cardId,
+        if (cachedCardId != null && cachedCardId.isNotEmpty) 'cached_card_id': cachedCardId,
+        if (setId != null && setId.isNotEmpty) 'set_id': setId,
+        if (cardNumber != null && cardNumber.isNotEmpty) 'card_number': cardNumber,
+      });
+      return res.status == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  // 給圖鑑詳情頁用：先查 cached_cards.psa_spec_id，再嘗試從 listings 找同張卡的 cert/spec_id
+  static Future<Map<String, dynamic>?> getPsaPopForDexCard({
+    required String cachedCardId,
+    String? setId,
+    String? cardNumber,
+  }) async {
+    // 1. 先查 cached_cards 本身的 spec_id（admin 設的）
+    try {
+      final row = await _client.from('cached_cards').select('psa_spec_id').eq('id', cachedCardId).maybeSingle();
+      final specId = row?['psa_spec_id'] as String?;
+      if (specId != null && specId.isNotEmpty) {
+        return getPsaPop(specId);
+      }
+    } catch (_) {}
+
+    // 2. 從 marketplace listings 找同張卡（set_id + card_number）有沒有 cert/spec_id
+    if (setId != null && setId.isNotEmpty && cardNumber != null && cardNumber.isNotEmpty) {
+      try {
+        final rows = await _client.from('listings')
+            .select('psa_cert, psa_spec_id')
+            .eq('set_id', setId)
+            .eq('card_number', cardNumber)
+            .not('psa_cert', 'is', null)
+            .order('created_at', ascending: false)
+            .limit(1);
+        if (rows is List && rows.isNotEmpty) {
+          final listing = rows[0] as Map<String, dynamic>;
+          final specId = listing['psa_spec_id'] as String?;
+          final cert = listing['psa_cert'] as String?;
+          return getPsaPopForListing(psaSpecId: specId, psaCert: cert);
+        }
+      } catch (_) {}
+    }
+    return null;
+  }
+
+  // 給 listing 詳情頁用：先查 specId，沒有就用 cert 觸發 fetch
+  static Future<Map<String, dynamic>?> getPsaPopForListing({
+    String? psaSpecId,
+    String? psaCert,
+  }) async {
+    // 1. specId 已知 → 直接查 cache
+    if (psaSpecId != null && psaSpecId.isNotEmpty) {
+      return getPsaPop(psaSpecId);
+    }
+    // 2. 有 cert → edge function fetch（會 cache），再讀回來
+    if (psaCert != null && psaCert.isNotEmpty) {
+      try {
+        final res = await _client.functions.invoke('psa-pop', body: {'cert_number': psaCert});
+        if (res.status == 200) {
+          final data = res.data as Map<String, dynamic>?;
+          return data?['data'];
+        }
+      } catch (_) {}
+    }
+    return null;
+  }
+
+  // 搜尋 cached_cards（上架時選卡用）
+  // 支援任意順序 token：如 "DP-P 126" / "126 DP-P" / "126/DP-P" 都能找到
+  static Future<List<Map<String, dynamic>>> searchCachedCards(String query) async {
+    if (query.trim().isEmpty) return [];
+    // 拆 token（空格、斜線分隔）
+    final tokens = query.trim().split(RegExp(r'[\s/]+')).where((t) => t.isNotEmpty).toList();
+    if (tokens.isEmpty) return [];
+    try {
+      // 用第一個 token 做初步過濾（name / set_id / number 任一符合）
+      final first = tokens[0];
+      final res = await _client.from('cached_cards')
+          .select('id, name, number, set_id, image_small')
+          .or('name.ilike.%$first%,set_id.ilike.%$first%,number.ilike.%$first%')
+          .order('set_id')
+          .limit(200);
+      final all = (res as List).cast<Map<String, dynamic>>();
+
+      // 剩餘 token 在 client 端過濾（所有 token 都要匹配 name/set_id/number 其中一個）
+      if (tokens.length == 1) return all.take(40).toList();
+      return all.where((c) {
+        final name = (c['name'] as String? ?? '').toLowerCase();
+        final sid  = (c['set_id'] as String? ?? '').toLowerCase();
+        final num  = (c['number'] as String? ?? '').toLowerCase();
+        return tokens.every((t) {
+          final tl = t.toLowerCase();
+          return name.contains(tl) || sid.contains(tl) || num.contains(tl);
+        });
+      }).take(40).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
   // ── Cached Sets ───────────────────────────────────────────────────────────
   static Future<List<Map<String, dynamic>>> getCachedSets() async {
     try {
@@ -112,14 +272,16 @@ class SupabaseService {
     } catch (_) {}
   }
 
-  // 搜尋卡片（依名稱，從 cached_cards）
-  static Future<List<Map<String, dynamic>>> searchCachedCards(String query) async {
+
+  // 精靈圖鑑專用：搜尋名稱開頭符合的所有卡（上限500）
+  static Future<List<Map<String, dynamic>>> searchCardsByPokemon(String pokemonName) async {
     try {
       final res = await _client
           .from('cached_cards')
           .select()
-          .ilike('name', '%$query%')
-          .limit(40);
+          .ilike('name', '$pokemonName%')
+          .order('name')
+          .limit(500);
       return List<Map<String, dynamic>>.from(res);
     } catch (_) {
       return [];

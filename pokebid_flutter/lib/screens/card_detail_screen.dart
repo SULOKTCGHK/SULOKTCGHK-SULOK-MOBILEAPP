@@ -6,6 +6,8 @@ import '../widgets/card_type_icon.dart';
 import '../services/offer_service.dart';
 import '../services/auth_service.dart';
 import '../services/review_service.dart';
+import '../services/supabase_service.dart';
+import '../services/recently_viewed_service.dart';
 import '../widgets/login_required.dart';
 import '../data/set_name_zh.dart';
 import 'chat_screen.dart';
@@ -35,6 +37,7 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
   late int _price;
   Offer? _myOffer;
   bool _hasReviewed = false;
+  Map<String, dynamic>? _psaPop;
 
   String get _sellerIg => 'pokebid_official';
 
@@ -54,6 +57,32 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
     _price = widget.card.price;
     if (!_isMyListing) _loadMyOffer();
     if (_isSold && !_isMyListing) _loadReviewStatus();
+    _loadPsaPop();
+    _recordView();
+  }
+
+  void _recordView() {
+    final card = widget.card;
+    if (card.supabaseId == null) return;
+    RecentlyViewedService.record({
+      'id': card.supabaseId!,
+      'name': card.name,
+      'grade': card.grade,
+      'price': card.price,
+      'image': card.imageUrls.isNotEmpty ? card.imageUrls.first : null,
+      'condition': card.condition,
+      'isSold': card.isSold,
+    });
+  }
+
+  Future<void> _loadPsaPop() async {
+    final card = widget.card;
+    if (card.condition != 'Graded') return;
+    final pop = await SupabaseService.getPsaPopForListing(
+      psaSpecId: card.psaSpecId,
+      psaCert: card.psaCert,
+    );
+    if (mounted && pop != null) setState(() => _psaPop = pop);
   }
 
   Future<void> _loadReviewStatus() async {
@@ -307,6 +336,10 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
                     ],
                   ),
                   const SizedBox(height: 12),
+
+                  // PSA Pop（鑑定卡才顯示）
+                  if (_psaPop != null) _PsaPopCard(pop: _psaPop!),
+                  if (_psaPop != null) const SizedBox(height: 12),
 
                   // Seller row
                   GestureDetector(
@@ -899,5 +932,85 @@ class _ImageCarouselState extends State<_ImageCarousel> {
       ],
       const SizedBox(height: 8),
     ]);
+  }
+}
+
+class _PsaPopCard extends StatelessWidget {
+  final Map<String, dynamic> pop;
+  const _PsaPopCard({required this.pop});
+
+  @override
+  Widget build(BuildContext context) {
+    final fetchedAt = pop['fetched_at'] as String?;
+    final dateStr = fetchedAt != null
+        ? DateTime.tryParse(fetchedAt)?.toLocal().toString().substring(0, 10) ?? ''
+        : '';
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 0.5),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: const Color(0xFF2980B9),
+              borderRadius: BorderRadius.circular(6)),
+            child: const Text('PSA Pop', style: TextStyle(
+                fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white)),
+          ),
+          const SizedBox(width: 8),
+          if (pop['card_name'] != null)
+            Expanded(child: Text(pop['card_name'] as String,
+                style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                overflow: TextOverflow.ellipsis)),
+        ]),
+        const SizedBox(height: 10),
+        Row(children: [
+          _PopCell('PSA 10', pop['pop_10'] as int? ?? 0, const Color(0xFF2980B9)),
+          const SizedBox(width: 6),
+          _PopCell('PSA 9', pop['pop_9'] as int? ?? 0, const Color(0xFF27AE60)),
+          const SizedBox(width: 6),
+          _PopCell('PSA 8', pop['pop_8'] as int? ?? 0, const Color(0xFF8E44AD)),
+          const SizedBox(width: 6),
+          _PopCell('Auth', pop['pop_auth'] as int? ?? 0, const Color(0xFF6B7280)),
+          const SizedBox(width: 6),
+          _PopCell('Total', pop['total'] as int? ?? 0, const Color(0xFFE8A52A)),
+        ]),
+        if (dateStr.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Text('更新：$dateStr',
+              style: const TextStyle(fontSize: 10, color: Color(0xFF9CA3AF))),
+        ],
+      ]),
+    );
+  }
+}
+
+class _PopCell extends StatelessWidget {
+  final String label;
+  final int count;
+  final Color color;
+  const _PopCell(this.label, this.count, this.color);
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(child: Container(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withAlpha(20),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withAlpha(50), width: 0.5),
+      ),
+      child: Column(children: [
+        Text('$count', style: TextStyle(
+            fontSize: 15, fontWeight: FontWeight.w700, color: color)),
+        const SizedBox(height: 2),
+        Text(label, style: const TextStyle(fontSize: 9, color: Color(0xFF6B7280))),
+      ]),
+    ));
   }
 }

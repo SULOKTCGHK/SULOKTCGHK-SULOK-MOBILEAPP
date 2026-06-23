@@ -33,6 +33,9 @@ class _DexCardDetailScreenState extends State<DexCardDetailScreen> {
   Map<String, dynamic>? _snkr;
   bool _snkrLoading = true;
 
+  // PSA Pop
+  Map<String, dynamic>? _psaPop;
+
   final _gradeCtrl = TextEditingController();
   final _priceCtrl = TextEditingController();
   final _buyerCtrl = TextEditingController();
@@ -45,12 +48,22 @@ class _DexCardDetailScreenState extends State<DexCardDetailScreen> {
     _loadTransactions();
     _dateCtrl.text = _todayStr();
     _loadSnkr();
+    _loadPsaPop();
   }
 
   Future<void> _loadSnkr() async {
     setState(() => _snkrLoading = true);
     final data = await PokemonApiService.getSnkrdunkPrice(widget.card.id, widget.card.name, widget.card.number);
     if (mounted) setState(() { _snkr = data; _snkrLoading = false; });
+  }
+
+  Future<void> _loadPsaPop() async {
+    final pop = await SupabaseService.getPsaPopForDexCard(
+      cachedCardId: widget.card.id,
+      setId: widget.card.setId,
+      cardNumber: widget.card.number,
+    );
+    if (mounted && pop != null) setState(() => _psaPop = pop);
   }
 
   Map<String, dynamic> _cardMap() => {
@@ -384,6 +397,10 @@ class _DexCardDetailScreenState extends State<DexCardDetailScreen> {
                   onTap: _openSnkrdunk,
                   onAddGrade: _addGradeToCollection,
                 ),
+                const SizedBox(height: 12),
+
+                // PSA Pop 數量
+                if (_psaPop != null) _PsaPopCard(pop: _psaPop!),
                 const SizedBox(height: 20),
 
                 // 成交紀錄 header
@@ -630,6 +647,79 @@ class _DexCardDetailScreenState extends State<DexCardDetailScreen> {
     if (rarity.contains('★') || rarity.contains('R')) return const Color(0xFF8E44AD);
     if (rarity.contains('◆◆') || rarity.contains('U')) return const Color(0xFF2980B9);
     return const Color(0xFF6B7280);
+  }
+}
+
+// ── PSA Pop 數量卡片 ──────────────────────────────────────────────────────────
+
+class _PsaPopCard extends StatelessWidget {
+  final Map<String, dynamic> pop;
+  const _PsaPopCard({required this.pop});
+
+  @override
+  Widget build(BuildContext context) {
+    final fetchedAt = pop['fetched_at'] as String?;
+    final dateStr = fetchedAt != null
+        ? fetchedAt.substring(0, 10)
+        : '';
+    final grades = [
+      {'label': 'PSA 10', 'key': 'pop_10', 'color': const Color(0xFF16A34A)},
+      {'label': 'PSA 9',  'key': 'pop_9',  'color': const Color(0xFF2980B9)},
+      {'label': 'PSA 8',  'key': 'pop_8',  'color': const Color(0xFF6B7280)},
+      {'label': 'PSA 7',  'key': 'pop_7',  'color': const Color(0xFF9CA3AF)},
+      {'label': 'Auth',   'key': 'pop_auth','color': const Color(0xFFB8860B)},
+    ];
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 0.5),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          const Text('PSA Pop 數量',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF111827))),
+          const Spacer(),
+          if (dateStr.isNotEmpty)
+            Text('更新：$dateStr',
+                style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF))),
+        ]),
+        const SizedBox(height: 12),
+        Row(children: grades.map((g) {
+          final count = (pop[g['key']] as num?)?.toInt() ?? 0;
+          return Expanded(child: _PopCell(
+            label: g['label'] as String,
+            count: count,
+            color: g['color'] as Color,
+          ));
+        }).toList()),
+        const SizedBox(height: 8),
+        Row(children: [
+          const Text('總計：', style: TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
+          Text('${(pop['total'] as num?)?.toInt() ?? 0} 張',
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF111827))),
+        ]),
+      ]),
+    );
+  }
+}
+
+class _PopCell extends StatelessWidget {
+  final String label;
+  final int count;
+  final Color color;
+  const _PopCell({required this.label, required this.count, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(children: [
+      Text('$count',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: color)),
+      const SizedBox(height: 2),
+      Text(label, style: const TextStyle(fontSize: 10, color: Color(0xFF9CA3AF))),
+    ]);
   }
 }
 

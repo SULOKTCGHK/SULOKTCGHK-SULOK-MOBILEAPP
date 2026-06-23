@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/card_model.dart';
@@ -11,6 +12,8 @@ import 'conversations_list_screen.dart';
 import '../widgets/notification_bell.dart';
 import '../widgets/unread_dot.dart';
 import '../services/notification_service.dart';
+import '../services/recently_viewed_service.dart';
+import '../services/listing_service.dart';
 
 class HomeScreen extends StatefulWidget {
   final List<PokemonCard> listings;
@@ -27,7 +30,9 @@ class _HomeScreenState extends State<HomeScreen> {
   int _bannerPage = 0;
 
   List<Announcement> _announcements = [];
+  List<Map<String, dynamic>> _recentlyViewed = [];
   bool _isAdmin = false;
+  StreamSubscription<void>? _recentSub;
 
   // Fallback announcements shown while loading or if Supabase has none
   static const List<Map<String, dynamic>> _fallback = [
@@ -39,6 +44,8 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _loadAnnouncements();
     _checkAdmin();
+    _loadRecentlyViewed();
+    _recentSub = RecentlyViewedService.onChange.listen((_) => _loadRecentlyViewed());
     Future.doWhile(() async {
       await Future.delayed(const Duration(seconds: 4));
       if (!mounted) return false;
@@ -53,9 +60,21 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  @override
+  void dispose() {
+    _recentSub?.cancel();
+    _bannerCtrl.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadAnnouncements() async {
     final list = await AnnouncementService.getAnnouncements();
     if (mounted) setState(() => _announcements = list);
+  }
+
+  Future<void> _loadRecentlyViewed() async {
+    final list = await RecentlyViewedService.getAll();
+    if (mounted) setState(() => _recentlyViewed = list);
   }
 
   Future<void> _checkAdmin() async {
@@ -72,12 +91,6 @@ class _HomeScreenState extends State<HomeScreen> {
         onPosted: _loadAnnouncements,
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _bannerCtrl.dispose();
-    super.dispose();
   }
 
   String _fmt(int p) => p.toString().replaceAllMapped(
@@ -233,6 +246,52 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
 
+          // ── 最近瀏覽 ────────────────────────────────────────────────────
+          if (_recentlyViewed.isNotEmpty) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
+              child: Row(children: [
+                const Text('最近瀏覽',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF111827))),
+                const Spacer(),
+                GestureDetector(
+                  onTap: () async {
+                    await RecentlyViewedService.clear();
+                    if (mounted) setState(() => _recentlyViewed = []);
+                  },
+                  child: const Text('清除',
+                      style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF), fontWeight: FontWeight.w500)),
+                ),
+              ]),
+            ),
+            SizedBox(
+              height: 160,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+                itemCount: _recentlyViewed.length,
+                itemBuilder: (_, i) {
+                  final item = _recentlyViewed[i];
+                  return _RecentCard(
+                    item: item,
+                    formatPrice: _fmt,
+                    onTap: () async {
+                      final id = item['id'] as String?;
+                      if (id == null) return;
+                      final card = await ListingService.getListingById(id);
+                      if (!mounted || card == null) return;
+                      await Navigator.push(context, MaterialPageRoute(
+                        builder: (_) => CardDetailScreen(
+                            card: card, isFavorited: false, onFavChanged: (_) {})));
+                      _loadRecentlyViewed();
+                    },
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 4),
+          ],
+
           // ── Latest Listings ────────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
@@ -280,9 +339,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   return _GridListingCard(
                     card: card,
                     formatPrice: _fmt,
-                    onTap: () => Navigator.push(context, MaterialPageRoute(
-                      builder: (_) => CardDetailScreen(
-                          card: card, isFavorited: false, onFavChanged: (_) {}))),
+                    onTap: () async {
+                      await Navigator.push(context, MaterialPageRoute(
+                        builder: (_) => CardDetailScreen(
+                            card: card, isFavorited: false, onFavChanged: (_) {})));
+                      _loadRecentlyViewed();
+                    },
                   );
                 },
               );
@@ -542,4 +604,84 @@ class _GridListingCard extends StatelessWidget {
     child: Center(child: Text(card.type.emoji,
         style: const TextStyle(fontSize: 28))),
   );
+}
+
+// ── Recently Viewed Card ──────────────────────────────────────────────────────
+
+class _RecentCard extends StatelessWidget {
+  final Map<String, dynamic> item;
+  final String Function(int) formatPrice;
+  final VoidCallback onTap;
+
+  const _RecentCard({required this.item, required this.formatPrice, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final name = item['name'] as String? ?? '';
+    final grade = item['grade'] as String? ?? '';
+    final price = item['price'] as int? ?? 0;
+    final image = item['image'] as String?;
+    final isSold = item['isSold'] as bool? ?? false;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 110,
+        margin: const EdgeInsets.only(right: 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE5E7EB), width: 0.5),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04),
+              blurRadius: 4, offset: const Offset(0, 2))],
+        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          // 圖片區
+          Expanded(
+            child: ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(11)),
+              child: Stack(fit: StackFit.expand, children: [
+                image != null && image.isNotEmpty
+                    ? CachedNetworkImage(imageUrl: image, fit: BoxFit.cover,
+                        placeholder: (_, __) => Container(color: const Color(0xFFF3F4F6)),
+                        errorWidget: (_, __, ___) => Container(color: const Color(0xFFF3F4F6),
+                            child: const Icon(Icons.style, color: Color(0xFFD1D5DB))))
+                    : Container(color: const Color(0xFFF3F4F6),
+                        child: const Icon(Icons.style, color: Color(0xFFD1D5DB))),
+                if (isSold)
+                  Container(
+                    color: Colors.black45,
+                    alignment: Alignment.center,
+                    child: const Text('已售出',
+                        style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+                  ),
+              ]),
+            ),
+          ),
+          // 資訊區
+          Padding(
+            padding: const EdgeInsets.fromLTRB(7, 6, 7, 7),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(name,
+                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF111827)),
+                  maxLines: 1, overflow: TextOverflow.ellipsis),
+              const SizedBox(height: 4),
+              if (grade.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                  margin: const EdgeInsets.only(bottom: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF3F4F6), borderRadius: BorderRadius.circular(3)),
+                  child: Text(grade,
+                      style: const TextStyle(fontSize: 8.5, color: Color(0xFF6B7280), fontWeight: FontWeight.w600)),
+                ),
+              Text('HK\$${formatPrice(price)}',
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF16A34A)),
+                  maxLines: 1, overflow: TextOverflow.ellipsis),
+            ]),
+          ),
+        ]),
+      ),
+    );
+  }
 }

@@ -32,6 +32,8 @@ class ListingService {
     List<String> imageUrls = const [],
     String? setId,
     String? cardNumber,
+    String? psaCert,
+    String? cachedCardId,
   }) async {
     try {
       final sellerId = AuthService.isLoggedIn
@@ -57,6 +59,8 @@ class ListingService {
         'is_active': true,
         if (setId != null && setId.isNotEmpty) 'set_id': setId,
         if (cardNumber != null && cardNumber.isNotEmpty) 'card_number': cardNumber,
+        if (psaCert != null && psaCert.isNotEmpty) 'psa_cert': psaCert,
+        if (cachedCardId != null && cachedCardId.isNotEmpty) 'cached_card_id': cachedCardId,
       }).select().maybeSingle();
 
       // 通知所有願望清單符合此新商品的用戶
@@ -144,6 +148,8 @@ class ListingService {
           (row['is_active'] as bool? ?? true) == false,
       setId: row['set_id'] as String?,
       cardNumber: row['card_number'] as String?,
+      psaCert: row['psa_cert'] as String?,
+      psaSpecId: row['psa_spec_id'] as String?,
     );
   }
 

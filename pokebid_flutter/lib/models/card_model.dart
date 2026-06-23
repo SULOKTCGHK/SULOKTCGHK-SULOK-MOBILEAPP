@@ -29,6 +29,8 @@ class PokemonCard {
   final bool isSold;
   final String? setId;      // 系列 ID，如 sv8a
   final String? cardNumber; // 卡號，如 217
+  final String? psaCert;    // PSA cert number（用戶上架時輸入）
+  final String? psaSpecId;  // PSA SpecID（cert 查到 / admin 設定）
 
   PokemonCard({
     required this.id,
@@ -46,6 +48,8 @@ class PokemonCard {
     this.isSold = false,
     this.setId,
     this.cardNumber,
+    this.psaCert,
+    this.psaSpecId,
   });
 }
 

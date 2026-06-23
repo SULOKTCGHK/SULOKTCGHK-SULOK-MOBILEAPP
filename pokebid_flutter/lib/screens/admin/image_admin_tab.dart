@@ -45,7 +45,7 @@ class _ImageAdminTabState extends State<ImageAdminTab> {
     setState(() => _busyId = s['id'] as String);
     final bytes = await file.readAsBytes();
     final ts = DateTime.now().millisecondsSinceEpoch;
-    final url = await SupabaseService.uploadAdminImage(bytes, 'admin/setlogo_${s['id']}_$ts.jpg');
+    final url = await SupabaseService.uploadAdminImage(bytes, 'sets/${s['id']}/logo_$ts.jpg');
     final ok = url != null && await SupabaseService.setSetLogo(s['id'] as String, url);
     if (!mounted) return;
     setState(() => _busyId = null);

@@ -32,13 +32,100 @@ class _AdminSetCardsScreenState extends State<AdminSetCardsScreen> {
       ? _cards.where((c) => (c['image_small'] as String?)?.isNotEmpty != true).toList()
       : _cards;
 
+  void _onTapCard(Map<String, dynamic> c) {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Text(c['name'] as String? ?? '',
+                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+          ),
+          ListTile(
+            leading: const Icon(Icons.image_outlined, color: Color(0xFFE8A52A)),
+            title: const Text('更換卡片圖'),
+            onTap: () { Navigator.pop(ctx); _changeImage(c); },
+          ),
+          ListTile(
+            leading: const Icon(Icons.verified_outlined, color: Color(0xFF2980B9)),
+            title: const Text('設定 PSA SpecID'),
+            subtitle: Text(c['psa_spec_id'] as String? ?? '未設定',
+                style: const TextStyle(fontSize: 12)),
+            onTap: () { Navigator.pop(ctx); _setPsaSpecId(c); },
+          ),
+          const SizedBox(height: 8),
+        ]),
+      ),
+    );
+  }
+
+  Future<void> _setPsaSpecId(Map<String, dynamic> c) async {
+    final ctrl = TextEditingController(text: c['psa_spec_id'] as String? ?? '');
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('PSA SpecID\n${c['name']}',
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          TextField(
+            controller: ctrl,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(
+              hintText: '輸入 PSA SpecID',
+              filled: true, fillColor: const Color(0xFFF3F4F6),
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text('儲存後會自動抓取 PSA Pop 數量',
+              style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))),
+        ]),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('取消')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE8A52A)),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('儲存並抓取', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    final specId = ctrl.text.trim();
+    if (specId.isEmpty) return;
+
+    setState(() => _busyId = c['id'] as String);
+    final okSpec = await SupabaseService.setCardSpecId(c['id'] as String, specId);
+    if (!okSpec) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('設定失敗')));
+      setState(() => _busyId = null);
+      return;
+    }
+    // 觸發 edge function 抓 pop
+    final pop = await SupabaseService.fetchPsaPop(specId);
+    if (!mounted) return;
+    setState(() {
+      _busyId = null;
+      c['psa_spec_id'] = specId;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(pop != null
+          ? 'PSA Pop 抓取成功！PSA 10: ${pop['pop_10']}'
+          : 'SpecID 已儲存，但 Pop 抓取失敗（確認 SpecID 正確）'),
+    ));
+  }
+
   Future<void> _changeImage(Map<String, dynamic> c) async {
     final file = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 90);
     if (file == null) return;
     setState(() => _busyId = c['id'] as String);
     final bytes = await file.readAsBytes();
     final ts = DateTime.now().millisecondsSinceEpoch;
-    final url = await SupabaseService.uploadAdminImage(bytes, 'admin/card_${c['id']}_$ts.jpg');
+    final url = await SupabaseService.uploadAdminImage(bytes, 'sets/${widget.setId}/${c['id']}_$ts.jpg');
     final ok = url != null && await SupabaseService.setCardImage(c['id'] as String, url);
     if (!mounted) return;
     setState(() {
@@ -86,7 +173,7 @@ class _AdminSetCardsScreenState extends State<AdminSetCardsScreen> {
     final img = c['image_small'] as String?;
     final busy = _busyId == c['id'];
     return GestureDetector(
-      onTap: busy ? null : () => _changeImage(c),
+      onTap: busy ? null : () => _onTapCard(c),
       child: Container(
         decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10),
             border: Border.all(color: const Color(0xFFEDEFF2))),

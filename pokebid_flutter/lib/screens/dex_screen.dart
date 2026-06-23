@@ -6,6 +6,7 @@ import '../services/api_service.dart';
 import '../services/supabase_service.dart';
 import 'dex_card_detail_screen.dart';
 import 'dex_set_grid_screen.dart';
+import 'pokemon_dex_screen.dart';
 
 class DexScreen extends StatefulWidget {
   const DexScreen({super.key});
@@ -28,6 +29,9 @@ class _DexScreenState extends State<DexScreen> {
   List<ApiCard> _searchResults = [];
 
   bool _sortNewestFirst = true;
+
+  // 頂層模式切換
+  String _dexMode = 'sets'; // 'sets' | 'pokemon'
 
   // 導覽：分支（'box' 卡盒 / 'promo'）與已選系列
   String? _branch;
@@ -257,34 +261,49 @@ class _DexScreenState extends State<DexScreen> {
       ),
       body: Column(
         children: [
-          Container(
-            color: Colors.white,
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
-            child: TextField(
-              controller: _searchCtrl,
-              onChanged: _search,
-              style: const TextStyle(fontSize: 14),
-              decoration: InputDecoration(
-                hintText: '搜尋卡牌名稱...',
-                hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
-                prefixIcon: const Icon(Icons.search, color: Color(0xFF9CA3AF), size: 20),
-                suffixIcon: _searchCtrl.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.close, size: 18, color: Color(0xFF9CA3AF)),
-                        onPressed: () { _searchCtrl.clear(); _search(''); })
-                    : null,
-                filled: true,
-                fillColor: const Color(0xFFF3F4F6),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
+          // 搜尋欄（只在系列模式顯示）
+          if (_dexMode == 'sets')
+            Container(
+              color: Colors.white,
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+              child: TextField(
+                controller: _searchCtrl,
+                onChanged: _search,
+                style: const TextStyle(fontSize: 14),
+                decoration: InputDecoration(
+                  hintText: '搜尋卡牌名稱...',
+                  hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
+                  prefixIcon: const Icon(Icons.search, color: Color(0xFF9CA3AF), size: 20),
+                  suffixIcon: _searchCtrl.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.close, size: 18, color: Color(0xFF9CA3AF)),
+                          onPressed: () { _searchCtrl.clear(); _search(''); })
+                      : null,
+                  filled: true,
+                  fillColor: const Color(0xFFF3F4F6),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 10),
                 ),
-                contentPadding: const EdgeInsets.symmetric(vertical: 10),
               ),
             ),
+          // 模式切換 Tab
+          Container(
+            color: Colors.white,
+            padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
+            child: Row(children: [
+              _modeTab('sets', '📦 系列圖鑑'),
+              const SizedBox(width: 8),
+              _modeTab('pokemon', '🐾 精靈圖鑑'),
+            ]),
           ),
+          Container(height: 0.5, color: const Color(0xFFE5E7EB)),
           Expanded(
-            child: _searching ? _buildSearchResults() : _buildMainContent(),
+            child: _dexMode == 'pokemon'
+                ? const PokemonDexScreen(embedded: true)
+                : (_searching ? _buildSearchResults() : _buildMainContent()),
           ),
         ],
       ),
@@ -346,11 +365,11 @@ class _DexScreenState extends State<DexScreen> {
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
           child: Row(children: [
-            _branchCard('box', '📦', '卡盒', '擴充包'),
-            const SizedBox(width: 8),
-            _branchCard('deck', '🎴', '牌組', 'Deck / 禮盒'),
-            const SizedBox(width: 8),
-            _branchCard('promo', '🌟', 'PROMO', '特典卡'),
+            _branchCard('box',   '📦', '卡盒',  '擴充包'),
+            const SizedBox(width: 10),
+            _branchCard('deck',  '🎴', '牌組',  'Deck / 禮盒'),
+            const SizedBox(width: 10),
+            _branchCard('promo', '✨', 'PROMO', '特典卡'),
           ]),
         ),
 
@@ -436,6 +455,12 @@ class _DexScreenState extends State<DexScreen> {
 
   Widget _branchCard(String key, String icon, String label, String desc) {
     final active = _branch == key;
+    // 每個分類用不同強調色
+    final accent = key == 'box'
+        ? const Color(0xFF4338CA)   // 靛藍
+        : key == 'deck'
+            ? const Color(0xFF0891B2) // 青藍
+            : const Color(0xFF7C3AED); // 紫
     return Expanded(
       child: GestureDetector(
         onTap: () => setState(() {
@@ -444,23 +469,55 @@ class _DexScreenState extends State<DexScreen> {
         }),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
           decoration: BoxDecoration(
-            color: active ? const Color(0xFFFEF9EC) : const Color(0xFFF9FAFB),
-            borderRadius: BorderRadius.circular(12),
+            color: active ? accent : Colors.white,
+            borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: active ? const Color(0xFFE8A52A) : const Color(0xFFE5E7EB),
-              width: active ? 1.5 : 0.5,
+              color: active ? accent : const Color(0xFFE5E7EB),
+              width: active ? 0 : 0.5,
             ),
+            boxShadow: active
+                ? [BoxShadow(color: accent.withOpacity(0.35), blurRadius: 10, offset: const Offset(0, 4))]
+                : [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 4, offset: const Offset(0, 2))],
           ),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(icon, style: const TextStyle(fontSize: 20)),
-            const SizedBox(height: 6),
-            Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700,
-                color: active ? const Color(0xFFE8A52A) : const Color(0xFF374151))),
-            Text(desc, style: const TextStyle(fontSize: 10, color: Color(0xFF9CA3AF)),
-                maxLines: 1, overflow: TextOverflow.ellipsis),
+          child: Column(children: [
+            Text(icon, style: const TextStyle(fontSize: 22)),
+            const SizedBox(height: 7),
+            Text(label,
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700,
+                    color: active ? Colors.white : const Color(0xFF1F2937))),
+            const SizedBox(height: 2),
+            Text(desc,
+                style: TextStyle(fontSize: 9.5,
+                    color: active ? Colors.white.withOpacity(0.75) : const Color(0xFF9CA3AF)),
+                maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center),
           ]),
+        ),
+      ),
+    );
+  }
+
+  Widget _modeTab(String mode, String label) {
+    final active = _dexMode == mode;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() {
+          _dexMode = mode;
+          if (mode == 'sets') { _searchCtrl.clear(); _search(''); }
+        }),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: active ? const Color(0xFFE8A52A) : const Color(0xFFF3F4F6),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          alignment: Alignment.center,
+          child: Text(label,
+              style: TextStyle(
+                fontSize: 13, fontWeight: FontWeight.w700,
+                color: active ? Colors.white : const Color(0xFF6B7280))),
         ),
       ),
     );
@@ -550,64 +607,115 @@ class _CollectionBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hasChange = chgPct != null;
+    final isUp = hasChange && chgPct! >= 0;
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFFE8A52A), Color(0xFFF5C842)],
+          colors: [Color(0xFF1A1040), Color(0xFF2D2082), Color(0xFF4338CA)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [BoxShadow(
-          color: const Color(0xFFE8A52A).withOpacity(0.3),
-          blurRadius: 12, offset: const Offset(0, 4),
+          color: const Color(0xFF2D2082).withOpacity(0.45),
+          blurRadius: 18, offset: const Offset(0, 6),
         )],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(children: [
-            const Icon(Icons.collections_bookmark_outlined, color: Colors.white, size: 18),
-            const SizedBox(width: 6),
-            const Text('我的收藏總價值',
-                style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500)),
-            const Spacer(),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.25),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text('已收 $collected 張',
-                  style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500)),
+      child: Stack(children: [
+        // 背景裝飾圓
+        Positioned(
+          right: -20, top: -20,
+          child: Container(
+            width: 120, height: 120,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withOpacity(0.06),
             ),
-          ]),
-          const SizedBox(height: 10),
-          Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-            Text('HK\$ ${formatPrice(totalValue)}',
-                style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w700)),
-            const Spacer(),
-            if (chgPct != null)
+          ),
+        ),
+        Positioned(
+          right: 40, bottom: -30,
+          child: Container(
+            width: 80, height: 80,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withOpacity(0.04),
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            // 頂部標題行
+            Row(children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.25), borderRadius: BorderRadius.circular(8)),
-                child: Text('${chgPct! >= 0 ? '▲' : '▼'} ${chgPct!.abs().toStringAsFixed(1)}%',
-                    style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
+                  color: Colors.white.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.collections_bookmark_outlined, color: Colors.white, size: 15),
               ),
-          ]),
-          if (points.length >= 2) ...[
+              const SizedBox(width: 8),
+              const Text('我的收藏總價值',
+                  style: TextStyle(color: Colors.white70, fontSize: 12.5, fontWeight: FontWeight.w500)),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.white.withOpacity(0.2), width: 0.5),
+                ),
+                child: Text('已收 $collected 張',
+                    style: const TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.w600)),
+              ),
+            ]),
+            const SizedBox(height: 14),
+            // 金額 + 漲跌
+            Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('HK\$', style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 13, fontWeight: FontWeight.w500)),
+                const SizedBox(height: 2),
+                Text(formatPrice(totalValue),
+                    style: const TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.w800, height: 1)),
+              ]),
+              const Spacer(),
+              if (hasChange)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: (isUp ? const Color(0xFF22C55E) : const Color(0xFFEF4444)).withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: (isUp ? const Color(0xFF22C55E) : const Color(0xFFEF4444)).withOpacity(0.4),
+                      width: 0.5),
+                  ),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(isUp ? Icons.trending_up : Icons.trending_down,
+                        size: 14, color: isUp ? const Color(0xFF4ADE80) : const Color(0xFFFCA5A5)),
+                    const SizedBox(width: 4),
+                    Text('${chgPct!.abs().toStringAsFixed(1)}%',
+                        style: TextStyle(
+                            color: isUp ? const Color(0xFF4ADE80) : const Color(0xFFFCA5A5),
+                            fontSize: 12, fontWeight: FontWeight.w700)),
+                  ]),
+                ),
+            ]),
+            // 走勢圖
+            if (points.length >= 2) ...[
+              const SizedBox(height: 12),
+              SizedBox(height: 36, width: double.infinity,
+                  child: CustomPaint(painter: _SparklinePainter(points))),
+            ],
             const SizedBox(height: 10),
-            SizedBox(height: 40, width: double.infinity,
-                child: CustomPaint(painter: _SparklinePainter(points))),
-          ],
-          const SizedBox(height: 4),
-          Text(points.length >= 2 ? '以市場參考價計算（近 ${points.length} 日走勢）' : '以市場參考價計算',
-              style: TextStyle(color: Colors.white.withOpacity(0.75), fontSize: 12)),
-        ],
-      ),
+            Text(points.length >= 2 ? '近 ${points.length} 日走勢 · 以市場參考價計算' : '以市場參考價計算',
+                style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 11)),
+          ]),
+        ),
+      ]),
     );
   }
 }
