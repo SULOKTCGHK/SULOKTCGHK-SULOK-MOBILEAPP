@@ -94,7 +94,7 @@ class _SplashScreenState extends State<SplashScreen>
       opacity: _fadeOut ? 0 : 1,
       duration: const Duration(milliseconds: 600),
       child: Scaffold(
-        backgroundColor: const Color(0xFFB71C1C),
+        backgroundColor: const Color(0xFF111111),
         body: SafeArea(child: Center(child: _buildPokedex())),
       ),
     );
@@ -108,7 +108,7 @@ class _SplashScreenState extends State<SplashScreen>
         Container(
           width: 280,
           decoration: BoxDecoration(
-            color: const Color(0xFFCC1F1F),
+            color: const Color(0xFF2A2A2A),
             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
             boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 4))],
           ),
@@ -119,7 +119,7 @@ class _SplashScreenState extends State<SplashScreen>
               width: 50, height: 50,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFF1565C0),
+                color: const Color(0xFF333333),
                 border: Border.all(color: Colors.white, width: 2.5),
                 boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.4), blurRadius: 6, offset: const Offset(0, 3))],
               ),
@@ -128,7 +128,7 @@ class _SplashScreenState extends State<SplashScreen>
                   width: 22, height: 22,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: const Color(0xFF42A5F5),
+                    color: const Color(0xFF666666),
                     border: Border.all(color: Colors.white54, width: 1),
                   ),
                 ),
@@ -138,11 +138,11 @@ class _SplashScreenState extends State<SplashScreen>
             // 三個小指示燈
             Column(children: [
               Row(children: [
-                _dot(const Color(0xFFEF5350)),
+                _dot(const Color(0xFFAAAAAA)),
                 const SizedBox(width: 5),
-                _dot(const Color(0xFFFFA726)),
+                _dot(const Color(0xFF777777)),
                 const SizedBox(width: 5),
-                _dot(const Color(0xFF66BB6A)),
+                _dot(const Color(0xFFFFFFFF)),
               ]),
               const SizedBox(height: 6),
               // 橫線裝飾
@@ -155,14 +155,14 @@ class _SplashScreenState extends State<SplashScreen>
         // ── 中間折頁分隔線 ─────────────────────────────────────────────
         Container(
           height: 8, width: 280,
-          color: const Color(0xFF7B0000),
+          color: const Color(0xFF000000),
         ),
 
         // ── 下蓋（含屏幕） ─────────────────────────────────────────────
         Container(
           width: 280,
           decoration: BoxDecoration(
-            color: const Color(0xFFCC1F1F),
+            color: const Color(0xFF2A2A2A),
             borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
             boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 4))],
           ),
@@ -339,7 +339,7 @@ class _SplashScreenState extends State<SplashScreen>
           // 水平
           Positioned(left: 0, child: _dpadKey(height: 18, width: 56)),
           // 中心點
-          Container(width: 18, height: 18, color: const Color(0xFF8B0000)),
+          Container(width: 18, height: 18, color: const Color(0xFF111111)),
         ]),
       ),
       const Spacer(),
@@ -355,9 +355,9 @@ class _SplashScreenState extends State<SplashScreen>
       // 右側 A/B 按鈕
       Column(children: [
         Row(children: [
-          _circleBtn(const Color(0xFF1565C0), 'B'),
+          _circleBtn(const Color(0xFF555555), 'B'),
           const SizedBox(width: 10),
-          _circleBtn(const Color(0xFFB71C1C), 'A'),
+          _circleBtn(const Color(0xFF333333), 'A'),
         ]),
       ]),
     ]);
@@ -366,7 +366,7 @@ class _SplashScreenState extends State<SplashScreen>
   Widget _dpadKey({required double height, required double width}) => Container(
     width: width, height: height,
     decoration: BoxDecoration(
-      color: const Color(0xFF8B0000),
+      color: const Color(0xFF111111),
       borderRadius: BorderRadius.circular(2),
     ),
   );
@@ -374,7 +374,7 @@ class _SplashScreenState extends State<SplashScreen>
   Widget _smallBtn(String label) => Container(
     width: 28, height: 10,
     decoration: BoxDecoration(
-      color: const Color(0xFF8B0000),
+      color: const Color(0xFF111111),
       borderRadius: BorderRadius.circular(5),
     ),
     child: Center(
