@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/login_required.dart';
+import 'splash_screen.dart';
 import 'home_screen.dart';
 import 'marketplace_screen.dart';
 import 'post_listing_sheet.dart';
@@ -20,6 +21,9 @@ class _MainShellState extends State<MainShell> {
   int _currentIndex = 0;
   List<PokemonCard> _listings = [];
   bool _loadingListings = true;
+  bool _splashDone = false;
+
+  bool get _showSplash => _loadingListings || !_splashDone;
 
   @override
   void initState() {
@@ -57,9 +61,13 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
+    if (_showSplash) return SplashScreen(
+      onComplete: () { if (mounted) setState(() => _splashDone = true); },
+    );
+
     final pages = [
-      HomeScreen(listings: _listings, loading: _loadingListings),
-      MarketplaceScreen(listings: _listings, loading: _loadingListings),
+      HomeScreen(listings: _listings, loading: false),
+      MarketplaceScreen(listings: _listings, loading: false),
       const SizedBox.shrink(), // placeholder for post
       const DexScreen(),
       const ProfileScreen(),
@@ -122,8 +130,7 @@ class _MainShellState extends State<MainShell> {
     );
   }
 
-  Widget _navItem(int index, IconData icon, IconData activeIcon, String label,
-      {bool showUnread = false}) {
+  Widget _navItem(int index, IconData icon, IconData activeIcon, String label, {bool showUnread = false}) {
     final active = _currentIndex == index;
     final iconWidget = Icon(active ? activeIcon : icon, size: 22,
         color: active ? const Color(0xFFE8A52A) : const Color(0xFF9CA3AF));
@@ -150,3 +157,4 @@ class _MainShellState extends State<MainShell> {
     );
   }
 }
+
