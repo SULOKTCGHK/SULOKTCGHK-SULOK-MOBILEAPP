@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/profile_service.dart';
 import '../services/auth_service.dart';
+import '../i18n/strings.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final UserProfile profile;
@@ -55,15 +56,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final username = _usernameCtrl.text.trim().toLowerCase();
 
     if (name.isEmpty) {
-      _showError('請填寫顯示名稱');
+      _showError(L.errEnterDisplayName);
       return;
     }
     if (username.isEmpty || username.length < 3) {
-      setState(() => _usernameError = '用戶名至少需要 3 個字元');
+      setState(() => _usernameError = L.errUsernameTooShort);
       return;
     }
     if (!RegExp(r'^[a-z0-9_]+$').hasMatch(username)) {
-      setState(() => _usernameError = '只能使用英文小寫、數字、底線');
+      setState(() => _usernameError = L.errUsernameChars);
       return;
     }
 
@@ -72,7 +73,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     // Check username uniqueness
     final taken = await ProfileService.isUsernameTaken(username, AuthService.userId);
     if (taken) {
-      setState(() { _usernameError = '此用戶名已被使用'; _saving = false; });
+      setState(() { _usernameError = L.errUsernameTaken; _saving = false; });
       return;
     }
 
@@ -89,12 +90,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       if (ok) {
         widget.onSaved();
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('個人資料已更新'),
-          backgroundColor: Color(0xFF16A34A),
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(L.profileUpdated),
+          backgroundColor: const Color(0xFF16A34A),
         ));
       } else {
-        _showError('儲存失敗，請稍後再試');
+        _showError(L.errSaveFailed);
       }
     }
   }
@@ -120,8 +121,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           icon: const Icon(Icons.close, color: Color(0xFF374151)),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('編輯個人資料',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500,
+        title: Text(L.editProfile,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500,
                 color: Color(0xFF111827))),
         actions: [
           Padding(
@@ -132,8 +133,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ? const SizedBox(width: 18, height: 18,
                       child: CircularProgressIndicator(
                           color: Color(0xFFE8A52A), strokeWidth: 2))
-                  : const Text('儲存',
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600,
+                  : Text(L.save,
+                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600,
                           color: Color(0xFFE8A52A))),
             ),
           ),
@@ -157,8 +158,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     style: const TextStyle(fontSize: 38))),
               ),
               const SizedBox(height: 8),
-              const Text('選擇頭像',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))),
+              Text(L.chooseAvatar,
+                  style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))),
             ]),
           ),
           const SizedBox(height: 12),
@@ -204,14 +205,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           // ── Form fields ──────────────────────────────────────────────
           _card(children: [
             _field(
-              label: '顯示名稱 *',
-              hint: '你的公開名稱',
+              label: L.displayNameLabel,
+              hint: L.displayNameHint,
               controller: _nameCtrl,
               icon: Icons.person_outline,
             ),
             _divider(),
             _field(
-              label: '用戶名 *',
+              label: L.usernameLabel,
               hint: 'pokecollector123',
               controller: _usernameCtrl,
               icon: Icons.alternate_email,
@@ -224,8 +225,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
           _card(children: [
             _field(
-              label: '個人簡介',
-              hint: '介紹一下自己...',
+              label: L.bioLabel,
+              hint: L.bioHint,
               controller: _bioCtrl,
               icon: Icons.notes_outlined,
               maxLines: 3,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
 import '../main_shell.dart';
+import '../../i18n/strings.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -54,18 +55,18 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
-                '日版寶可夢卡牌交易平台',
-                style: TextStyle(fontSize: 15, color: Color(0xFF6B7280)),
+              Text(
+                L.loginTagline,
+                style: const TextStyle(fontSize: 15, color: Color(0xFF6B7280)),
               ),
 
               const Spacer(flex: 2),
 
-              _featureRow('🎴', '瀏覽日版圖鑑', '查看完整日版卡牌系列'),
+              _featureRow('🎴', L.featBrowseTitle, L.featBrowseSub),
               const SizedBox(height: 14),
-              _featureRow('💬', '即時聊天', '直接與賣家聯絡議價'),
+              _featureRow('💬', L.featChatTitle, L.featChatSub),
               const SizedBox(height: 14),
-              _featureRow('📊', '成交紀錄', '追蹤收藏市值變化'),
+              _featureRow('📊', L.featRecordTitle, L.featRecordSub),
 
               const Spacer(flex: 2),
 
@@ -106,8 +107,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                             const SizedBox(width: 10),
-                            const Text('使用 Google 帳號登入',
-                                style: TextStyle(fontSize: 15,
+                            Text(L.signInGoogleBtn,
+                                style: const TextStyle(fontSize: 15,
                                     fontWeight: FontWeight.w500,
                                     color: Color(0xFF374151))),
                           ],
@@ -120,13 +121,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 onTap: () => Navigator.of(context).pushReplacement(
                   MaterialPageRoute(builder: (_) => const MainShell()),
                 ),
-                child: const Text('先瀏覽，不登入',
-                    style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF),
+                child: Text(L.browseWithoutLogin,
+                    style: const TextStyle(fontSize: 13, color: Color(0xFF9CA3AF),
                         decoration: TextDecoration.underline)),
               ),
               const SizedBox(height: 12),
-              const Text('登入即代表同意使用條款及隱私政策',
-                  style: TextStyle(fontSize: 11, color: Color(0xFFD1D5DB)),
+              Text(L.loginAgreement,
+                  style: const TextStyle(fontSize: 11, color: Color(0xFFD1D5DB)),
                   textAlign: TextAlign.center),
               const SizedBox(height: 24),
             ],

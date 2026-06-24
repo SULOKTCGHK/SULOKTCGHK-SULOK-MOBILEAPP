@@ -13,6 +13,7 @@ import '../services/supabase_service.dart';
 import '../services/review_service.dart';
 import 'card_detail_screen.dart';
 import 'chat_screen.dart';
+import '../i18n/strings.dart';
 
 class SellerProfileScreen extends StatefulWidget {
   final String sellerId;
@@ -92,7 +93,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
 
   Future<void> _toggleFollow() async {
     if (_myId == widget.sellerId) return;
-    if (!await requireLogin(context, action: '追蹤賣家')) return;
+    if (!await requireLogin(context, action: L.followSeller)) return;
     setState(() => _followLoading = true);
     try {
       if (_following) {
@@ -132,8 +133,8 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
           icon: const Icon(Icons.chevron_left, color: Color(0xFF374151), size: 28),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('賣家主頁',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500,
+        title: Text(L.sellerHome,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500,
                 color: Color(0xFF111827))),
       ),
       body: _loading
@@ -180,13 +181,13 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
 
                       // Stats row
                       Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                        _stat('$_followerCount', '追蹤者'),
+                        _stat('$_followerCount', L.followers),
                         _divider(),
-                        _stat('${_listings.length}', '上架中'),
+                        _stat('${_listings.length}', L.listingActive),
                         _divider(),
                         _stat(
                           _stats.count > 0 ? _stats.avgRating.toStringAsFixed(1) : '—',
-                          '評分 (${_stats.count})',
+                          L.ratingCount(_stats.count),
                           star: _stats.count > 0,
                         ),
                       ]),
@@ -227,7 +228,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
                                               : Colors.white,
                                         ),
                                         const SizedBox(width: 6),
-                                        Text(_following ? '已追蹤' : '追蹤',
+                                        Text(_following ? L.following : L.follow,
                                             style: TextStyle(
                                               fontSize: 14,
                                               fontWeight: FontWeight.w600,
@@ -275,7 +276,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(16, 4, 16, 10),
-                      child: Text('買家評價 (${_reviews.length})',
+                      child: Text(L.buyerReviews(_reviews.length),
                           style: const TextStyle(fontSize: 15,
                               fontWeight: FontWeight.w600, color: Color(0xFF111827))),
                     ),
@@ -299,7 +300,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(16, 4, 16, 10),
-                    child: Text('上架商品 (${_listings.length})',
+                    child: Text(L.sellerListings(_listings.length),
                         style: const TextStyle(fontSize: 15,
                             fontWeight: FontWeight.w600, color: Color(0xFF111827))),
                   ),
@@ -307,11 +308,11 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
 
                 // ── Listings grid ───────────────────────────────────────
                 _listings.isEmpty
-                    ? const SliverToBoxAdapter(
+                    ? SliverToBoxAdapter(
                         child: Padding(
-                          padding: EdgeInsets.symmetric(vertical: 40),
-                          child: Center(child: Text('目前沒有上架商品',
-                              style: TextStyle(color: Color(0xFF9CA3AF)))),
+                          padding: const EdgeInsets.symmetric(vertical: 40),
+                          child: Center(child: Text(L.noListings,
+                              style: const TextStyle(color: Color(0xFF9CA3AF)))),
                         ),
                       )
                     : SliverPadding(
@@ -366,7 +367,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
       const SizedBox(height: 8),
       Expanded(
         child: Text(
-          r.comment?.isNotEmpty == true ? r.comment! : '（無文字評價）',
+          r.comment?.isNotEmpty == true ? r.comment! : L.noTextReview,
           style: const TextStyle(fontSize: 12.5, color: Color(0xFF374151), height: 1.4),
           maxLines: 3, overflow: TextOverflow.ellipsis,
         ),

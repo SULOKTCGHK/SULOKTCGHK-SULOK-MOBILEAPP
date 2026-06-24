@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../i18n/strings.dart';
+import '../i18n/locale_controller.dart';
 
 /// 法律文件顯示頁（隱私政策 / 使用條款）
 class LegalScreen extends StatelessWidget {
@@ -13,22 +15,26 @@ class LegalScreen extends StatelessWidget {
     required this.sections,
   });
 
-  factory LegalScreen.privacy() => const LegalScreen(
-        title: '私隱政策',
-        effectiveDate: '2026 年 6 月 22 日',
-        sections: _privacySections,
+  static const _date = '2026 年 6 月 22 日';
+  static const _dateEn = 'June 22, 2026';
+  static bool get _en => localeController.isEnglish;
+
+  factory LegalScreen.privacy() => LegalScreen(
+        title: L.privacyPolicy,
+        effectiveDate: _en ? _dateEn : _date,
+        sections: _en ? _privacySectionsEn : _privacySections,
       );
 
-  factory LegalScreen.terms() => const LegalScreen(
-        title: '服務條款',
-        effectiveDate: '2026 年 6 月 22 日',
-        sections: _termsSections,
+  factory LegalScreen.terms() => LegalScreen(
+        title: L.termsOfService,
+        effectiveDate: _en ? _dateEn : _date,
+        sections: _en ? _termsSectionsEn : _termsSections,
       );
 
-  factory LegalScreen.safety() => const LegalScreen(
-        title: '安全交易提示',
-        effectiveDate: '2026 年 6 月 22 日',
-        sections: _safetySections,
+  factory LegalScreen.safety() => LegalScreen(
+        title: L.safetyTips,
+        effectiveDate: _en ? _dateEn : _date,
+        sections: _en ? _safetySectionsEn : _safetySections,
       );
 
   @override
@@ -56,7 +62,7 @@ class LegalScreen extends StatelessWidget {
           Text(title,
               style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Color(0xFF111827))),
           const SizedBox(height: 4),
-          Text('生效日期：$effectiveDate',
+          Text(L.effectiveDate(effectiveDate),
               style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))),
           const SizedBox(height: 20),
           for (final s in sections) ...[
@@ -74,9 +80,9 @@ class LegalScreen extends StatelessWidget {
               color: const Color(0xFFF3F4F6),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Text(
-              '如對本文件有任何疑問，請透過 PokeBid 內的客服管道或電子郵件與我們聯絡。',
-              style: TextStyle(fontSize: 12, color: Color(0xFF6B7280), height: 1.5),
+            child: Text(
+              L.legalContact,
+              style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280), height: 1.5),
             ),
           ),
         ],
@@ -126,6 +132,40 @@ const List<LegalSection> _privacySections = [
       '若您對本私隱政策或個人資料處理有任何疑問或要求，請透過 PokeBid 平台內的客服管道或電子郵件與我們聯絡。'),
 ];
 
+const List<LegalSection> _privacySectionsEn = [
+  LegalSection('1. Introduction',
+      'PokeBid ("the Platform") is a community marketplace for trading and collecting Pokémon cards. We process your personal data in accordance with Hong Kong\'s Personal Data (Privacy) Ordinance (Cap. 486, "PDPO"). This policy explains what data we collect, how we use it, and the rights you have. By using the Platform you agree to this policy.'),
+  LegalSection('2. Data We Collect',
+      '• Account data: when you sign in with Google, we receive your name, email, and avatar.\n'
+      '• Transaction & content data: listings, offers, chat messages, reviews, collection, and wishlist you create.\n'
+      '• Uploaded content: card images you upload.\n'
+      '• Usage data: device type, activity logs, and other technical information used to improve the service and troubleshoot issues.'),
+  LegalSection('3. Purpose & Use',
+      'We use your personal data only to: provide and maintain core features such as trading, chat, and notifications; display seller reviews and reputation; send notifications related to your transactions; keep the Platform secure and prevent fraud and abuse; and comply with applicable law. We will not use your data for purposes beyond those for which it was collected without your consent.'),
+  LegalSection('4. Third-Party Services',
+      'The Platform relies on the following third-party services:\n'
+      '• Google Sign-In (authentication)\n'
+      '• Supabase (data storage and backend services)\n'
+      '• Card price references (e.g. TCGplayer, JustTCG, SNKRDUNK) used only to display market data — your personal data is not sent to them.\n'
+      'These services have their own privacy policies, which we encourage you to review.'),
+  LegalSection('5. Transfer & Disclosure',
+      'We do not sell your personal data. Some information (such as display name, listings, and reviews) is shown publicly on the Platform for other users to see. We will not disclose your personal data to third parties except where required by law, in response to a lawful request from law enforcement, or as necessary to protect the safety of the Platform and its users.'),
+  LegalSection('6. Data Security',
+      'We take reasonably practicable measures to protect your personal data against unauthorised or accidental access, processing, deletion, or use. Data is primarily stored on access-controlled backend services.'),
+  LegalSection('7. Data Retention',
+      'We retain your personal data only for as long as necessary to fulfil the purposes for which it was collected. You may request deletion of your account and associated personal data; however, certain transaction or communication records may be retained for a reasonable period where required by law or to resolve disputes.'),
+  LegalSection('8. Your Rights (Access & Correction)',
+      'Under the PDPO, you have the right to access and correct the personal data we hold about you, and to withdraw consent previously given at any time. To exercise your access, correction, or deletion rights, please contact us through the in-app support channel. We will respond within the time required by the Ordinance.'),
+  LegalSection('9. Direct Marketing',
+      'We will not use your personal data for direct marketing without your consent. If marketing messages are offered in future, you may opt out at any time free of charge.'),
+  LegalSection('10. Minors',
+      'The Platform is not directed at persons below the age of legal capacity to contract. If you are under that age, please use the Platform only with the consent and supervision of a parent or guardian.'),
+  LegalSection('11. Changes to This Policy',
+      'We may update this policy from time to time; material changes will be announced within the Platform. Your continued use after changes constitutes acceptance of the updated policy.'),
+  LegalSection('12. Contact Us',
+      'If you have any questions or requests regarding this privacy policy or the handling of your personal data, please contact us through the in-app support channel or by email.'),
+];
+
 // ── 服務條款（香港，C2C 媒合平台）────────────────────────────────────────────
 const List<LegalSection> _termsSections = [
   LegalSection('1. 條款的接受',
@@ -163,6 +203,42 @@ const List<LegalSection> _termsSections = [
       '本條款受香港特別行政區法律管轄並據其詮釋。因本條款或您使用本平台所生之任何爭議，雙方同意交由香港特別行政區法院處理。'),
 ];
 
+const List<LegalSection> _termsSectionsEn = [
+  LegalSection('1. Acceptance of Terms',
+      'Welcome to PokeBid. By registering, signing in, or using any feature of the Platform, you confirm that you have read, understood, and agree to these Terms of Service. If you do not agree, please do not use the Platform.'),
+  LegalSection('2. Description of Service',
+      'PokeBid provides features for listing, offering, chatting, collection management, Dex lookup, and market price reference for Pokémon cards. The Platform is a consumer-to-consumer (C2C) marketplace; all transactions are negotiated and completed directly between buyers and sellers.'),
+  LegalSection('3. Platform Role & Transaction Disclaimer (Important)',
+      'PokeBid only provides listing and contact services to connect buyers and sellers, and is not a party to any transaction. The Platform:\n'
+      '• does not handle any payment, nor take part in negotiation;\n'
+      '• does not verify the authenticity, condition, or ownership of cards;\n'
+      '• does not handle shipping, delivery, refunds, or returns.\n'
+      'All payment, delivery, and related arrangements are negotiated by, and at the risk of, the buyer and seller. Any dispute, loss, fraud, authenticity, or condition issue arising from a transaction is the sole responsibility of the buyer and seller; the Platform bears no liability. We strongly recommend reviewing the other party\'s ratings and taking safe-trading measures before transacting (see "Safe Trading Tips").'),
+  LegalSection('4. Account & Eligibility',
+      'You must provide true and accurate information and are responsible for all activity under your account. You must be of an age at which you can independently enter into contracts under Hong Kong law. Keep your login credentials secure; you may not transfer or lend your account to others.'),
+  LegalSection('5. Listing & Transaction Rules',
+      '• Sellers are responsible for the authenticity, condition description, and ownership of listed cards.\n'
+      '• Listing counterfeits, stolen goods, infringing items, or any illegal items is prohibited.\n'
+      '• Market data shown on the Platform (including PSA-grade sale prices) is for reference only and does not constitute a price guarantee or investment advice.\n'
+      '• Prices are shown in Hong Kong dollars (HK\$); Japanese market prices are converted at a reference exchange rate and are for reference only.'),
+  LegalSection('6. User Conduct',
+      'You agree not to: post false, fraudulent, or misleading information; harass, abuse, or threaten other users; post illegal, pornographic, hateful, or infringing content; use automation to perform bulk operations; or circumvent platform mechanisms or compromise system security.'),
+  LegalSection('7. Review System',
+      'Reviews must be based on genuine transaction experiences. Fake reviews, malicious attacks, or false ratings are prohibited. The Platform reserves the right to remove violating reviews.'),
+  LegalSection('8. Intellectual Property',
+      '"Pokémon" and related names, logos, and designs belong to their respective rights holders (including Nintendo / The Pokémon Company, etc.); the Platform has no affiliation, sponsorship, or endorsement relationship with them. Card images and market data come from third-party sources and are for identification and reference only. Content you upload remains yours, but you grant the Platform a licence to use and display it for the purpose of providing the service.'),
+  LegalSection('9. Disclaimer',
+      'The Platform provides the service on an "as is" and "as available" basis, without any express or implied warranty that the service will be uninterrupted, error-free, accurate in its market data, or fully meet your needs.'),
+  LegalSection('10. Limitation of Liability',
+      'To the maximum extent permitted by Hong Kong law, the Platform shall not be liable for any direct, indirect, incidental, or consequential damages arising from the use of or inability to use the service, or from transactions between users.'),
+  LegalSection('11. Account Termination',
+      'If you breach these Terms, the Platform may restrict, suspend, or terminate your access without prior notice.'),
+  LegalSection('12. Changes to Terms',
+      'The Platform may revise these Terms from time to time and announce changes within the Platform. Your continued use after revision constitutes acceptance of the revised Terms.'),
+  LegalSection('13. Governing Law & Jurisdiction',
+      'These Terms are governed by and construed in accordance with the laws of the Hong Kong Special Administrative Region. Any dispute arising from these Terms or your use of the Platform shall be submitted to the courts of the Hong Kong SAR.'),
+];
+
 // ── 安全交易提示 ──────────────────────────────────────────────────────────────
 const List<LegalSection> _safetySections = [
   LegalSection('PokeBid 不經手金流',
@@ -186,4 +262,28 @@ const List<LegalSection> _safetySections = [
       '• 要求你先付「訂金／運費／關稅」到私人帳戶。'),
   LegalSection('遇到問題',
       '保留聊天紀錄、付款證明與單據。如懷疑受騙，請向香港警方求助；本平台可在合理範圍內協助提供相關紀錄，惟不承擔交易結果的責任。'),
+];
+
+const List<LegalSection> _safetySectionsEn = [
+  LegalSection('PokeBid does not handle payments',
+      'The Platform only connects buyers and sellers; it does not take part in payment or shipping. All transactions are completed between you and the other party, so be sure to take the following measures to protect yourself.'),
+  LegalSection('Before trading',
+      '• Check the other party\'s reviews and trade history first; be extra careful with low-reputation or brand-new accounts.\n'
+      '• Ask the seller for clear real photos of the card (front and back, corners, grading label).\n'
+      '• For high-value cards, ask for PSA / grading details or video verification.'),
+  LegalSection('Meet in person (most recommended)',
+      '• Meet in a busy public place with CCTV (e.g. a mall or MTR station).\n'
+      '• Inspect the card in person and pay only after confirming it is correct.\n'
+      '• Bring a companion for high-value deals.'),
+  LegalSection('Shipping / payment',
+      '• Use a shipping method with a tracking number and keep the receipt.\n'
+      '• Prefer payment methods with buyer protection or traceability.\n'
+      '• Avoid paying the full amount upfront to an unknown account before verifying the other party.'),
+  LegalSection('Scam red flags 🚩',
+      '• Pressuring you to "transfer now" or to leave the platform for a private deal.\n'
+      '• Prices far below market — too good to be true.\n'
+      '• Going silent after payment, refusing video or real-photo verification.\n'
+      '• Asking you to pay a "deposit / shipping / customs fee" to a personal account first.'),
+  LegalSection('If something goes wrong',
+      'Keep your chat records, payment proof, and receipts. If you suspect fraud, seek help from the Hong Kong Police; the Platform may assist in providing relevant records within reason, but bears no responsibility for the outcome of the transaction.'),
 ];

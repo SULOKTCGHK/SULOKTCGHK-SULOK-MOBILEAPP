@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/review_service.dart';
+import '../i18n/strings.dart';
 
 /// 評價賣家的底部彈窗
 class ReviewSheet extends StatefulWidget {
@@ -45,7 +46,7 @@ class _ReviewSheetState extends State<ReviewSheet> {
       widget.onSubmitted?.call();
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: const Text('評價已送出，感謝你的回饋！'),
+        content: Text(L.reviewSubmitted),
         backgroundColor: const Color(0xFF16A34A),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -68,12 +69,12 @@ class _ReviewSheetState extends State<ReviewSheet> {
               decoration: BoxDecoration(color: const Color(0xFFE5E7EB),
                   borderRadius: BorderRadius.circular(2))),
           const SizedBox(height: 20),
-          Text('評價 ${widget.sellerName}',
+          Text(L.reviewTitle(widget.sellerName),
               style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700,
                   color: Color(0xFF111827))),
           const SizedBox(height: 4),
-          const Text('你的評價會幫助其他買家',
-              style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))),
+          Text(L.reviewHelpsBuyers,
+              style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))),
           const SizedBox(height: 20),
 
           // 星等選擇
@@ -99,7 +100,7 @@ class _ReviewSheetState extends State<ReviewSheet> {
             maxLength: 200,
             style: const TextStyle(fontSize: 14),
             decoration: InputDecoration(
-              hintText: '分享你的交易體驗（選填）',
+              hintText: L.commentHintOptional,
               hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 13),
               filled: true,
               fillColor: const Color(0xFFF9FAFB),
@@ -134,8 +135,8 @@ class _ReviewSheetState extends State<ReviewSheet> {
               child: _submitting
                   ? const SizedBox(width: 20, height: 20,
                       child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                  : const Text('送出評價',
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                  : Text(L.submitReview,
+                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
             ),
           ),
         ]),

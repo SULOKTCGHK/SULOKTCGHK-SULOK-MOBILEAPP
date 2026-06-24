@@ -17,6 +17,7 @@ import 'legal_screen.dart';
 import '../widgets/unread_dot.dart';
 import '../services/push_service.dart';
 import '../i18n/locale_controller.dart';
+import '../i18n/strings.dart';
 import '../widgets/verified_badge.dart';
 import '../widgets/ig_link.dart';
 import '../widgets/login_required.dart';
@@ -134,11 +135,11 @@ class _ProfileScreenState extends State<ProfileScreen>
       context: context,
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('下架商品', style: TextStyle(fontWeight: FontWeight.w700)),
-        content: Text('確定要下架「${card.name}」嗎？'),
+        title: Text(L.delistTitle, style: const TextStyle(fontWeight: FontWeight.w700)),
+        content: Text(L.delistConfirm(card.name)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false),
-              child: const Text('取消')),
+              child: Text(L.cancel)),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
@@ -146,7 +147,7 @@ class _ProfileScreenState extends State<ProfileScreen>
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
-            child: const Text('確認下架'),
+            child: Text(L.confirmDelist),
           ),
         ],
       ),
@@ -177,11 +178,11 @@ class _ProfileScreenState extends State<ProfileScreen>
               decoration: BoxDecoration(color: const Color(0xFFE5E7EB),
                   borderRadius: BorderRadius.circular(2)))),
           const SizedBox(height: 16),
-          Text('編輯「${card.name}」',
+          Text(L.editItemTitle(card.name),
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
           const SizedBox(height: 20),
-          const Text('價格 (HK\$)',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
+          Text(L.priceLabel,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
                   color: Color(0xFF374151))),
           const SizedBox(height: 8),
           TextField(
@@ -218,7 +219,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 elevation: 0,
               ),
-              child: const Text('儲存', style: TextStyle(fontSize: 15,
+              child: Text(L.save, style: const TextStyle(fontSize: 15,
                   fontWeight: FontWeight.w600)),
             ),
           ),
@@ -269,7 +270,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     if (mounted) {
       setState(() => _refreshingMarket = false);
       ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('已更新 $n 筆市價'), duration: const Duration(seconds: 2)));
+          SnackBar(content: Text(L.marketUpdated(n)), duration: const Duration(seconds: 2)));
     }
   }
 
@@ -285,17 +286,17 @@ class _ProfileScreenState extends State<ProfileScreen>
       builder: (_) => StatefulBuilder(
         builder: (ctx, setState) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('刪除帳號', style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFFE74C3C))),
+          title: Text(L.deleteAccount, style: const TextStyle(fontWeight: FontWeight.w700, color: Color(0xFFE74C3C))),
           content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const Text('此操作無法復原。你的掛售商品、出價、收藏及個人資料將被永久刪除。', style: TextStyle(fontSize: 13.5, height: 1.5, color: Color(0xFF374151))),
+            Text(L.deleteAccountWarning, style: const TextStyle(fontSize: 13.5, height: 1.5, color: Color(0xFF374151))),
             const SizedBox(height: 16),
-            const Text('請輸入「確認刪除」以繼續：', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+            Text(L.deleteAccountPrompt, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             TextField(
               controller: confirmCtrl,
               autofocus: true,
               decoration: InputDecoration(
-                hintText: '確認刪除',
+                hintText: L.deleteConfirmWord,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               ),
@@ -303,11 +304,11 @@ class _ProfileScreenState extends State<ProfileScreen>
             ),
           ]),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('取消')),
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(L.cancel)),
             ElevatedButton(
-              onPressed: confirmCtrl.text == '確認刪除' ? () => Navigator.pop(ctx, true) : null,
+              onPressed: confirmCtrl.text == L.deleteConfirmWord ? () => Navigator.pop(ctx, true) : null,
               style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE74C3C), foregroundColor: Colors.white),
-              child: const Text('永久刪除'),
+              child: Text(L.permanentDelete),
             ),
           ],
         ),
@@ -328,7 +329,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('刪除失敗：$e'),
+          content: Text(L.deleteFailed('$e')),
           backgroundColor: const Color(0xFFE74C3C),
         ));
       }
@@ -339,14 +340,14 @@ class _ProfileScreenState extends State<ProfileScreen>
     final confirm = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('登出'),
-        content: const Text('確定要登出嗎？'),
+        title: Text(L.logout),
+        content: Text(L.logoutConfirm),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false),
-              child: const Text('取消')),
+              child: Text(L.cancel)),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('登出', style: TextStyle(color: Color(0xFFE74C3C))),
+            child: Text(L.logout, style: const TextStyle(color: Color(0xFFE74C3C))),
           ),
         ],
       ),
@@ -366,7 +367,7 @@ class _ProfileScreenState extends State<ProfileScreen>
   @override
   Widget build(BuildContext context) {
     final isLoggedIn = AuthService.isLoggedIn;
-    final displayName = _profile?.displayName ?? (isLoggedIn ? AuthService.displayName : '訪客');
+    final displayName = _profile?.displayName ?? (isLoggedIn ? AuthService.displayName : L.guest);
     final username = _profile?.username ?? '';
     final avatarEmoji = _profile?.avatarEmoji ?? '🎴';
     final bio = _profile?.bio ?? '';
@@ -383,15 +384,15 @@ class _ProfileScreenState extends State<ProfileScreen>
           child: Container(height: 0.5, color: const Color(0xFFE5E7EB)),
         ),
         titleSpacing: 16,
-        title: const Text('我的',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500,
+        title: Text(L.navMe,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500,
                 color: Color(0xFF111827))),
         actions: [
           if (isLoggedIn && _profile != null)
             IconButton(
               icon: const Icon(Icons.edit_outlined, color: Color(0xFF9CA3AF), size: 20),
               onPressed: _openEditProfile,
-              tooltip: '編輯個人資料',
+              tooltip: L.editProfile,
             ),
           if (isLoggedIn)
             IconButton(
@@ -493,8 +494,8 @@ class _ProfileScreenState extends State<ProfileScreen>
                           color: const Color(0xFFE8A52A),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Text('登入',
-                            style: TextStyle(fontSize: 13,
+                        child: Text(L.login,
+                            style: const TextStyle(fontSize: 13,
                                 fontWeight: FontWeight.w500,
                                 color: Colors.white)),
                       ),
@@ -504,11 +505,11 @@ class _ProfileScreenState extends State<ProfileScreen>
 
                 // Stats
                 Row(children: [
-                  _statItem('掛售中', '${_myListings.length}'),
+                  _statItem(L.statListing, '${_myListings.length}'),
                   _divider(),
-                  _statItem('收藏', '${_collection.length}'),
+                  _statItem(L.statCollection, '${_collection.length}'),
                   _divider(),
-                  _statItem('收藏價值', 'HK\$${_fmt(_collectionValue)}'),
+                  _statItem(L.statCollectionValue, 'HK\$${_fmt(_collectionValue)}'),
                 ]),
               ],
             ),
@@ -525,8 +526,8 @@ class _ProfileScreenState extends State<ProfileScreen>
               indicatorWeight: 2,
               labelStyle: const TextStyle(fontSize: 13,
                   fontWeight: FontWeight.w500),
-              tabs: const [
-                Tab(text: '設定'),
+              tabs: [
+                Tab(text: L.settings),
               ],
             ),
           ),
@@ -559,19 +560,19 @@ class _ProfileScreenState extends State<ProfileScreen>
 
   Widget _buildMyListings() {
     if (!AuthService.isLoggedIn) {
-      return const Center(child: Text('請先登入以查看掛售商品',
-          style: TextStyle(color: Color(0xFF9CA3AF))));
+      return Center(child: Text(L.loginToViewListings,
+          style: const TextStyle(color: Color(0xFF9CA3AF))));
     }
     if (_loadingMyListings) {
       return const Center(child: CircularProgressIndicator(
           color: Color(0xFFE8A52A), strokeWidth: 2));
     }
     if (_myListings.isEmpty) {
-      return const Center(child: Column(mainAxisAlignment: MainAxisAlignment.center,
+      return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.sell_outlined, size: 48, color: Color(0xFFD1D5DB)),
-            SizedBox(height: 12),
-            Text('尚未掛售任何商品', style: TextStyle(color: Color(0xFF9CA3AF))),
+            const Icon(Icons.sell_outlined, size: 48, color: Color(0xFFD1D5DB)),
+            const SizedBox(height: 12),
+            Text(L.noListingsYet, style: const TextStyle(color: Color(0xFF9CA3AF))),
           ]));
     }
     return ListView.builder(
@@ -626,7 +627,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: const Color(0xFFE8A52A).withOpacity(0.4)),
                     ),
-                    child: const Text('編輯', style: TextStyle(fontSize: 11,
+                    child: Text(L.edit, style: const TextStyle(fontSize: 11,
                         fontWeight: FontWeight.w500, color: Color(0xFFE8A52A))),
                   ),
                 ),
@@ -640,7 +641,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: const Color(0xFFE74C3C).withOpacity(0.4)),
                     ),
-                    child: const Text('下架', style: TextStyle(fontSize: 11,
+                    child: Text(L.delist, style: const TextStyle(fontSize: 11,
                         fontWeight: FontWeight.w500, color: Color(0xFFE74C3C))),
                   ),
                 ),
@@ -670,7 +671,7 @@ class _ProfileScreenState extends State<ProfileScreen>
         icon: const Icon(Icons.chevron_left, color: Color(0xFF374151), size: 28),
         onPressed: () => Navigator.pop(context),
       ),
-      title: const Text('我的掛售', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF111827))),
+      title: Text(L.myListings, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF111827))),
       bottom: PreferredSize(preferredSize: const Size.fromHeight(0.5),
         child: Container(height: 0.5, color: const Color(0xFFE5E7EB))),
     ),
@@ -687,7 +688,7 @@ class _ProfileScreenState extends State<ProfileScreen>
         icon: const Icon(Icons.chevron_left, color: Color(0xFF374151), size: 28),
         onPressed: () => Navigator.pop(context),
       ),
-      title: const Text('我的收藏', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF111827))),
+      title: Text(L.myCollection, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF111827))),
       bottom: PreferredSize(preferredSize: const Size.fromHeight(0.5),
         child: Container(height: 0.5, color: const Color(0xFFE5E7EB))),
     ),
@@ -706,15 +707,15 @@ class _ProfileScreenState extends State<ProfileScreen>
           icon: const Icon(Icons.chevron_left, color: Color(0xFF374151), size: 28),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('我的評價', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF111827))),
+        title: Text(L.myReviews, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF111827))),
         bottom: PreferredSize(preferredSize: const Size.fromHeight(0.5),
           child: Container(height: 0.5, color: const Color(0xFFE5E7EB))),
       ),
       body: _reviews.isEmpty
-        ? const Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Icon(Icons.star_outline, size: 56, color: Color(0xFFD1D5DB)),
-            SizedBox(height: 12),
-            Text('還沒有評價', style: TextStyle(fontSize: 14, color: Color(0xFF9CA3AF))),
+        ? Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
+            const Icon(Icons.star_outline, size: 56, color: Color(0xFFD1D5DB)),
+            const SizedBox(height: 12),
+            Text(L.noReviews, style: const TextStyle(fontSize: 14, color: Color(0xFF9CA3AF))),
           ]))
         : ListView(padding: const EdgeInsets.all(16), children: [
             // 評分摘要
@@ -734,7 +735,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                     i < avg.round() ? Icons.star_rounded : Icons.star_outline_rounded,
                     color: const Color(0xFFE8A52A), size: 18))),
                   const SizedBox(height: 4),
-                  Text('共 ${_reviews.length} 則', style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
+                  Text(L.reviewsTotal(_reviews.length), style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
                 ]),
                 const SizedBox(width: 24),
                 Expanded(child: Column(children: List.generate(5, (i) {
@@ -775,7 +776,7 @@ class _ProfileScreenState extends State<ProfileScreen>
         icon: const Icon(Icons.chevron_left, color: Color(0xFF374151), size: 28),
         onPressed: () => Navigator.pop(context),
       ),
-      title: const Text('交易紀錄', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF111827))),
+      title: Text(L.txHistory, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF111827))),
       bottom: PreferredSize(preferredSize: const Size.fromHeight(0.5),
         child: Container(height: 0.5, color: const Color(0xFFE5E7EB))),
     ),
@@ -793,11 +794,11 @@ class _ProfileScreenState extends State<ProfileScreen>
         const Icon(Icons.collections_bookmark_outlined,
             size: 48, color: Color(0xFFD1D5DB)),
         const SizedBox(height: 12),
-        const Text('尚無收藏',
-            style: TextStyle(fontSize: 15, color: Color(0xFF9CA3AF))),
+        Text(L.noCollection,
+            style: const TextStyle(fontSize: 15, color: Color(0xFF9CA3AF))),
         const SizedBox(height: 6),
-        const Text('前往圖鑑加入收藏',
-            style: TextStyle(fontSize: 13, color: Color(0xFFD1D5DB))),
+        Text(L.goToDexToCollect,
+            style: const TextStyle(fontSize: 13, color: Color(0xFFD1D5DB))),
       ]));
     }
     final rate = (_summary['rate'] as num?)?.toDouble() ?? 0.0515;
@@ -810,14 +811,14 @@ class _ProfileScreenState extends State<ProfileScreen>
       Padding(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
         child: Row(children: [
-          _colSeg('持有中 (${holding.length})', 0),
+          _colSeg(L.holdingCount(holding.length), 0),
           const SizedBox(width: 8),
-          _colSeg('已售出 (${sold.length})', 1),
+          _colSeg(L.soldCountSeg(sold.length), 1),
         ]),
       ),
       Expanded(
         child: list.isEmpty
-            ? Center(child: Text(_colTab == 0 ? '無持有中收藏' : '尚無售出記錄',
+            ? Center(child: Text(_colTab == 0 ? L.noHolding : L.noSoldRecord,
                 style: const TextStyle(fontSize: 13, color: Color(0xFF9CA3AF))))
             : ListView.builder(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -883,15 +884,15 @@ class _ProfileScreenState extends State<ProfileScreen>
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
               decoration: BoxDecoration(color: gradeColor.withOpacity(0.12), borderRadius: BorderRadius.circular(4)),
-              child: Text(grade == 'RAW' ? '生卡' : grade,
+              child: Text(grade == 'RAW' ? L.rawCard : grade,
                   style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: gradeColor)),
             ),
           ]),
           const SizedBox(height: 2),
-          Text('成本 HK\$${_fmt(costHkd.round())}',
+          Text(L.costHkd(_fmt(costHkd.round())),
               style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF))),
           if (isSold)
-            Text('售出 ${(item['sold_at'] as String?)?.split('T').first ?? ''}',
+            Text(L.soldOn((item['sold_at'] as String?)?.split('T').first ?? ''),
                 style: const TextStyle(fontSize: 10.5, color: Color(0xFFB6BCC6))),
         ])),
         Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
@@ -908,7 +909,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(color: const Color(0xFF16A34A), borderRadius: BorderRadius.circular(6)),
-                  child: const Text('售出', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, color: Colors.white)),
+                  child: Text(L.sellAction, style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, color: Colors.white)),
                 ),
               ),
               const SizedBox(width: 6),
@@ -935,20 +936,20 @@ class _ProfileScreenState extends State<ProfileScreen>
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('記錄售出　${item['card_name'] ?? ''}', style: const TextStyle(fontSize: 15)),
+        title: Text(L.recordSellTitle('${item['card_name'] ?? ''}'), style: const TextStyle(fontSize: 15)),
         content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('成本 HK\$${_fmt(costHkd)}　·　參考市價 HK\$${_fmt(marketHkd)}',
+          Text(L.costAndMarket(_fmt(costHkd), _fmt(marketHkd)),
               style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
           const SizedBox(height: 12),
           TextField(
             controller: ctrl,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: const InputDecoration(labelText: '實際售出價格', prefixText: 'HK\$ ', isDense: true),
+            decoration: InputDecoration(labelText: L.actualSalePrice, prefixText: 'HK\$ ', isDense: true),
           ),
         ]),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('取消')),
-          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('確認售出')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(L.cancel)),
+          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: Text(L.confirmSell)),
         ],
       ),
     );
@@ -959,7 +960,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     await _loadCollection();
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('已記錄售出'), duration: Duration(seconds: 2)));
+          SnackBar(content: Text(L.saleRecorded), duration: const Duration(seconds: 2)));
     }
   }
 
@@ -980,7 +981,7 @@ class _ProfileScreenState extends State<ProfileScreen>
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
-          const Text('收藏總市值', style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))),
+          Text(L.collectionTotalValue, style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))),
           const Spacer(),
           GestureDetector(
             onTap: _refreshMarket,
@@ -989,7 +990,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                   ? const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 1.5, color: Color(0xFFE8A52A)))
                   : const Icon(Icons.refresh, size: 14, color: Color(0xFFE8A52A)),
               const SizedBox(width: 3),
-              const Text('更新市價', style: TextStyle(fontSize: 11, color: Color(0xFFE8A52A))),
+              Text(L.updateMarket, style: const TextStyle(fontSize: 11, color: Color(0xFFE8A52A))),
             ]),
           ),
         ]),
@@ -998,9 +999,9 @@ class _ProfileScreenState extends State<ProfileScreen>
             style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: Colors.white)),
         const SizedBox(height: 10),
         Row(children: [
-          Expanded(child: _plMini('總成本', 'HK\$${_fmt(cost)}', Colors.white70)),
-          Expanded(child: _plMini('盈虧', '${up ? '+' : '-'}HK\$${_fmt(pl.abs())}', plColor)),
-          Expanded(child: _plMini('報酬率', '${up ? '+' : ''}${plPct.toStringAsFixed(1)}%', plColor)),
+          Expanded(child: _plMini(L.totalCost, 'HK\$${_fmt(cost)}', Colors.white70)),
+          Expanded(child: _plMini(L.profitLoss, '${up ? '+' : '-'}HK\$${_fmt(pl.abs())}', plColor)),
+          Expanded(child: _plMini(L.returnRate, '${up ? '+' : ''}${plPct.toStringAsFixed(1)}%', plColor)),
         ]),
         if (((_summary['soldCount'] as int?) ?? 0) > 0) ...[
           const SizedBox(height: 10),
@@ -1011,15 +1012,15 @@ class _ProfileScreenState extends State<ProfileScreen>
             final rUp = realized >= 0;
             final rColor = rUp ? const Color(0xFF34D399) : const Color(0xFFF87171);
             return Row(children: [
-              Text('已售出 ${_summary['soldCount']} 張', style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF))),
+              Text(L.soldCards(_summary['soldCount']), style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF))),
               const Spacer(),
-              Text('已實現盈虧　${rUp ? '+' : '-'}HK\$${_fmt(realized.abs())}',
+              Text(L.realizedPl(rUp ? '+' : '-', _fmt(realized.abs())),
                   style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: rColor)),
             ]);
           }),
         ],
         const SizedBox(height: 4),
-        Text('市值依 SNKRDUNK 日本成交價　1 JPY ≈ ${(_summary['rate'] as num? ?? 0.0515).toStringAsFixed(4)} HKD',
+        Text(L.marketRateNote((_summary['rate'] as num? ?? 0.0515).toStringAsFixed(4)),
             style: const TextStyle(fontSize: 9.5, color: Color(0xFF6B7280))),
       ]),
     );
@@ -1035,9 +1036,9 @@ class _ProfileScreenState extends State<ProfileScreen>
 
   Widget _reviewTile(Review r) {
     final deliveryLabel = switch (r.deliveryMethod) {
-      'meetup' => '面交',
-      'sf' => 'SF順豐',
-      'other' => '其他',
+      'meetup' => L.deliveryMeetup,
+      'sf' => L.deliverySf,
+      'other' => L.deliveryOther,
       _ => null,
     };
     return Container(
@@ -1100,8 +1101,8 @@ class _ProfileScreenState extends State<ProfileScreen>
           decoration: BoxDecoration(color: const Color(0xFFF3F4F6), borderRadius: BorderRadius.circular(10)),
           padding: const EdgeInsets.all(3),
           child: Row(children: [
-            _txSeg('售出紀錄 (${_soldListings.length})', 0),
-            _txSeg('購買紀錄 (${_purchases.length})', 1),
+            _txSeg(L.soldRecords(_soldListings.length), 0),
+            _txSeg(L.purchaseRecords(_purchases.length), 1),
           ]),
         ),
       ),
@@ -1137,7 +1138,7 @@ class _ProfileScreenState extends State<ProfileScreen>
 
   Widget _buildSoldList() {
     if (_soldListings.isEmpty) {
-      return const Center(child: Text('還沒有售出紀錄', style: TextStyle(color: Color(0xFF9CA3AF))));
+      return Center(child: Text(L.noSoldRecords, style: const TextStyle(color: Color(0xFF9CA3AF))));
     }
     return ListView.separated(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -1152,8 +1153,8 @@ class _ProfileScreenState extends State<ProfileScreen>
           child: _txCard(
             imageUrls: c.imageUrls,
             name: c.name,
-            sub: '售價 HK\$${c.price}',
-            tag: '已售出',
+            sub: L.salePrice(c.price),
+            tag: L.tagSold,
             tagColor: const Color(0xFF16A34A),
           ),
         );
@@ -1163,7 +1164,7 @@ class _ProfileScreenState extends State<ProfileScreen>
 
   Widget _buildBoughtList() {
     if (_purchases.isEmpty) {
-      return const Center(child: Text('還沒有購買紀錄', style: TextStyle(color: Color(0xFF9CA3AF))));
+      return Center(child: Text(L.noPurchaseRecords, style: const TextStyle(color: Color(0xFF9CA3AF))));
     }
     return ListView.separated(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -1172,7 +1173,7 @@ class _ProfileScreenState extends State<ProfileScreen>
       itemBuilder: (_, i) {
         final p = _purchases[i];
         final listing = p['listings'] as Map<String, dynamic>?;
-        final name = listing?['name'] as String? ?? '商品';
+        final name = listing?['name'] as String? ?? L.productFallback;
         final imageUrls = (listing?['image_urls'] as List?)?.cast<String>() ?? [];
         final sellerName = listing?['seller_name'] as String? ?? '';
         final amount = p['amount'] as int? ?? 0;
@@ -1189,8 +1190,8 @@ class _ProfileScreenState extends State<ProfileScreen>
           child: _txCard(
             imageUrls: imageUrls,
             name: name,
-            sub: '成交價 HK\$$amount${sellerName.isNotEmpty ? '  賣家：$sellerName' : ''}',
-            tag: '已購買',
+            sub: L.purchasePrice(amount, sellerName.isNotEmpty ? L.sellerSuffix(sellerName) : ''),
+            tag: L.tagPurchased,
             tagColor: const Color(0xFF2980B9),
           ),
         );
@@ -1247,37 +1248,37 @@ class _ProfileScreenState extends State<ProfileScreen>
       padding: const EdgeInsets.all(16),
       children: [
         // 我的功能入口
-        _sectionHeader('我的'),
+        _sectionHeader(L.sectionMine),
         _settingCard(children: [
           _arrowTile(
             icon: Icons.storefront_outlined,
             iconColor: const Color(0xFFE8A52A),
-            title: '我的掛售',
-            trailing: '${_myListings.length} 項',
+            title: L.myListings,
+            trailing: L.itemsCount(_myListings.length),
             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => _myListingsPage())),
           ),
           const Divider(height: 0.5, color: Color(0xFFF3F4F6)),
           _arrowTile(
             icon: Icons.collections_bookmark_outlined,
             iconColor: const Color(0xFF8E44AD),
-            title: '我的收藏',
-            trailing: '${_collection.length} 張',
+            title: L.myCollection,
+            trailing: L.cardsCount(_collection.length),
             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => _myCollectionPage())),
           ),
           const Divider(height: 0.5, color: Color(0xFFF3F4F6)),
           _arrowTile(
             icon: Icons.receipt_long_outlined,
             iconColor: const Color(0xFF2980B9),
-            title: '交易紀錄',
-            trailing: '${_soldListings.length + _purchases.length} 筆',
+            title: L.txHistory,
+            trailing: L.recordsCount(_soldListings.length + _purchases.length),
             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => _txHistoryPage())),
           ),
           const Divider(height: 0.5, color: Color(0xFFF3F4F6)),
           _arrowTile(
             icon: Icons.star_outline_rounded,
             iconColor: const Color(0xFFE8A52A),
-            title: '我的評價',
-            trailing: _reviews.isEmpty ? '暫無' : '${(_reviews.fold<int>(0, (s, r) => s + r.rating) / _reviews.length).toStringAsFixed(1)} ★ (${_reviews.length}則)',
+            title: L.myReviews,
+            trailing: _reviews.isEmpty ? L.none : L.reviewsSummary((_reviews.fold<int>(0, (s, r) => s + r.rating) / _reviews.length).toStringAsFixed(1), _reviews.length),
             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => _myReviewsPage())),
           ),
         ]),
@@ -1286,12 +1287,12 @@ class _ProfileScreenState extends State<ProfileScreen>
 
         const SizedBox(height: 4),
         // 交易
-        _sectionHeader('交易'),
+        _sectionHeader(L.sectionTrade),
         _settingCard(children: [
           _arrowTile(
             icon: Icons.forum_outlined,
             iconColor: const Color(0xFF2980B9),
-            title: '我的訊息',
+            title: L.myMessages,
             trailing: '',
             unreadTypes: const ['message'],
             onTap: () {
@@ -1304,7 +1305,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           _arrowTile(
             icon: Icons.local_offer_outlined,
             iconColor: const Color(0xFF8E44AD),
-            title: '收到的出價',
+            title: L.receivedOffers,
             trailing: '',
             unreadTypes: const ['offer_received'],
             onTap: () {
@@ -1317,7 +1318,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           _arrowTile(
             icon: Icons.people_outline,
             iconColor: const Color(0xFF16A34A),
-            title: '我追蹤的賣家',
+            title: L.followedSellers,
             trailing: '',
             onTap: () {
               Navigator.push(context, MaterialPageRoute(
@@ -1329,12 +1330,12 @@ class _ProfileScreenState extends State<ProfileScreen>
         const SizedBox(height: 16),
 
         // 帳號資訊
-        _sectionHeader('帳號'),
+        _sectionHeader(L.sectionAccount),
         _settingCard(children: [
           _arrowTile(
             icon: Icons.person_outline,
             iconColor: const Color(0xFFE8A52A),
-            title: '編輯個人資料',
+            title: L.editProfile,
             trailing: _profile != null ? '@${_profile!.username}' : '',
             onTap: _profile != null ? _openEditProfile : () {},
           ),
@@ -1342,10 +1343,10 @@ class _ProfileScreenState extends State<ProfileScreen>
           _arrowTile(
             icon: Icons.verified_outlined,
             iconColor: const Color(0xFF2980B9),
-            title: '電話認證',
-            trailing: (_profile?.phoneVerified ?? false) ? '已認證 ✓' : '未認證',
+            title: L.phoneVerify,
+            trailing: (_profile?.phoneVerified ?? false) ? L.verified : L.notVerified,
             onTap: () async {
-              if (!await requireLogin(context, action: '進行電話認證')) return;
+              if (!await requireLogin(context, action: L.doPhoneVerify)) return;
               if (!mounted) return;
               final ok = await Navigator.push<bool>(context,
                   MaterialPageRoute(builder: (_) => const PhoneVerifyScreen()));
@@ -1357,7 +1358,7 @@ class _ProfileScreenState extends State<ProfileScreen>
             _arrowTile(
               icon: Icons.admin_panel_settings_outlined,
               iconColor: const Color(0xFFE8A52A),
-              title: '管理後台',
+              title: L.adminPanel,
               trailing: '',
               onTap: () => Navigator.push(context,
                   MaterialPageRoute(builder: (_) => const AdminScreen())),
@@ -1368,13 +1369,13 @@ class _ProfileScreenState extends State<ProfileScreen>
         const SizedBox(height: 16),
 
         // 通知
-        _sectionHeader('通知設定'),
+        _sectionHeader(L.sectionNotifySettings),
         _settingCard(children: [
           _switchTile(
             icon: Icons.chat_bubble_outline,
             iconColor: const Color(0xFF2980B9),
-            title: '新訊息通知',
-            subtitle: '收到買家訊息時通知',
+            title: L.notifyNewMsg,
+            subtitle: L.notifyNewMsgSub,
             value: _notifyNewMsg,
             onChanged: (v) {
               setState(() => _notifyNewMsg = v);
@@ -1385,8 +1386,8 @@ class _ProfileScreenState extends State<ProfileScreen>
           _switchTile(
             icon: Icons.trending_down,
             iconColor: const Color(0xFF27AE60),
-            title: '收藏價格提醒',
-            subtitle: '收藏卡牌市價變動時通知',
+            title: L.notifyPriceDrop,
+            subtitle: L.notifyPriceDropSub,
             value: _notifyPriceDrop,
             onChanged: (v) {
               setState(() => _notifyPriceDrop = v);
@@ -1398,12 +1399,12 @@ class _ProfileScreenState extends State<ProfileScreen>
         const SizedBox(height: 16),
 
         // 語言
-        _sectionHeader('語言'),
+        _sectionHeader(L.language),
         _settingCard(children: [
           _arrowTile(
             icon: Icons.language,
             iconColor: const Color(0xFF8E44AD),
-            title: '顯示語言',
+            title: L.displayLanguage,
             trailing: _language,
             onTap: _showLanguagePicker,
           ),
@@ -1412,21 +1413,21 @@ class _ProfileScreenState extends State<ProfileScreen>
         const SizedBox(height: 16),
 
         // 關於
-        _sectionHeader('關於'),
+        _sectionHeader(L.about),
         _settingCard(children: [
           _arrowTile(icon: Icons.info_outline, iconColor: const Color(0xFF6B7280),
-              title: '版本', trailing: 'v1.0.0', onTap: () {}),
+              title: L.version, trailing: 'v1.0.0', onTap: () {}),
           const Divider(height: 0.5, color: Color(0xFFF3F4F6)),
           _arrowTile(icon: Icons.verified_user_outlined, iconColor: const Color(0xFF16A34A),
-              title: '安全交易提示', trailing: '', onTap: () => Navigator.push(context,
+              title: L.safetyTips, trailing: '', onTap: () => Navigator.push(context,
                   MaterialPageRoute(builder: (_) => LegalScreen.safety()))),
           const Divider(height: 0.5, color: Color(0xFFF3F4F6)),
           _arrowTile(icon: Icons.shield_outlined, iconColor: const Color(0xFF6B7280),
-              title: '私隱政策', trailing: '', onTap: () => Navigator.push(context,
+              title: L.privacyPolicy, trailing: '', onTap: () => Navigator.push(context,
                   MaterialPageRoute(builder: (_) => LegalScreen.privacy()))),
           const Divider(height: 0.5, color: Color(0xFFF3F4F6)),
           _arrowTile(icon: Icons.description_outlined, iconColor: const Color(0xFF6B7280),
-              title: '服務條款', trailing: '', onTap: () => Navigator.push(context,
+              title: L.termsOfService, trailing: '', onTap: () => Navigator.push(context,
                   MaterialPageRoute(builder: (_) => LegalScreen.terms()))),
         ]),
 
@@ -1444,10 +1445,10 @@ class _ProfileScreenState extends State<ProfileScreen>
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: const Color(0xFFE74C3C).withValues(alpha: 0.3), width: 0.5),
               ),
-              child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                Icon(Icons.logout, color: Color(0xFFE74C3C), size: 18),
-                SizedBox(width: 8),
-                Text('登出帳號', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Color(0xFFE74C3C))),
+              child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                const Icon(Icons.logout, color: Color(0xFFE74C3C), size: 18),
+                const SizedBox(width: 8),
+                Text(L.logoutAccountBtn, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Color(0xFFE74C3C))),
               ]),
             ),
           ),
@@ -1463,10 +1464,10 @@ class _ProfileScreenState extends State<ProfileScreen>
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: const Color(0xFFE74C3C).withValues(alpha: 0.2), width: 0.5),
               ),
-              child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                Icon(Icons.delete_forever_outlined, color: Color(0xFF9CA3AF), size: 18),
-                SizedBox(width: 8),
-                Text('刪除帳號', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFF9CA3AF))),
+              child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                const Icon(Icons.delete_forever_outlined, color: Color(0xFF9CA3AF), size: 18),
+                const SizedBox(width: 8),
+                Text(L.deleteAccount, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFF9CA3AF))),
               ]),
             ),
           ),
@@ -1577,7 +1578,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('選擇語言', style: TextStyle(fontSize: 16,
+            Text(L.selectLanguage, style: const TextStyle(fontSize: 16,
                 fontWeight: FontWeight.w600, color: Color(0xFF111827))),
             const SizedBox(height: 12),
             ...['繁體中文', 'English'].map((lang) =>

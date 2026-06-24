@@ -308,4 +308,159 @@ class L {
   static String get noReceivedOffers => _t('目前沒有收到出價', 'No offers received yet');
   static String get pendingReply => _t('待回覆', 'Pending');
   static String get offerAmount => _t('出價金額', 'Offer amount');
+
+  // ── Profile / Settings ─────────────────────────────────────────────────
+  static String get guest => _t('訪客', 'Guest');
+  static String get editProfile => _t('編輯個人資料', 'Edit profile');
+  static String get statListing => _t('掛售中', 'Listed');
+  static String get statCollection => _t('收藏', 'Collection');
+  static String get statCollectionValue => _t('收藏價值', 'Value');
+  // section headers
+  static String get sectionMine => _t('我的', 'Mine');
+  static String get sectionTrade => _t('交易', 'Trading');
+  static String get sectionAccount => _t('帳號', 'Account');
+  static String get sectionNotifySettings => _t('通知設定', 'Notifications');
+  // mine entries
+  static String get myListings => _t('我的掛售', 'My listings');
+  static String get myCollection => _t('我的收藏', 'My collection');
+  static String get txHistory => _t('交易紀錄', 'Transaction history');
+  static String get myReviews => _t('我的評價', 'My reviews');
+  static String itemsCount(int n) => _t('$n 項', '$n');
+  static String cardsCount(int n) => _t('$n 張', '$n');
+  static String recordsCount(int n) => _t('$n 筆', '$n');
+  static String get none => _t('暫無', 'None');
+  static String reviewsSummary(String avg, int n) =>
+      _t('$avg ★ ($n則)', '$avg ★ ($n)');
+  // trade entries
+  static String get myMessages => _t('我的訊息', 'My messages');
+  static String get followedSellers => _t('我追蹤的賣家', 'Followed sellers');
+  // account entries
+  static String get phoneVerify => _t('電話認證', 'Phone verification');
+  static String get verified => _t('已認證 ✓', 'Verified ✓');
+  static String get notVerified => _t('未認證', 'Not verified');
+  static String get doPhoneVerify => _t('進行電話認證', 'verify your phone');
+  static String get adminPanel => _t('管理後台', 'Admin panel');
+  // notify settings
+  static String get notifyNewMsg => _t('新訊息通知', 'New message alerts');
+  static String get notifyNewMsgSub => _t('收到買家訊息時通知', 'Notify when a buyer messages you');
+  static String get notifyPriceDrop => _t('收藏價格提醒', 'Price alerts');
+  static String get notifyPriceDropSub =>
+      _t('收藏卡牌市價變動時通知', 'Notify when your collection\'s market value changes');
+  // listing management
+  static String get loginToViewListings =>
+      _t('請先登入以查看掛售商品', 'Log in to view your listings');
+  static String get noListingsYet => _t('尚未掛售任何商品', 'No listings yet');
+  static String get delist => _t('下架', 'Delist');
+  static String get delistTitle => _t('下架商品', 'Delist item');
+  static String delistConfirm(String name) => _t('確定要下架「$name」嗎？', 'Delist "$name"?');
+  static String get confirmDelist => _t('確認下架', 'Delist');
+  static String editItemTitle(String name) => _t('編輯「$name」', 'Edit "$name"');
+  static String get priceLabel => _t('價格 (HK\$)', 'Price (HK\$)');
+  static String marketUpdated(int n) => _t('已更新 $n 筆市價', 'Updated $n market prices');
+  // delete account
+  static String get deleteAccountWarning =>
+      _t('此操作無法復原。你的掛售商品、出價、收藏及個人資料將被永久刪除。',
+        'This cannot be undone. Your listings, offers, collection, and profile will be permanently deleted.');
+  static String get deleteAccountPrompt =>
+      _t('請輸入「確認刪除」以繼續：', 'Type "DELETE" to continue:');
+  static String get deleteConfirmWord => _t('確認刪除', 'DELETE');
+  static String get permanentDelete => _t('永久刪除', 'Delete permanently');
+  static String deleteFailed(String e) => _t('刪除失敗：$e', 'Delete failed: $e');
+  static String get logoutAccountBtn => _t('登出帳號', 'Log out');
+  // collection
+  static String get noCollection => _t('尚無收藏', 'No collection yet');
+  static String get goToDexToCollect => _t('前往圖鑑加入收藏', 'Add cards from the Dex');
+  static String holdingCount(int n) => _t('持有中 ($n)', 'Holding ($n)');
+  static String soldCountSeg(int n) => _t('已售出 ($n)', 'Sold ($n)');
+  static String get noHolding => _t('無持有中收藏', 'Nothing in holding');
+  static String get noSoldRecord => _t('尚無售出記錄', 'No sales recorded');
+  static String costHkd(String v) => _t('成本 HK\$$v', 'Cost HK\$$v');
+  static String soldOn(String date) => _t('售出 $date', 'Sold $date');
+  static String get sellAction => _t('售出', 'Sell');
+  static String recordSellTitle(String name) => _t('記錄售出　$name', 'Record sale　$name');
+  static String costAndMarket(String cost, String market) =>
+      _t('成本 HK\$$cost　·　參考市價 HK\$$market', 'Cost HK\$$cost　·　Market HK\$$market');
+  static String get actualSalePrice => _t('實際售出價格', 'Actual sale price');
+  static String get confirmSell => _t('確認售出', 'Confirm sale');
+  static String get saleRecorded => _t('已記錄售出', 'Sale recorded');
+  // PL summary
+  static String get collectionTotalValue => _t('收藏總市值', 'Total collection value');
+  static String get updateMarket => _t('更新市價', 'Refresh');
+  static String get totalCost => _t('總成本', 'Total cost');
+  static String get profitLoss => _t('盈虧', 'P/L');
+  static String get returnRate => _t('報酬率', 'Return');
+  static String soldCards(dynamic n) => _t('已售出 $n 張', 'Sold $n');
+  static String realizedPl(String sign, String v) =>
+      _t('已實現盈虧　$sign HK\$$v', 'Realized P/L　$sign HK\$$v');
+  static String marketRateNote(String rate) =>
+      _t('市值依 SNKRDUNK 日本成交價　1 JPY ≈ $rate HKD',
+        'Value based on SNKRDUNK Japan sales　1 JPY ≈ $rate HKD');
+  // reviews
+  static String get noReviews => _t('還沒有評價', 'No reviews yet');
+  static String reviewsTotal(int n) => _t('共 $n 則', '$n reviews');
+  // tx history
+  static String soldRecords(int n) => _t('售出紀錄 ($n)', 'Sold ($n)');
+  static String purchaseRecords(int n) => _t('購買紀錄 ($n)', 'Purchases ($n)');
+  static String get noSoldRecords => _t('還沒有售出紀錄', 'No sales yet');
+  static String get noPurchaseRecords => _t('還沒有購買紀錄', 'No purchases yet');
+  static String get productFallback => _t('商品', 'Item');
+  static String salePrice(int p) => _t('售價 HK\$$p', 'Sold for HK\$$p');
+  static String purchasePrice(int amount, String sellerPart) =>
+      _t('成交價 HK\$$amount$sellerPart', 'Paid HK\$$amount$sellerPart');
+  static String sellerSuffix(String name) => _t('  賣家：$name', '  Seller: $name');
+  static String get tagSold => _t('已售出', 'Sold');
+  static String get tagPurchased => _t('已購買', 'Purchased');
+
+  // ── Login screen ───────────────────────────────────────────────────────
+  static String get loginTagline => _t('日版寶可夢卡牌交易平台', 'Japanese Pokémon TCG Marketplace');
+  static String get featBrowseTitle => _t('瀏覽日版圖鑑', 'Browse the Dex');
+  static String get featBrowseSub => _t('查看完整日版卡牌系列', 'Explore full Japanese card sets');
+  static String get featChatTitle => _t('即時聊天', 'Instant chat');
+  static String get featChatSub => _t('直接與賣家聯絡議價', 'Message sellers and negotiate directly');
+  static String get featRecordTitle => _t('成交紀錄', 'Trade records');
+  static String get featRecordSub => _t('追蹤收藏市值變化', 'Track your collection\'s value');
+  static String get signInGoogleBtn => _t('使用 Google 帳號登入', 'Sign in with Google');
+  static String get browseWithoutLogin => _t('先瀏覽，不登入', 'Browse without signing in');
+  static String get loginAgreement =>
+      _t('登入即代表同意使用條款及隱私政策', 'By signing in you agree to the Terms and Privacy Policy');
+
+  // ── Review sheet (standalone) ──────────────────────────────────────────
+  static String get reviewHelpsBuyers => _t('你的評價會幫助其他買家', 'Your review helps other buyers');
+  static String get commentHintOptional =>
+      _t('分享你的交易體驗（選填）', 'Share your trading experience (optional)');
+  static String get reviewSubmitted =>
+      _t('評價已送出，感謝你的回饋！', 'Review submitted. Thanks for your feedback!');
+
+  // ── Edit profile ───────────────────────────────────────────────────────
+  static String get errEnterDisplayName => _t('請填寫顯示名稱', 'Please enter a display name');
+  static String get errUsernameTooShort => _t('用戶名至少需要 3 個字元', 'Username needs at least 3 characters');
+  static String get errUsernameChars =>
+      _t('只能使用英文小寫、數字、底線', 'Only lowercase letters, numbers, and underscores');
+  static String get errUsernameTaken => _t('此用戶名已被使用', 'This username is taken');
+  static String get profileUpdated => _t('個人資料已更新', 'Profile updated');
+  static String get errSaveFailed => _t('儲存失敗，請稍後再試', 'Save failed. Please try again.');
+  static String get chooseAvatar => _t('選擇頭像', 'Choose avatar');
+  static String get displayNameLabel => _t('顯示名稱 *', 'Display name *');
+  static String get displayNameHint => _t('你的公開名稱', 'Your public name');
+  static String get usernameLabel => _t('用戶名 *', 'Username *');
+  static String get bioLabel => _t('個人簡介', 'Bio');
+  static String get bioHint => _t('介紹一下自己...', 'Tell others about yourself...');
+
+  // ── Seller profile ─────────────────────────────────────────────────────
+  static String get followSeller => _t('追蹤賣家', 'follow this seller');
+  static String get sellerHome => _t('賣家主頁', 'Seller profile');
+  static String get followers => _t('追蹤者', 'Followers');
+  static String get listingActive => _t('上架中', 'Listed');
+  static String ratingCount(int n) => _t('評分 ($n)', 'Rating ($n)');
+  static String get following => _t('已追蹤', 'Following');
+  static String get follow => _t('追蹤', 'Follow');
+  static String buyerReviews(int n) => _t('買家評價 ($n)', 'Reviews ($n)');
+  static String sellerListings(int n) => _t('上架商品 ($n)', 'Listings ($n)');
+  static String get noTextReview => _t('（無文字評價）', '(no written review)');
+
+  // ── Legal screen ───────────────────────────────────────────────────────
+  static String effectiveDate(String date) => _t('生效日期：$date', 'Effective date: $date');
+  static String get legalContact =>
+      _t('如對本文件有任何疑問，請透過 PokeBid 內的客服管道或電子郵件與我們聯絡。',
+        'If you have any questions about this document, please contact us through PokeBid\'s in-app support channel or by email.');
 }
