@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/verification_service.dart';
+import '../i18n/strings.dart';
 
 class PhoneVerifyScreen extends StatefulWidget {
   const PhoneVerifyScreen({super.key});
@@ -25,7 +26,7 @@ class _PhoneVerifyScreenState extends State<PhoneVerifyScreen> {
 
   Future<void> _send() async {
     final phone = _normalize(_phoneCtrl.text);
-    if (phone.length < 8) { setState(() => _error = '請輸入有效電話號碼'); return; }
+    if (phone.length < 8) { setState(() => _error = L.errInvalidPhone); return; }
     setState(() { _busy = true; _error = null; });
     final err = await VerificationService.send(phone);
     if (!mounted) return;
@@ -37,16 +38,16 @@ class _PhoneVerifyScreenState extends State<PhoneVerifyScreen> {
   }
 
   Future<void> _verify() async {
-    if (_otpCtrl.text.trim().length < 4) { setState(() => _error = '請輸入驗證碼'); return; }
+    if (_otpCtrl.text.trim().length < 4) { setState(() => _error = L.errEnterOtp); return; }
     setState(() { _busy = true; _error = null; });
     final ok = await VerificationService.check(_fullPhone, _otpCtrl.text.trim());
     if (!mounted) return;
     if (ok) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('WhatsApp 認證成功 ✓'), duration: Duration(seconds: 2)));
+        SnackBar(content: Text(L.whatsappVerifySuccess), duration: const Duration(seconds: 2)));
       Navigator.pop(context, true);
     } else {
-      setState(() { _busy = false; _error = '驗證碼錯誤或已過期'; });
+      setState(() { _busy = false; _error = L.otpWrongOrExpired; });
     }
   }
 
@@ -57,22 +58,22 @@ class _PhoneVerifyScreenState extends State<PhoneVerifyScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white, elevation: 0.5,
         foregroundColor: const Color(0xFF111827),
-        title: const Text('WhatsApp 認證', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+        title: Text(L.whatsappVerify, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
       ),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
           const Icon(Icons.verified, size: 48, color: Color(0xFF25D366)),
           const SizedBox(height: 12),
-          const Text('用 WhatsApp 認證電話',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Color(0xFF111827))),
+          Text(L.verifyPhoneTitle,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Color(0xFF111827))),
           const SizedBox(height: 6),
-          const Text('驗證碼會透過 WhatsApp 發送。認證後，你的用戶名旁會顯示「已認證」標誌，提升交易信任度。',
-              style: TextStyle(fontSize: 13, color: Color(0xFF6B7280), height: 1.5)),
+          Text(L.verifyPhoneDesc,
+              style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280), height: 1.5)),
           const SizedBox(height: 24),
 
           if (!_sent) ...[
-            const Text('電話號碼', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF374151))),
+            Text(L.phoneNumber, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF374151))),
             const SizedBox(height: 6),
             TextField(
               controller: _phoneCtrl,
@@ -84,23 +85,23 @@ class _PhoneVerifyScreenState extends State<PhoneVerifyScreen> {
               ),
             ),
             const SizedBox(height: 4),
-            const Text('其他地區請自行輸入 +國碼', style: TextStyle(fontSize: 10.5, color: Color(0xFF9CA3AF))),
+            Text(L.otherRegionNote, style: const TextStyle(fontSize: 10.5, color: Color(0xFF9CA3AF))),
           ] else ...[
-            Text('已透過 WhatsApp 發送驗證碼至 $_fullPhone',
+            Text(L.otpSentTo(_fullPhone),
                 style: const TextStyle(fontSize: 13, color: Color(0xFF374151))),
             const SizedBox(height: 12),
             TextField(
               controller: _otpCtrl,
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
-                hintText: '輸入 6 位數驗證碼',
+                hintText: L.enterOtpHint,
                 filled: true, fillColor: Colors.white,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
               ),
             ),
             const SizedBox(height: 6),
             TextButton(onPressed: _busy ? null : () => setState(() { _sent = false; _otpCtrl.clear(); }),
-                child: const Text('重新輸入號碼')),
+                child: Text(L.reenterNumber)),
           ],
 
           if (_error != null) ...[
@@ -119,7 +120,7 @@ class _PhoneVerifyScreenState extends State<PhoneVerifyScreen> {
               onPressed: _busy ? null : (_sent ? _verify : _send),
               child: _busy
                   ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                  : Text(_sent ? '確認驗證' : '發送驗證碼',
+                  : Text(_sent ? L.confirmVerify : L.sendOtp,
                       style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
             ),
           ),

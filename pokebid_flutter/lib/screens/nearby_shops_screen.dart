@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/shop_service.dart';
+import '../i18n/strings.dart';
 
 class NearbyShopsScreen extends StatefulWidget {
   const NearbyShopsScreen({super.key});
@@ -58,15 +59,15 @@ class _NearbyShopsScreenState extends State<NearbyShopsScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white, elevation: 0.5,
         foregroundColor: const Color(0xFF111827),
-        title: const Text('附近卡鋪', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+        title: Text(L.nearbyShops, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: Color(0xFFE8A52A), strokeWidth: 2))
           : _shops.isEmpty
-              ? Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: const [
-                  Icon(Icons.storefront_outlined, size: 48, color: Color(0xFFD1D5DB)),
-                  SizedBox(height: 12),
-                  Text('暫無卡鋪資料', style: TextStyle(fontSize: 15, color: Color(0xFF9CA3AF))),
+              ? Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                  const Icon(Icons.storefront_outlined, size: 48, color: Color(0xFFD1D5DB)),
+                  const SizedBox(height: 12),
+                  Text(L.noShopData, style: const TextStyle(fontSize: 15, color: Color(0xFF9CA3AF))),
                 ]))
               : RefreshIndicator(
                   onRefresh: _load,
@@ -82,10 +83,10 @@ class _NearbyShopsScreenState extends State<NearbyShopsScreen> {
                           child: Row(children: [
                             const Icon(Icons.location_off, size: 16, color: Color(0xFFB8860B)),
                             const SizedBox(width: 8),
-                            const Expanded(child: Text('未取得定位，以下依名稱排序。開啟定位權限可顯示距離。',
-                                style: TextStyle(fontSize: 12, color: Color(0xFF92400E)))),
+                            Expanded(child: Text(L.noLocationNote,
+                                style: const TextStyle(fontSize: 12, color: Color(0xFF92400E)))),
                             GestureDetector(onTap: _load,
-                                child: const Text('重試', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFFB8860B)))),
+                                child: Text(L.retry, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFFB8860B)))),
                           ]),
                         ),
                       ..._shops.map(_shopCard),
@@ -130,10 +131,10 @@ class _NearbyShopsScreenState extends State<NearbyShopsScreen> {
         ],
         const SizedBox(height: 10),
         Row(children: [
-          Expanded(child: _btn(Icons.directions, '導航', const Color(0xFF2980B9), () => _openMaps(s))),
+          Expanded(child: _btn(Icons.directions, L.navigate, const Color(0xFF2980B9), () => _openMaps(s))),
           if (s.phone != null && s.phone!.isNotEmpty) ...[
             const SizedBox(width: 8),
-            Expanded(child: _btn(Icons.phone, '致電', const Color(0xFF16A34A), () => _call(s.phone!))),
+            Expanded(child: _btn(Icons.phone, L.callShop, const Color(0xFF16A34A), () => _call(s.phone!))),
           ],
         ]),
       ]),

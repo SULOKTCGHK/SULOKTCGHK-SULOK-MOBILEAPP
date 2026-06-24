@@ -463,4 +463,180 @@ class L {
   static String get legalContact =>
       _t('如對本文件有任何疑問，請透過 PokeBid 內的客服管道或電子郵件與我們聯絡。',
         'If you have any questions about this document, please contact us through PokeBid\'s in-app support channel or by email.');
+
+  // ── Dex ────────────────────────────────────────────────────────────────
+  static String get dexTitleSuffix => _t(' 圖鑑', ' Dex');
+  static String get searchCardHint => _t('搜尋卡牌名稱...', 'Search card name...');
+  static String get tabSetDex => _t('📦 系列圖鑑', '📦 Sets');
+  static String get tabPokemonDex => _t('🐾 精靈圖鑑', '🐾 Pokémon');
+  static String get cardNotFound => _t('找不到卡牌', 'No cards found');
+  static String dexLoadFailed(String e) => _t('載入失敗：$e', 'Failed to load: $e');
+  static String get branchBox => _t('卡盒', 'Boxes');
+  static String get branchBoxDesc => _t('擴充包', 'Booster packs');
+  static String get branchDeck => _t('牌組', 'Decks');
+  static String get branchDeckDesc => _t('Deck / 禮盒', 'Decks / gift boxes');
+  static String get branchPromoDesc => _t('特典卡', 'Promo cards');
+  static String get noBoxData => _t('尚無卡盒資料', 'No box data yet');
+  static String get noDeckData => _t('尚無牌組資料', 'No deck data yet');
+  static String promoSeriesCount(int n) => _t('PROMO 系列（$n）', 'PROMO sets ($n)');
+  static String get noPromoData => _t('尚無 PROMO 資料', 'No PROMO data yet');
+  static String get seriesShort => _t('系列', 'Series');
+  static String get newestFirst => _t('最新在前', 'Newest first');
+  static String get oldestFirst => _t('最舊在前', 'Oldest first');
+  static String get otherSeries => _t('其他系列', 'Other series');
+  static String get myCollectionValue => _t('我的收藏總價值', 'My collection value');
+  static String collectedCount(int n) => _t('已收 $n 張', '$n collected');
+  static String trendDays(int n) =>
+      _t('近 $n 日走勢 · 以市場參考價計算', 'Last $n days · based on market reference price');
+  static String get marketRefPriceNote => _t('以市場參考價計算', 'Based on market reference price');
+  static String setYearCount(String year, int total) => _t('$year · $total 張', '$year · $total cards');
+  static String seriesGroupCount(int n, String latest) =>
+      _t('$n 個系列$latest', '$n sets$latest');
+  static String latestDateSuffix(String date) => _t(' · 最新 $date', ' · latest $date');
+  static String get loadFailedTitle => _t('無法載入資料', 'Failed to load data');
+  static String get addToCollection => _t('加入收藏', 'add to collection');
+  static String get addToCollectionBtn => _t('加入收藏', 'Add to collection');
+  // TCG series names
+  static String seriesName(String key) {
+    const zh = {
+      'm': 'Mega 系列', 'sv': '朱＆紫系列', 's': '劍＆盾系列', 'sp': '劍盾特別系列',
+      'sm': '太陽＆月亮系列', 'xy': 'XY 系列', 'cp': 'XY 概念包系列', 'bw': '黑＆白系列',
+      'dp': '鑽石＆珍珠系列', 'pt': '白金系列', 'l': 'LEGEND 系列', 'adv': 'ADV（紅寶石）系列',
+      'classic1': '初代系列', 'neo': 'Neo（金銀）系列', 'ecard': 'e卡系列', 'pcg': 'PCG（EX）系列',
+    };
+    const en = {
+      'm': 'Mega Series', 'sv': 'Scarlet & Violet', 's': 'Sword & Shield', 'sp': 'Sword & Shield Special',
+      'sm': 'Sun & Moon', 'xy': 'XY Series', 'cp': 'XY Concept Pack', 'bw': 'Black & White',
+      'dp': 'Diamond & Pearl', 'pt': 'Platinum Series', 'l': 'LEGEND Series', 'adv': 'ADV (Ruby) Series',
+      'classic1': 'Classic Series', 'neo': 'Neo (Gold/Silver)', 'ecard': 'e-Card Series', 'pcg': 'PCG (EX) Series',
+    };
+    return (_en ? en : zh)[key] ?? otherSeries;
+  }
+
+  // ── Dex set grid ───────────────────────────────────────────────────────
+  static String setTotalDate(int total, String date) =>
+      _t('$total 張 · $date', '$total cards · $date');
+  static String get sortNumAsc => _t('編號 ↑', 'No. ↑');
+  static String get sortNumDesc => _t('編號 ↓', 'No. ↓');
+  static String get sortRarity => _t('稀有度', 'Rarity');
+  static String get noCardsInSet => _t('此系列暫無卡牌資料', 'No card data for this set yet');
+  static String setNotFetched(String id) =>
+      _t('$id 尚未抓取或仍在更新中。\n下拉可重新載入。',
+        '$id hasn\'t been fetched or is still updating.\nPull down to reload.');
+
+  // ── Dex card detail ────────────────────────────────────────────────────
+  static String get collected => _t('已收藏', 'Collected');
+  static String collectCardTitle(String name) => _t('收藏　$name', 'Collect　$name');
+  static String currentMarket(String hkd, String jpy) =>
+      _t('當前市價：HK\$$hkd　(¥$jpy)', 'Market: HK\$$hkd　(¥$jpy)');
+  static String get yourCost => _t('你的成本價', 'Your cost');
+  static String collectedToast(String label, String name) =>
+      _t('已收藏　$label　$name', 'Collected　$label　$name');
+  static String get anonymous => _t('匿名', 'Anonymous');
+  static String get txSaved => _t('成交紀錄已儲存', 'Transaction saved');
+  static String get priceStats => _t('成交價格統計', 'Price statistics');
+  static String get noTxHintAdd =>
+      _t('尚無成交紀錄，點下方「新增」記錄成交', 'No transactions yet. Tap "Add" below to record one.');
+  static String get avgSalePrice => _t('平均成交價', 'Average price');
+  static String get statHigh => _t('最高', 'High');
+  static String get statAvg => _t('平均', 'Avg');
+  static String get statLow => _t('最低', 'Low');
+  static String get recentTx => _t('近期成交紀錄', 'Recent transactions');
+  static String get add => _t('新增', 'Add');
+  static String get noTxRecords => _t('暫無成交紀錄', 'No transactions yet');
+  static String get noTxHintTap => _t('點「新增」記錄你的成交', 'Tap "Add" to record your sale');
+  static String get psaPopCount => _t('PSA Pop 數量', 'PSA Pop count');
+  static String get total => _t('總計：', 'Total: ');
+  static String totalCards(int n) => _t('$n 張', '$n cards');
+  static String get addCollectShort => _t('＋收藏', '+ Collect');
+  static String daysShort(int d) => _t('$d日', '${d}d');
+  static String get psaPriceTrend => _t('PSA 10 價格走勢', 'PSA 10 price trend');
+  static String get addTxTitle => _t('新增成交紀錄', 'Add transaction');
+  static String get gradeFieldHint => _t('評級（如 PSA 10）', 'Grade (e.g. PSA 10)');
+  static String get amountFieldHint => _t('成交金額 HK\$', 'Amount HK\$');
+  static String get buyerFieldHint => _t('買家（選填）', 'Buyer (optional)');
+
+  // ── Login required dialog ──────────────────────────────────────────────
+  static String get pleaseLogin => _t('請先登入', 'Please log in');
+  static String loginToAction(String action) => _t('登入後才能$action。', 'Log in to $action.');
+  static String get featureNeedsLogin => _t('此功能需要登入帳號。', 'This feature requires an account.');
+  static String get later => _t('稍後', 'Later');
+  static String get goLogin => _t('前往登入', 'Log in');
+
+  // ── Followed sellers ───────────────────────────────────────────────────
+  static String get noFollowedSellers => _t('尚未追蹤任何賣家', 'Not following any sellers yet');
+  static String get followHint => _t('在賣家頁面點「追蹤」即可加入', 'Tap "Follow" on a seller\'s page to add them');
+
+  // ── Nearby shops ───────────────────────────────────────────────────────
+  static String get noShopData => _t('暫無卡鋪資料', 'No shop data yet');
+  static String get noLocationNote =>
+      _t('未取得定位，以下依名稱排序。開啟定位權限可顯示距離。',
+        'Location unavailable; sorted by name. Enable location to show distances.');
+  static String get navigate => _t('導航', 'Directions');
+  static String get callShop => _t('致電', 'Call');
+
+  // ── Wishlist ───────────────────────────────────────────────────────────
+  static String get wishlistTitle => _t('願望清單', 'Wishlist');
+  static String get addWish => _t('新增願望', 'Add wish');
+  static String get addWishAction => _t('新增願望', 'add a wish');
+  static String get addWishDesc =>
+      _t('輸入想要的卡片關鍵字（卡名），有符合的新上架會通知你。',
+        'Enter a keyword (card name) for the card you want; you\'ll be notified of matching new listings.');
+  static String get keywordLabel => _t('關鍵字（卡名）', 'Keyword (card name)');
+  static String get budgetMaxOptional => _t('預算上限（選填）', 'Max budget (optional)');
+  static String get add2 => _t('加入', 'Add');
+  static String get enterKeyword => _t('請輸入關鍵字', 'Please enter a keyword');
+  static String get addedToWishlist => _t('已加入願望清單', 'Added to wishlist');
+  static String get wishlistEmpty => _t('願望清單是空的', 'Your wishlist is empty');
+  static String get wishlistEmptyHint =>
+      _t('點右下「＋新增願望」加入想要的卡', 'Tap "+ Add wish" to add cards you want');
+  static String budgetMax(int p) => _t('預算上限 HK\$$p', 'Max budget HK\$$p');
+  static String get notifyOnMatch => _t('有新上架符合時會通知你', 'We\'ll notify you when a match is listed');
+
+  // ── Announcement ───────────────────────────────────────────────────────
+  static String get announcementDetail => _t('公告詳情', 'Announcement');
+
+  // ── Phone (WhatsApp) verification ──────────────────────────────────────
+  static String get errInvalidPhone => _t('請輸入有效電話號碼', 'Please enter a valid phone number');
+  static String get errEnterOtp => _t('請輸入驗證碼', 'Please enter the verification code');
+  static String get whatsappVerifySuccess => _t('WhatsApp 認證成功 ✓', 'WhatsApp verification successful ✓');
+  static String get otpWrongOrExpired => _t('驗證碼錯誤或已過期', 'Code is incorrect or expired');
+  static String get whatsappVerify => _t('WhatsApp 認證', 'WhatsApp Verification');
+  static String get verifyPhoneTitle => _t('用 WhatsApp 認證電話', 'Verify your phone via WhatsApp');
+  static String get verifyPhoneDesc =>
+      _t('驗證碼會透過 WhatsApp 發送。認證後，你的用戶名旁會顯示「已認證」標誌，提升交易信任度。',
+        'The code is sent via WhatsApp. Once verified, a "Verified" badge appears next to your name to build trust.');
+  static String get phoneNumber => _t('電話號碼', 'Phone number');
+  static String get otherRegionNote => _t('其他地區請自行輸入 +國碼', 'For other regions, include your +country code');
+  static String otpSentTo(String phone) =>
+      _t('已透過 WhatsApp 發送驗證碼至 $phone', 'Code sent via WhatsApp to $phone');
+  static String get enterOtpHint => _t('輸入 6 位數驗證碼', 'Enter the 6-digit code');
+  static String get reenterNumber => _t('重新輸入號碼', 'Re-enter number');
+  static String get confirmVerify => _t('確認驗證', 'Verify');
+  static String get sendOtp => _t('發送驗證碼', 'Send code');
+
+  // ── Onboarding ─────────────────────────────────────────────────────────
+  static String get obSkip => _t('跳過', 'Skip');
+  static String get obNext => _t('下一步', 'Next');
+  static String get obStart => _t('開始使用 🎉', 'Get started 🎉');
+  static String get obWelcomeTitle => _t('歡迎來到 PokeBid', 'Welcome to PokeBid');
+  static String get obWelcomeSubtitle => _t('香港最大的寶可夢卡牌\nC2C 交易平台', 'Hong Kong\'s largest Pokémon\nTCG C2C marketplace');
+  static String get obWelcomeBody =>
+      _t('在這裡你可以買賣珍稀卡牌，查閱市場行情，建立你的收藏圖鑑。',
+        'Buy and sell rare cards, check market prices, and build your collection Dex.');
+  static String get obMarketTitle => _t('掛售區', 'Marketplace');
+  static String get obMarketSubtitle => _t('瀏覽所有在售卡牌', 'Browse all cards for sale');
+  static String get obMarketBody =>
+      _t('可以按系列、稀有度、成色篩選。點入卡牌可查看詳情、出價或直接聯絡賣家。',
+        'Filter by set, rarity, and condition. Tap a card to see details, make an offer, or contact the seller.');
+  static String get obPostTitle => _t('發佈商品', 'Post a listing');
+  static String get obPostSubtitle => _t('輕鬆上架你的卡牌', 'List your cards easily');
+  static String get obPostBody =>
+      _t('點底部「＋」按鈕，填寫卡名、價格、上傳照片即可上架。支援 PSA 評級卡，可輸入 Cert 號自動抓取 Pop 數據。',
+        'Tap the "+" button, fill in name and price, and upload photos. PSA cards are supported — enter the Cert number to auto-fetch Pop data.');
+  static String get obDexTitle => _t('圖鑑', 'Dex');
+  static String get obDexSubtitle => _t('你的專屬卡牌百科', 'Your personal card encyclopedia');
+  static String get obDexBody =>
+      _t('查閱每張卡的 SNKRDUNK 日本市場成交價、PSA Pop 數量，並追蹤你的收藏總價值。',
+        'Check each card\'s SNKRDUNK Japan sale prices and PSA Pop counts, and track your collection\'s total value.');
 }

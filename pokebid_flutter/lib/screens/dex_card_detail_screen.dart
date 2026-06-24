@@ -5,6 +5,7 @@ import '../services/api_service.dart';
 import '../services/supabase_service.dart';
 import '../services/currency_service.dart';
 import '../widgets/login_required.dart';
+import '../i18n/strings.dart';
 
 class DexCardDetailScreen extends StatefulWidget {
   final ApiCard card;
@@ -76,7 +77,7 @@ class _DexCardDetailScreenState extends State<DexCardDetailScreen> {
 
   // 把某分級（含成本價）加入收藏
   Future<void> _addGradeToCollection(String gradeCode, String label, num marketJpy) async {
-    if (!await requireLogin(context, action: '加入收藏')) return;
+    if (!await requireLogin(context, action: L.addToCollection)) return;
     if (!mounted) return;
     final rate = await CurrencyService.jpyToHkd();
     final marketHkd = (marketJpy * rate).round();
@@ -86,7 +87,7 @@ class _DexCardDetailScreenState extends State<DexCardDetailScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('收藏　${widget.card.cleanName}', style: const TextStyle(fontSize: 15)),
+        title: Text(L.collectCardTitle(widget.card.cleanName), style: const TextStyle(fontSize: 15)),
         content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -94,18 +95,18 @@ class _DexCardDetailScreenState extends State<DexCardDetailScreen> {
             child: Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFFB8860B))),
           ),
           const SizedBox(height: 10),
-          Text('當前市價：HK\$$marketHkd　(¥${marketJpy.toStringAsFixed(0)})',
+          Text(L.currentMarket('$marketHkd', marketJpy.toStringAsFixed(0)),
               style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
           const SizedBox(height: 12),
           TextField(
             controller: costCtrl,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: const InputDecoration(labelText: '你的成本價', prefixText: 'HK\$ ', isDense: true),
+            decoration: InputDecoration(labelText: L.yourCost, prefixText: 'HK\$ ', isDense: true),
           ),
         ]),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('取消')),
-          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('加入收藏')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(L.cancel)),
+          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: Text(L.addToCollectionBtn)),
         ],
       ),
     );
@@ -115,7 +116,7 @@ class _DexCardDetailScreenState extends State<DexCardDetailScreen> {
         grade: gradeCode, costHkd: cost, marketJpy: marketJpy);
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('已收藏　$label　${widget.card.cleanName}'), duration: const Duration(seconds: 2)));
+        SnackBar(content: Text(L.collectedToast(label, widget.card.cleanName)), duration: const Duration(seconds: 2)));
     }
   }
 
@@ -141,7 +142,7 @@ class _DexCardDetailScreenState extends State<DexCardDetailScreen> {
   Future<void> _saveTransaction() async {
     final price = int.tryParse(_priceCtrl.text);
     if (price == null || price <= 0) {
-      _showSnack('請輸入有效金額', error: true);
+      _showSnack(L.invalidAmount, error: true);
       return;
     }
     await SupabaseService.insertTransaction({
@@ -149,7 +150,7 @@ class _DexCardDetailScreenState extends State<DexCardDetailScreen> {
       'card_name': widget.card.name,
       'grade': _gradeCtrl.text.trim().isEmpty ? 'Raw' : _gradeCtrl.text.trim(),
       'price_ntd': price,
-      'buyer': _buyerCtrl.text.trim().isEmpty ? '匿名' : _buyerCtrl.text.trim(),
+      'buyer': _buyerCtrl.text.trim().isEmpty ? L.anonymous : _buyerCtrl.text.trim(),
       'date': _dateCtrl.text.trim().isEmpty ? _todayStr() : _dateCtrl.text.trim(),
     });
     _gradeCtrl.clear();
@@ -158,7 +159,7 @@ class _DexCardDetailScreenState extends State<DexCardDetailScreen> {
     _dateCtrl.text = _todayStr();
     setState(() => _showAddTx = false);
     _loadTransactions();
-    _showSnack('成交紀錄已儲存');
+    _showSnack(L.txSaved);
   }
 
   void _showSnack(String msg, {bool error = false}) {
@@ -252,7 +253,7 @@ class _DexCardDetailScreenState extends State<DexCardDetailScreen> {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    _collected ? '已收藏' : '加入收藏',
+                    _collected ? L.collected : L.addToCollectionBtn,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
@@ -354,15 +355,15 @@ class _DexCardDetailScreenState extends State<DexCardDetailScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        '成交價格統計',
-                        style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+                      Text(
+                        L.priceStats,
+                        style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
                       ),
                       const SizedBox(height: 8),
                       if (_transactions.isEmpty)
-                        const Text(
-                          '尚無成交紀錄，點下方「新增」記錄成交',
-                          style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
+                        Text(
+                          L.noTxHintAdd,
+                          style: const TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
                         )
                       else ...[
                         Text(
@@ -370,18 +371,18 @@ class _DexCardDetailScreenState extends State<DexCardDetailScreen> {
                           style: const TextStyle(
                             fontSize: 28, fontWeight: FontWeight.w700, color: Color(0xFF16A34A)),
                         ),
-                        const Text(
-                          '平均成交價',
-                          style: TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
+                        Text(
+                          L.avgSalePrice,
+                          style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
                         ),
                         const SizedBox(height: 12),
                         Row(
                           children: [
-                            Expanded(child: _statBox('最高', _highPrice, const Color(0xFFE74C3C))),
+                            Expanded(child: _statBox(L.statHigh, _highPrice, const Color(0xFFE74C3C))),
                             const SizedBox(width: 8),
-                            Expanded(child: _statBox('平均', _avgPrice, const Color(0xFFE8A52A))),
+                            Expanded(child: _statBox(L.statAvg, _avgPrice, const Color(0xFFE8A52A))),
                             const SizedBox(width: 8),
-                            Expanded(child: _statBox('最低', _lowPrice, const Color(0xFF2980B9))),
+                            Expanded(child: _statBox(L.statLow, _lowPrice, const Color(0xFF2980B9))),
                           ],
                         ),
                       ],
@@ -406,9 +407,9 @@ class _DexCardDetailScreenState extends State<DexCardDetailScreen> {
                 // 成交紀錄 header
                 Row(
                   children: [
-                    const Text(
-                      '近期成交紀錄',
-                      style: TextStyle(
+                    Text(
+                      L.recentTx,
+                      style: const TextStyle(
                         fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF111827)),
                     ),
                     const SizedBox(width: 8),
@@ -419,7 +420,7 @@ class _DexCardDetailScreenState extends State<DexCardDetailScreen> {
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
-                        '${_transactions.length} 筆',
+                        L.recordsCount(_transactions.length),
                         style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
                       ),
                     ),
@@ -442,7 +443,7 @@ class _DexCardDetailScreenState extends State<DexCardDetailScreen> {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              _showAddTx ? '取消' : '新增',
+                              _showAddTx ? L.cancel : L.add,
                               style: const TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
@@ -477,16 +478,16 @@ class _DexCardDetailScreenState extends State<DexCardDetailScreen> {
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(color: const Color(0xFFE5E7EB), width: 0.5),
                     ),
-                    child: const Center(
+                    child: Center(
                       child: Column(
                         children: [
-                          Icon(Icons.receipt_long_outlined, size: 36, color: Color(0xFFD1D5DB)),
-                          SizedBox(height: 8),
-                          Text('暫無成交紀錄',
-                              style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 13)),
-                          SizedBox(height: 4),
-                          Text('點「新增」記錄你的成交',
-                              style: TextStyle(color: Color(0xFFD1D5DB), fontSize: 11)),
+                          const Icon(Icons.receipt_long_outlined, size: 36, color: Color(0xFFD1D5DB)),
+                          const SizedBox(height: 8),
+                          Text(L.noTxRecords,
+                              style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 13)),
+                          const SizedBox(height: 4),
+                          Text(L.noTxHintTap,
+                              style: const TextStyle(color: Color(0xFFD1D5DB), fontSize: 11)),
                         ],
                       ),
                     ),
@@ -679,11 +680,11 @@ class _PsaPopCard extends StatelessWidget {
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
-          const Text('PSA Pop 數量',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF111827))),
+          Text(L.psaPopCount,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF111827))),
           const Spacer(),
           if (dateStr.isNotEmpty)
-            Text('更新：$dateStr',
+            Text(L.psaUpdated(dateStr),
                 style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF))),
         ]),
         const SizedBox(height: 12),
@@ -697,8 +698,8 @@ class _PsaPopCard extends StatelessWidget {
         }).toList()),
         const SizedBox(height: 8),
         Row(children: [
-          const Text('總計：', style: TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
-          Text('${(pop['total'] as num?)?.toInt() ?? 0} 張',
+          Text(L.total, style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
+          Text(L.totalCards((pop['total'] as num?)?.toInt() ?? 0),
               style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF111827))),
         ]),
       ]),
@@ -752,20 +753,20 @@ class _SnkrPriceCard extends StatelessWidget {
             decoration: BoxDecoration(color: const Color(0xFFE8A52A), borderRadius: BorderRadius.circular(9)),
             child: const Center(child: Text('🇯🇵', style: TextStyle(fontSize: 18)))),
           const SizedBox(width: 10),
-          const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('SNKRDUNK 日本市場成交', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: Color(0xFF111827))),
-            Text('近期實際成交價（日圓）', style: TextStyle(fontSize: 10.5, color: Color(0xFF9CA3AF))),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(L.snkrTitle, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: Color(0xFF111827))),
+            Text(L.snkrSubtitle, style: const TextStyle(fontSize: 10.5, color: Color(0xFF9CA3AF))),
           ])),
           GestureDetector(onTap: onTap, child: const Icon(Icons.open_in_new, size: 16, color: Color(0xFFE8A52A))),
         ]),
         const SizedBox(height: 12),
 
         if (loading)
-          const Padding(padding: EdgeInsets.symmetric(vertical: 8),
-            child: Text('查詢中...', style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))))
+          Padding(padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Text(L.snkrLoading, style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))))
         else if (data == null)
-          const Padding(padding: EdgeInsets.symmetric(vertical: 8),
-            child: Text('SNKRDUNK 暫無此卡成交資料', style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))))
+          Padding(padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Text(L.snkrNoData, style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))))
         else ...[
           // 三種分級價格
           Row(children: [
@@ -773,7 +774,7 @@ class _SnkrPriceCard extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(child: _gradeBox('PSA 9', 'PSA9', data!['psa9'], const Color(0xFF2980B9))),
             const SizedBox(width: 8),
-            Expanded(child: _gradeBox('生卡', 'RAW', data!['raw'], const Color(0xFF6B7280))),
+            Expanded(child: _gradeBox(L.rawCard, 'RAW', data!['raw'], const Color(0xFF6B7280))),
           ]),
           // PSA10 價格走勢圖（7日/30日）
           if (data!['psa10'] is Map &&
@@ -801,7 +802,7 @@ class _SnkrPriceCard extends StatelessWidget {
         Text(m == null ? '—' : _yen(m['avg']),
             style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: color),
             maxLines: 1, overflow: TextOverflow.ellipsis),
-        Text(m == null ? '無成交' : '${m['count']} 筆',
+        Text(m == null ? L.noSales : L.salesCount(m['count']),
             style: const TextStyle(fontSize: 9, color: Color(0xFF9CA3AF))),
         if (m != null && onAddGrade != null) ...[
           const SizedBox(height: 6),
@@ -811,8 +812,8 @@ class _SnkrPriceCard extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 3),
               decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(6)),
-              child: const Text('＋收藏', textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, color: Colors.white)),
+              child: Text(L.addCollectShort, textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, color: Colors.white)),
             ),
           ),
         ],
@@ -826,7 +827,7 @@ class _SnkrPriceCard extends StatelessWidget {
     if (recent.isEmpty) return [];
     return [
       const SizedBox(height: 12),
-      const Text('PSA 10 近期成交', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
+      Text(L.snkrRecent, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
       const SizedBox(height: 6),
       ...recent.take(5).map((r) {
         final item = r as Map<String, dynamic>;
@@ -877,8 +878,8 @@ class _SnkrChartState extends State<_SnkrChart> {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       const SizedBox(height: 14),
       Row(children: [
-        const Text('PSA 10 價格走勢',
-            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
+        Text(L.psaPriceTrend,
+            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
         const SizedBox(width: 8),
         if (chg != null)
           Container(
@@ -908,7 +909,7 @@ class _SnkrChartState extends State<_SnkrChart> {
         decoration: BoxDecoration(
           color: sel ? const Color(0xFFE8A52A) : const Color(0xFFF3F4F6),
           borderRadius: BorderRadius.circular(6)),
-        child: Text('$d日',
+        child: Text(L.daysShort(d),
             style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700,
                 color: sel ? Colors.white : const Color(0xFF6B7280))),
       ),
@@ -1001,21 +1002,21 @@ class _AddTxForm extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('新增成交紀錄',
-              style: TextStyle(
+          Text(L.addTxTitle,
+              style: const TextStyle(
                   fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF111827))),
           const SizedBox(height: 12),
           Row(
             children: [
-              Expanded(child: _field(gradeCtrl, '評級（如 PSA 10）')),
+              Expanded(child: _field(gradeCtrl, L.gradeFieldHint)),
               const SizedBox(width: 8),
-              Expanded(child: _field(priceCtrl, '成交金額 HK\$', isNumber: true)),
+              Expanded(child: _field(priceCtrl, L.amountFieldHint, isNumber: true)),
             ],
           ),
           const SizedBox(height: 8),
           Row(
             children: [
-              Expanded(child: _field(buyerCtrl, '買家（選填）')),
+              Expanded(child: _field(buyerCtrl, L.buyerFieldHint)),
               const SizedBox(width: 8),
               Expanded(child: _field(dateCtrl, 'YYYY/MM/DD')),
             ],
@@ -1032,8 +1033,8 @@ class _AddTxForm extends StatelessWidget {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 elevation: 0,
               ),
-              child: const Text('儲存',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+              child: Text(L.save,
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
             ),
           ),
         ],

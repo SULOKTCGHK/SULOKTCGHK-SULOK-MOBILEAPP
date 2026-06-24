@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../services/announcement_service.dart';
+import '../i18n/strings.dart';
 
 class AnnouncementDetailScreen extends StatelessWidget {
   final Announcement announcement;
@@ -39,8 +40,8 @@ class AnnouncementDetailScreen extends StatelessWidget {
           icon: const Icon(Icons.chevron_left, color: Color(0xFF374151), size: 28),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('公告詳情',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Color(0xFF111827))),
+        title: Text(L.announcementDetail,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Color(0xFF111827))),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),

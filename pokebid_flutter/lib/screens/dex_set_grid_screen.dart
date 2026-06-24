@@ -4,6 +4,7 @@ import 'package:shimmer/shimmer.dart';
 import '../services/api_service.dart';
 import '../services/supabase_service.dart';
 import 'dex_card_detail_screen.dart';
+import '../i18n/strings.dart';
 
 class DexSetGridScreen extends StatefulWidget {
   final ApiSet set;
@@ -144,7 +145,7 @@ class _DexSetGridScreenState extends State<DexSetGridScreen> {
           Text(widget.set.displayName,
               style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600,
                   color: Color(0xFF111827))),
-          Text('${widget.set.total} 張 · ${widget.set.releaseDate ?? ''}',
+          Text(L.setTotalDate(widget.set.total, widget.set.releaseDate ?? ''),
               style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF))),
         ]),
       ),
@@ -162,11 +163,11 @@ class _DexSetGridScreenState extends State<DexSetGridScreen> {
                     scrollDirection: Axis.horizontal,
                     child: Row(children: [
                       // Sort chips
-                      _sortChip('編號 ↑', _SortMode.numAsc),
+                      _sortChip(L.sortNumAsc, _SortMode.numAsc),
                       const SizedBox(width: 6),
-                      _sortChip('編號 ↓', _SortMode.numDesc),
+                      _sortChip(L.sortNumDesc, _SortMode.numDesc),
                       const SizedBox(width: 6),
-                      _sortChip('稀有度', _SortMode.rarity),
+                      _sortChip(L.sortRarity, _SortMode.rarity),
                       // Divider
                       Container(
                         width: 1, height: 20,
@@ -174,7 +175,7 @@ class _DexSetGridScreenState extends State<DexSetGridScreen> {
                         color: const Color(0xFFE5E7EB),
                       ),
                       // Rarity filter chips
-                      _rarityChip(null, '全部'),
+                      _rarityChip(null, L.all),
                       ..._availableRarities.map((r) =>
                           Padding(
                             padding: const EdgeInsets.only(left: 6),
@@ -294,11 +295,11 @@ class _DexSetGridScreenState extends State<DexSetGridScreen> {
               child: const Center(child: Text('🃏', style: TextStyle(fontSize: 36))),
             ),
             const SizedBox(height: 20),
-            const Text('此系列暫無卡牌資料',
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: Color(0xFF374151))),
+            Text(L.noCardsInSet,
+                style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: Color(0xFF374151))),
             const SizedBox(height: 8),
             Text(
-              '${widget.set.id} 尚未抓取或仍在更新中。\n下拉可重新載入。',
+              L.setNotFetched(widget.set.id),
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 13, color: Color(0xFF9CA3AF), height: 1.6),
             ),

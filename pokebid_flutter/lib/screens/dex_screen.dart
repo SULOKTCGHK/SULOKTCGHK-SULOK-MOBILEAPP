@@ -7,6 +7,7 @@ import '../services/supabase_service.dart';
 import 'dex_card_detail_screen.dart';
 import 'dex_set_grid_screen.dart';
 import 'pokemon_dex_screen.dart';
+import '../i18n/strings.dart';
 
 class DexScreen extends StatefulWidget {
   const DexScreen({super.key});
@@ -109,7 +110,7 @@ class _DexScreenState extends State<DexScreen> {
     return 'other';
   }
 
-  String _seriesName(String key) => _seriesNames[key] ?? '其他系列';
+  String _seriesName(String key) => L.seriesName(key);
 
   List<ApiSet> _sortByDate(List<ApiSet> list) {
     list.sort((a, b) {
@@ -197,7 +198,7 @@ class _DexScreenState extends State<DexScreen> {
         _loadingSets = false;
       });
     } catch (e) {
-      if (mounted) setState(() { _error = '載入失敗：$e'; _loadingSets = false; });
+      if (mounted) setState(() { _error = L.dexLoadFailed('$e'); _loadingSets = false; });
     }
   }
 
@@ -243,12 +244,12 @@ class _DexScreenState extends State<DexScreen> {
               )
             : null,
         title: RichText(
-          text: const TextSpan(
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500, color: Color(0xFF111827)),
+          text: TextSpan(
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500, color: Color(0xFF111827)),
             children: [
-              TextSpan(text: 'Poke'),
-              TextSpan(text: 'Bid', style: TextStyle(color: Color(0xFFE8A52A))),
-              TextSpan(text: ' 圖鑑', style: TextStyle(fontSize: 15, color: Color(0xFF6B7280))),
+              const TextSpan(text: 'Poke'),
+              const TextSpan(text: 'Bid', style: TextStyle(color: Color(0xFFE8A52A))),
+              TextSpan(text: L.dexTitleSuffix, style: const TextStyle(fontSize: 15, color: Color(0xFF6B7280))),
             ],
           ),
         ),
@@ -271,7 +272,7 @@ class _DexScreenState extends State<DexScreen> {
                 onChanged: _search,
                 style: const TextStyle(fontSize: 14),
                 decoration: InputDecoration(
-                  hintText: '搜尋卡牌名稱...',
+                  hintText: L.searchCardHint,
                   hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
                   prefixIcon: const Icon(Icons.search, color: Color(0xFF9CA3AF), size: 20),
                   suffixIcon: _searchCtrl.text.isNotEmpty
@@ -294,9 +295,9 @@ class _DexScreenState extends State<DexScreen> {
             color: Colors.white,
             padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
             child: Row(children: [
-              _modeTab('sets', '📦 系列圖鑑'),
+              _modeTab('sets', L.tabSetDex),
               const SizedBox(width: 8),
-              _modeTab('pokemon', '🐾 精靈圖鑑'),
+              _modeTab('pokemon', L.tabPokemonDex),
             ]),
           ),
           Container(height: 0.5, color: const Color(0xFFE5E7EB)),
@@ -315,11 +316,11 @@ class _DexScreenState extends State<DexScreen> {
       return const Center(child: CircularProgressIndicator(color: Color(0xFFE8A52A), strokeWidth: 2));
     }
     if (_searchResults.isEmpty) {
-      return const Center(
+      return Center(
         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Icon(Icons.search_off, size: 48, color: Color(0xFFD1D5DB)),
-          SizedBox(height: 12),
-          Text('找不到卡牌', style: TextStyle(color: Color(0xFF9CA3AF))),
+          const Icon(Icons.search_off, size: 48, color: Color(0xFFD1D5DB)),
+          const SizedBox(height: 12),
+          Text(L.cardNotFound, style: const TextStyle(color: Color(0xFF9CA3AF))),
         ]),
       );
     }
@@ -365,17 +366,17 @@ class _DexScreenState extends State<DexScreen> {
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
           child: Row(children: [
-            _branchCard('box',   '📦', '卡盒',  '擴充包'),
+            _branchCard('box',   '📦', L.branchBox,  L.branchBoxDesc),
             const SizedBox(width: 10),
-            _branchCard('deck',  '🎴', '牌組',  'Deck / 禮盒'),
+            _branchCard('deck',  '🎴', L.branchDeck,  L.branchDeckDesc),
             const SizedBox(width: 10),
-            _branchCard('promo', '✨', 'PROMO', '特典卡'),
+            _branchCard('promo', '✨', 'PROMO', L.branchPromoDesc),
           ]),
         ),
 
         if (_branch == 'promo') ..._buildPromoLevel()
-        else if (_branch == 'box') ..._buildSeriesBranch(_boxSets, '尚無卡盒資料')
-        else if (_branch == 'deck') ..._buildSeriesBranch(_deckSets, '尚無牌組資料'),
+        else if (_branch == 'box') ..._buildSeriesBranch(_boxSets, L.noBoxData)
+        else if (_branch == 'deck') ..._buildSeriesBranch(_deckSets, L.noDeckData),
 
         const SizedBox(height: 100),
       ],
@@ -386,9 +387,9 @@ class _DexScreenState extends State<DexScreen> {
   List<Widget> _buildPromoLevel() {
     final sets = _promoSets;
     return [
-      _sectionHeader('PROMO 系列（${sets.length}）'),
+      _sectionHeader(L.promoSeriesCount(sets.length)),
       if (sets.isEmpty)
-        _emptyHint('尚無 PROMO 資料')
+        _emptyHint(L.noPromoData)
       else
         _setGrid(sets),
     ];
@@ -419,7 +420,7 @@ class _DexScreenState extends State<DexScreen> {
     if (_selectedSeries == null) {
       final groups = _seriesGroups(branchSets);
       return [
-        _sectionHeader('選擇系列'),
+        _sectionHeader(L.selectSet),
         if (groups.isEmpty)
           _emptyHint(emptyMsg)
         else
@@ -439,9 +440,9 @@ class _DexScreenState extends State<DexScreen> {
         child: Row(children: [
           GestureDetector(
             onTap: () => setState(() => _selectedSeries = null),
-            child: const Row(mainAxisSize: MainAxisSize.min, children: [
-              Icon(Icons.chevron_left, size: 18, color: Color(0xFFE8A52A)),
-              Text('系列', style: TextStyle(fontSize: 13, color: Color(0xFFE8A52A))),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              const Icon(Icons.chevron_left, size: 18, color: Color(0xFFE8A52A)),
+              Text(L.seriesShort, style: const TextStyle(fontSize: 13, color: Color(0xFFE8A52A))),
             ]),
           ),
           const SizedBox(width: 8),
@@ -534,7 +535,7 @@ class _DexScreenState extends State<DexScreen> {
           Icon(_sortNewestFirst ? Icons.arrow_downward : Icons.arrow_upward,
               size: 12, color: const Color(0xFFE8A52A)),
           const SizedBox(width: 4),
-          Text(_sortNewestFirst ? '最新在前' : '最舊在前',
+          Text(_sortNewestFirst ? L.newestFirst : L.oldestFirst,
               style: const TextStyle(fontSize: 11, color: Color(0xFFE8A52A))),
         ]),
       ),
@@ -659,8 +660,8 @@ class _CollectionBanner extends StatelessWidget {
                 child: const Icon(Icons.collections_bookmark_outlined, color: Colors.white, size: 15),
               ),
               const SizedBox(width: 8),
-              const Text('我的收藏總價值',
-                  style: TextStyle(color: Colors.white70, fontSize: 12.5, fontWeight: FontWeight.w500)),
+              Text(L.myCollectionValue,
+                  style: const TextStyle(color: Colors.white70, fontSize: 12.5, fontWeight: FontWeight.w500)),
               const Spacer(),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -669,7 +670,7 @@ class _CollectionBanner extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: Colors.white.withOpacity(0.2), width: 0.5),
                 ),
-                child: Text('已收 $collected 張',
+                child: Text(L.collectedCount(collected),
                     style: const TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.w600)),
               ),
             ]),
@@ -711,7 +712,7 @@ class _CollectionBanner extends StatelessWidget {
                   child: CustomPaint(painter: _SparklinePainter(points))),
             ],
             const SizedBox(height: 10),
-            Text(points.length >= 2 ? '近 ${points.length} 日走勢 · 以市場參考價計算' : '以市場參考價計算',
+            Text(points.length >= 2 ? L.trendDays(points.length) : L.marketRefPriceNote,
                 style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 11)),
           ]),
         ),
@@ -826,7 +827,7 @@ class _SetCard extends StatelessWidget {
                     style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF111827), height: 1.2),
                     maxLines: 2, overflow: TextOverflow.ellipsis),
                 const SizedBox(height: 3),
-                Text('$year · ${set.total} 張',
+                Text(L.setYearCount(year, set.total),
                     style: const TextStyle(fontSize: 10.5, color: Color(0xFF9CA3AF))),
               ]),
             ),
@@ -876,7 +877,7 @@ class _SeriesTile extends StatelessWidget {
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF111827))),
             const SizedBox(height: 2),
-            Text('$count 個系列${latestDate.length >= 10 ? ' · 最新 ${latestDate.substring(0, 10)}' : ''}',
+            Text(L.seriesGroupCount(count, latestDate.length >= 10 ? L.latestDateSuffix(latestDate.substring(0, 10)) : ''),
                 style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF))),
           ])),
           const Icon(Icons.chevron_right, color: Color(0xFF9CA3AF), size: 20),
@@ -1019,15 +1020,15 @@ class _ErrorWidget extends StatelessWidget {
     child: Column(children: [
       const Icon(Icons.wifi_off, size: 48, color: Color(0xFFD1D5DB)),
       const SizedBox(height: 12),
-      const Text('無法載入資料',
-          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: Color(0xFF374151))),
+      Text(L.loadFailedTitle,
+          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: Color(0xFF374151))),
       const SizedBox(height: 6),
       Text(message, style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)), textAlign: TextAlign.center),
       const SizedBox(height: 16),
       ElevatedButton.icon(
         onPressed: onRetry,
         icon: const Icon(Icons.refresh, size: 16),
-        label: const Text('重試'),
+        label: Text(L.retry),
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFFE8A52A), foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), elevation: 0,

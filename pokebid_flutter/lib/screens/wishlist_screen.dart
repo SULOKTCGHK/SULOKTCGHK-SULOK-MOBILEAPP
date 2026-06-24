@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/wishlist_service.dart';
 import '../services/api_service.dart';
 import '../widgets/login_required.dart';
+import '../i18n/strings.dart';
 
 class WishlistScreen extends StatefulWidget {
   const WishlistScreen({super.key});
@@ -31,7 +32,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
   }
 
   Future<void> _addWish() async {
-    if (!await requireLogin(context, action: '新增願望')) return;
+    if (!await requireLogin(context, action: L.addWishAction)) return;
     if (!mounted) return;
     final kwCtrl = TextEditingController();
     final priceCtrl = TextEditingController();
@@ -39,23 +40,23 @@ class _WishlistScreenState extends State<WishlistScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('新增願望', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+        title: Text(L.addWish, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
         content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('輸入想要的卡片關鍵字（卡名），有符合的新上架會通知你。',
-              style: TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
+          Text(L.addWishDesc,
+              style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
           const SizedBox(height: 12),
           TextField(controller: kwCtrl, autofocus: true,
-            decoration: const InputDecoration(labelText: '關鍵字（卡名）', hintText: '例：Umbreon ex', isDense: true)),
+            decoration: InputDecoration(labelText: L.keywordLabel, hintText: '例：Umbreon ex', isDense: true)),
           const SizedBox(height: 10),
           TextField(controller: priceCtrl, keyboardType: TextInputType.number,
-            decoration: const InputDecoration(labelText: '預算上限（選填）', prefixText: 'HK\$ ', isDense: true)),
+            decoration: InputDecoration(labelText: L.budgetMaxOptional, prefixText: 'HK\$ ', isDense: true)),
         ]),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('取消')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(L.cancel)),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE8A52A)),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('加入', style: TextStyle(color: Colors.white))),
+            child: Text(L.add2, style: const TextStyle(color: Colors.white))),
         ],
       ),
     );
@@ -63,13 +64,13 @@ class _WishlistScreenState extends State<WishlistScreen> {
     final kw = kwCtrl.text.trim();
     if (kw.isEmpty) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('請輸入關鍵字')));
+          SnackBar(content: Text(L.enterKeyword)));
       return;
     }
     await WishlistService.add(keyword: kw, maxPrice: int.tryParse(priceCtrl.text.trim()));
     _load();
     if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('已加入願望清單'), duration: Duration(seconds: 2)));
+        SnackBar(content: Text(L.addedToWishlist), duration: const Duration(seconds: 2)));
   }
 
   @override
@@ -88,14 +89,14 @@ class _WishlistScreenState extends State<WishlistScreen> {
           icon: const Icon(Icons.chevron_left, color: Color(0xFF374151), size: 28),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('願望清單',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Color(0xFF111827))),
+        title: Text(L.wishlistTitle,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Color(0xFF111827))),
       ),
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: const Color(0xFFE8A52A),
         onPressed: _addWish,
         icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text('新增願望', style: TextStyle(color: Colors.white)),
+        label: Text(L.addWish, style: const TextStyle(color: Colors.white)),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: Color(0xFFE8A52A), strokeWidth: 2))
@@ -111,14 +112,14 @@ class _WishlistScreenState extends State<WishlistScreen> {
   }
 
   Widget _empty() => Center(
-    child: Column(mainAxisAlignment: MainAxisAlignment.center, children: const [
-      Icon(Icons.favorite_border, size: 56, color: Color(0xFFD1D5DB)),
-      SizedBox(height: 12),
-      Text('願望清單是空的',
-          style: TextStyle(fontSize: 14, color: Color(0xFF9CA3AF))),
-      SizedBox(height: 4),
-      Text('點右下「＋新增願望」加入想要的卡',
-          style: TextStyle(fontSize: 12, color: Color(0xFFD1D5DB))),
+    child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+      const Icon(Icons.favorite_border, size: 56, color: Color(0xFFD1D5DB)),
+      const SizedBox(height: 12),
+      Text(L.wishlistEmpty,
+          style: const TextStyle(fontSize: 14, color: Color(0xFF9CA3AF))),
+      const SizedBox(height: 4),
+      Text(L.wishlistEmptyHint,
+          style: const TextStyle(fontSize: 12, color: Color(0xFFD1D5DB))),
     ]),
   );
 
@@ -153,13 +154,13 @@ class _WishlistScreenState extends State<WishlistScreen> {
             ]),
             if (w.maxPrice != null) ...[
               const SizedBox(height: 4),
-              Text('預算上限 HK\$${w.maxPrice}',
+              Text(L.budgetMax(w.maxPrice!),
                   style: const TextStyle(fontSize: 12, color: Color(0xFF16A34A),
                       fontWeight: FontWeight.w600)),
             ],
             const SizedBox(height: 2),
-            const Text('有新上架符合時會通知你',
-                style: TextStyle(fontSize: 11, color: Color(0xFF9CA3AF))),
+            Text(L.notifyOnMatch,
+                style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF))),
           ]),
         ),
         IconButton(
