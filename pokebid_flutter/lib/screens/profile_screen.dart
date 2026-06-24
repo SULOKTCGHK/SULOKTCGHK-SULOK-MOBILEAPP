@@ -274,6 +274,65 @@ class _ProfileScreenState extends State<ProfileScreen>
   String _fmt(int p) => p.toString().replaceAllMapped(
       RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
 
+  Future<void> _deleteAccount() async {
+    // 第一步：輸入確認文字
+    final confirmCtrl = TextEditingController();
+    final typed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => StatefulBuilder(
+        builder: (ctx, setState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('刪除帳號', style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFFE74C3C))),
+          content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Text('此操作無法復原。你的掛售商品、出價、收藏及個人資料將被永久刪除。', style: TextStyle(fontSize: 13.5, height: 1.5, color: Color(0xFF374151))),
+            const SizedBox(height: 16),
+            const Text('請輸入「確認刪除」以繼續：', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 8),
+            TextField(
+              controller: confirmCtrl,
+              autofocus: true,
+              decoration: InputDecoration(
+                hintText: '確認刪除',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              ),
+              onChanged: (_) => setState(() {}),
+            ),
+          ]),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('取消')),
+            ElevatedButton(
+              onPressed: confirmCtrl.text == '確認刪除' ? () => Navigator.pop(ctx, true) : null,
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE74C3C), foregroundColor: Colors.white),
+              child: const Text('永久刪除'),
+            ),
+          ],
+        ),
+      ),
+    );
+    confirmCtrl.dispose();
+    if (typed != true || !mounted) return;
+
+    // 第二步：執行刪除
+    try {
+      await AuthService.deleteAccount();
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+          (route) => false,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('刪除失敗：$e'),
+          backgroundColor: const Color(0xFFE74C3C),
+        ));
+      }
+    }
+  }
+
   Future<void> _signOut() async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -1380,19 +1439,32 @@ class _ProfileScreenState extends State<ProfileScreen>
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFE74C3C).withOpacity(0.3),
-                    width: 0.5),
+                border: Border.all(color: const Color(0xFFE74C3C).withValues(alpha: 0.3), width: 0.5),
               ),
-              child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.logout, color: Color(0xFFE74C3C), size: 18),
-                    SizedBox(width: 8),
-                    Text('登出帳號',
-                        style: TextStyle(fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: Color(0xFFE74C3C))),
-                  ]),
+              child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                Icon(Icons.logout, color: Color(0xFFE74C3C), size: 18),
+                SizedBox(width: 8),
+                Text('登出帳號', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Color(0xFFE74C3C))),
+              ]),
+            ),
+          ),
+          const SizedBox(height: 12),
+          // 刪除帳號（Apple App Store 要求）
+          GestureDetector(
+            onTap: _deleteAccount,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF2F2),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFE74C3C).withValues(alpha: 0.2), width: 0.5),
+              ),
+              child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                Icon(Icons.delete_forever_outlined, color: Color(0xFF9CA3AF), size: 18),
+                SizedBox(width: 8),
+                Text('刪除帳號', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFF9CA3AF))),
+              ]),
             ),
           ),
         ],

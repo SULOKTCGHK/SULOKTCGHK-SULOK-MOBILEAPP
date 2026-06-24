@@ -47,6 +47,16 @@ class AuthService {
     await prefs.remove('user_id');
   }
 
+  // 刪除帳號（呼叫 Edge Function 以 service_role 刪除 Auth 帳號及所有資料）
+  static Future<void> deleteAccount() async {
+    if (!isLoggedIn) return;
+    final res = await _client.functions.invoke('delete-account', method: HttpMethod.post);
+    if (res.status != 200) {
+      throw Exception('刪除帳號失敗（${res.status}）');
+    }
+    await signOut();
+  }
+
   // 監聽登入狀態變化
   static Stream<AuthState> get authStateChanges =>
       _client.auth.onAuthStateChange;
