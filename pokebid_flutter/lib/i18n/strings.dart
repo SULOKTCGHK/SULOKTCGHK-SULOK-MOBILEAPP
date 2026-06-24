@@ -639,4 +639,23 @@ class L {
   static String get obDexBody =>
       _t('查閱每張卡的 SNKRDUNK 日本市場成交價、PSA Pop 數量，並追蹤你的收藏總價值。',
         'Check each card\'s SNKRDUNK Japan sale prices and PSA Pop counts, and track your collection\'s total value.');
+
+  // ── Coach mark ─────────────────────────────────────────────────────────
+  static String coachStep(int cur, int total) => _t('步驟 $cur / $total', 'Step $cur / $total');
+  static String get coachSkip => _t('跳過引導', 'Skip tour');
+  static String get coachDone => _t('完成引導 🎉', 'Done 🎉');
+  static String get coachNext => _t('下一步  →', 'Next  →');
+
+  // ── Pokémon Dex ────────────────────────────────────────────────────────
+  static String get pokemonBack => _t('精靈', 'Pokémon');
+  static String get pokemonDexTitle => _t('精靈圖鑑', 'Pokémon Dex');
+  static String get searchPokemonHint => _t('搜尋精靈名稱或編號...', 'Search Pokémon name or number...');
+  static String pokemonCount(int n) => _t('共 $n 隻精靈', '$n Pokémon');
+  static String get noPokemon => _t('找不到精靈', 'No Pokémon found');
+  static String noCardsForPokemon(String name) =>
+      _t('找不到「$name」相關卡片', 'No cards found for "$name"');
+  static String get pokemonNotInDb => _t('資料庫可能未收錄此精靈', 'This Pokémon may not be in our database yet');
+  // Pokémon name by current locale
+  static String pokemonName(Map<String, dynamic> p) =>
+      _en ? (p['en'] as String? ?? '') : (p['zh'] as String? ?? p['en'] as String? ?? '');
 }

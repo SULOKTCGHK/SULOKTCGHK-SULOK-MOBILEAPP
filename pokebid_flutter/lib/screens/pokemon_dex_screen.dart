@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../services/supabase_service.dart';
 import '../services/api_service.dart';
 import 'dex_card_detail_screen.dart';
+import '../i18n/strings.dart';
 
 // 世代定義：name、id 範圍
 const List<Map<String, dynamic>> _kGens = [
@@ -623,9 +624,9 @@ class _PokemonDexScreenState extends State<PokemonDexScreen> {
             child: Row(children: [
               GestureDetector(
                 onTap: () => setState(() { _selectedPokemon = null; _cards = []; }),
-                child: const Row(mainAxisSize: MainAxisSize.min, children: [
-                  Icon(Icons.chevron_left, size: 20, color: Color(0xFFE8A52A)),
-                  Text('精靈', style: TextStyle(fontSize: 13, color: Color(0xFFE8A52A))),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  const Icon(Icons.chevron_left, size: 20, color: Color(0xFFE8A52A)),
+                  Text(L.pokemonBack, style: const TextStyle(fontSize: 13, color: Color(0xFFE8A52A))),
                 ]),
               ),
               const SizedBox(width: 8),
@@ -642,7 +643,7 @@ class _PokemonDexScreenState extends State<PokemonDexScreen> {
         backgroundColor: Colors.white, elevation: 0.5,
         foregroundColor: const Color(0xFF111827),
         title: _selectedPokemon == null
-            ? const Text('精靈圖鑑', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700))
+            ? Text(L.pokemonDexTitle, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700))
             : Row(children: [
                 GestureDetector(
                   onTap: () => setState(() { _selectedPokemon = null; _cards = []; }),
@@ -673,7 +674,7 @@ class _PokemonDexScreenState extends State<PokemonDexScreen> {
           onChanged: (v) => setState(() => _query = v),
           style: const TextStyle(fontSize: 14),
           decoration: InputDecoration(
-            hintText: '搜尋精靈名稱或編號...',
+            hintText: L.searchPokemonHint,
             hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
             prefixIcon: const Icon(Icons.search, color: Color(0xFF9CA3AF), size: 20),
             suffixIcon: _query.isNotEmpty
@@ -709,7 +710,7 @@ class _PokemonDexScreenState extends State<PokemonDexScreen> {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 alignment: Alignment.center,
-                child: Text(_kGens[i]['label'] as String,
+                child: Text(i == 0 ? L.all : _kGens[i]['label'] as String,
                     style: TextStyle(
                       fontSize: 11.5, fontWeight: FontWeight.w600,
                       color: active ? Colors.white : const Color(0xFF6B7280))),
@@ -722,14 +723,14 @@ class _PokemonDexScreenState extends State<PokemonDexScreen> {
       Padding(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
         child: Row(children: [
-          Text('共 ${list.length} 隻精靈',
+          Text(L.pokemonCount(list.length),
               style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))),
         ]),
       ),
       // 精靈格
       Expanded(
         child: list.isEmpty
-            ? const Center(child: Text('找不到精靈', style: TextStyle(color: Color(0xFF9CA3AF))))
+            ? Center(child: Text(L.noPokemon, style: const TextStyle(color: Color(0xFF9CA3AF))))
             : GridView.builder(
                 padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -761,7 +762,7 @@ class _PokemonDexScreenState extends State<PokemonDexScreen> {
               style: const TextStyle(fontSize: 9, color: Color(0xFF9CA3AF))),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: Text(p['zh'] as String,
+            child: Text(L.pokemonName(p),
                 style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600,
                     color: Color(0xFF374151)),
                 maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center),
@@ -779,11 +780,11 @@ class _PokemonDexScreenState extends State<PokemonDexScreen> {
       return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
         const Icon(Icons.style_outlined, size: 48, color: Color(0xFFD1D5DB)),
         const SizedBox(height: 12),
-        Text('找不到「$_selectedPokemon」相關卡片',
+        Text(L.noCardsForPokemon(_selectedPokemon ?? ''),
             style: const TextStyle(color: Color(0xFF9CA3AF))),
         const SizedBox(height: 6),
-        const Text('資料庫可能未收錄此精靈',
-            style: TextStyle(fontSize: 12, color: Color(0xFFD1D5DB))),
+        Text(L.pokemonNotInDb,
+            style: const TextStyle(fontSize: 12, color: Color(0xFFD1D5DB))),
       ]));
     }
     return GridView.builder(
