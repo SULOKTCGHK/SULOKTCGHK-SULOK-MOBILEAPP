@@ -7,6 +7,7 @@ import '../services/listing_service.dart';
 import '../services/auth_service.dart';
 import '../services/supabase_service.dart';
 import '../data/set_name_zh.dart';
+import '../i18n/strings.dart';
 
 class PostListingSheet extends StatefulWidget {
   final Function(PokemonCard) onSubmit;
@@ -149,8 +150,8 @@ class _PostListingSheetState extends State<PostListingSheet> {
   Future<void> _submit() async {
     final name = _nameCtrl.text.trim();
     final price = int.tryParse(_priceCtrl.text);
-    if (name.isEmpty) { _showError('請輸入卡牌名稱'); return; }
-    if (price == null || price < 1) { _showError('請輸入有效價格'); return; }
+    if (name.isEmpty) { _showError(L.errEnterName); return; }
+    if (price == null || price < 1) { _showError(L.errEnterPrice); return; }
 
     setState(() => _submitting = true);
 
@@ -181,7 +182,7 @@ class _PostListingSheetState extends State<PostListingSheet> {
     if (!mounted) return;
     setState(() => _submitting = false);
 
-    if (!ok) { _showError('上架失敗，請稍後再試'); return; }
+    if (!ok) { _showError(L.errPostFailed); return; }
 
     // Pass a placeholder card so onSubmit callback triggers the refresh
     widget.onSubmit(PokemonCard(
@@ -189,11 +190,11 @@ class _PostListingSheetState extends State<PostListingSheet> {
       type: CardType.normal, price: price,
       condition: _cardCondition == 'raw' ? 'Raw' : 'Graded',
       seller: Seller(
-        name: AuthService.isLoggedIn ? AuthService.displayName : '匿名賣家',
+        name: AuthService.isLoggedIn ? AuthService.displayName : L.anonymousSeller,
         rating: 5.0, sales: 0,
       ),
       listingType: ListingType.fixedPrice,
-      timeInfo: '剛上架',
+      timeInfo: L.justListed,
     ));
     Navigator.pop(context);
   }
@@ -235,8 +236,8 @@ class _PostListingSheetState extends State<PostListingSheet> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 8, 8, 0),
                 child: Row(children: [
-                  const Text('上架掛售',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600,
+                  Text(L.postListingTitle,
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600,
                           color: Color(0xFF111827))),
                   const Spacer(),
                   IconButton(
@@ -307,7 +308,7 @@ class _PostListingSheetState extends State<PostListingSheet> {
                               ),
                             ),
                             const SizedBox(height: 6),
-                            Text('${_images.length}/4 張照片',
+                            Text(L.photosCount(_images.length),
                                 style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF))),
                           ] else
                             GestureDetector(
@@ -320,11 +321,11 @@ class _PostListingSheetState extends State<PostListingSheet> {
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(color: const Color(0xFFD1D5DB), width: 1.5),
                                 ),
-                                child: const Column(children: [
-                                  Icon(Icons.add_a_photo_outlined, size: 28, color: Color(0xFF9CA3AF)),
-                                  SizedBox(height: 6),
-                                  Text('上傳卡牌照片（最多4張）',
-                                      style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF))),
+                                child: Column(children: [
+                                  const Icon(Icons.add_a_photo_outlined, size: 28, color: Color(0xFF9CA3AF)),
+                                  const SizedBox(height: 6),
+                                  Text(L.uploadPhotos,
+                                      style: const TextStyle(fontSize: 13, color: Color(0xFF9CA3AF))),
                                 ]),
                               ),
                             ),
@@ -351,8 +352,8 @@ class _PostListingSheetState extends State<PostListingSheet> {
                             child: Row(children: [
                               const Icon(Icons.search, size: 16, color: Color(0xFFE8A52A)),
                               const SizedBox(width: 8),
-                              const Expanded(child: Text('從圖鑑選卡（選填）',
-                                  style: TextStyle(fontSize: 13, color: Color(0xFFB45309), fontWeight: FontWeight.w500))),
+                              Expanded(child: Text(L.pickFromDex,
+                                  style: const TextStyle(fontSize: 13, color: Color(0xFFB45309), fontWeight: FontWeight.w500))),
                               const Icon(Icons.chevron_right, size: 16, color: Color(0xFFE8A52A)),
                             ]),
                           ),
@@ -360,28 +361,28 @@ class _PostListingSheetState extends State<PostListingSheet> {
                       const SizedBox(height: 12),
 
                       // Card name
-                      _label('卡牌名稱'),
-                      _textField(_nameCtrl, '例如：リザードン ex / 初版 リザードン'),
+                      _label(L.cardName),
+                      _textField(_nameCtrl, L.cardNameHint),
                       const SizedBox(height: 16),
 
                       // ── 商品類型 ──────────────────────────────────────
-                      _label('商品類型'),
+                      _label(L.productType),
                       Row(children: [
                         Expanded(
                           child: _conditionBtn(
                             value: 'raw',
-                            label: 'RAW 未鑑定',
+                            label: L.rawUngraded,
                             icon: Icons.style_outlined,
-                            desc: '原卡，未經鑑定',
+                            desc: L.rawDesc,
                           ),
                         ),
                         const SizedBox(width: 10),
                         Expanded(
                           child: _conditionBtn(
                             value: 'graded',
-                            label: '鑑定卡',
+                            label: L.gradedCard,
                             icon: Icons.verified_outlined,
-                            desc: 'PSA / BGS / CGC 等',
+                            desc: L.gradedDesc,
                           ),
                         ),
                       ]),
@@ -389,7 +390,7 @@ class _PostListingSheetState extends State<PostListingSheet> {
 
                       // ── 鑑定資訊（只在鑑定卡時顯示）────────────────
                       if (_cardCondition == 'graded') ...[
-                        _label('鑑定公司'),
+                        _label(L.gradingCompany),
                         SingleChildScrollView(
                           scrollDirection: Axis.horizontal,
                           child: Row(
@@ -438,7 +439,7 @@ class _PostListingSheetState extends State<PostListingSheet> {
                         ),
                         const SizedBox(height: 14),
 
-                        _label('鑑定分數'),
+                        _label(L.gradeScore),
                         Wrap(
                           spacing: 8,
                           runSpacing: 8,
@@ -515,7 +516,7 @@ class _PostListingSheetState extends State<PostListingSheet> {
                                 color: Color(0xFF16A34A)),
                             const SizedBox(width: 6),
                             Text(
-                              '鑑定等級：$_gradingCompany $_gradeScore',
+                              L.gradeLevel(_gradingCompany, _gradeScore),
                               style: const TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,
@@ -538,8 +539,8 @@ class _PostListingSheetState extends State<PostListingSheet> {
                               decoration: BoxDecoration(
                                 color: const Color(0xFFF3F4F6),
                                 borderRadius: BorderRadius.circular(4)),
-                              child: const Text('選填',
-                                  style: TextStyle(fontSize: 10, color: Color(0xFF9CA3AF))),
+                              child: Text(L.optional,
+                                  style: const TextStyle(fontSize: 10, color: Color(0xFF9CA3AF))),
                             ),
                           ]),
                           const SizedBox(height: 6),
@@ -548,7 +549,7 @@ class _PostListingSheetState extends State<PostListingSheet> {
                             keyboardType: TextInputType.number,
                             style: const TextStyle(fontSize: 14),
                             decoration: InputDecoration(
-                              hintText: '例：12345678',
+                              hintText: L.certHint,
                               hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 13),
                               prefixIcon: const Icon(Icons.numbers, size: 18, color: Color(0xFF9CA3AF)),
                               filled: true, fillColor: const Color(0xFFF9FAFB),
@@ -562,31 +563,31 @@ class _PostListingSheetState extends State<PostListingSheet> {
                             ),
                           ),
                           const SizedBox(height: 4),
-                          const Text('輸入後系統自動抓取 PSA Pop · 同時填寫系列 + 卡號可讓圖鑑也顯示 Pop',
-                              style: TextStyle(fontSize: 11, color: Color(0xFF9CA3AF))),
+                          Text(L.certHelper,
+                              style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF))),
                           const SizedBox(height: 12),
                         ],
                       ],
 
                       // Price
-                      _label('直購價格 (HK\$)'),
+                      _label(L.buyPriceLabel),
                       _textField(_priceCtrl, '0', isNumber: true),
                       const SizedBox(height: 14),
 
                       // ── 系列 + 卡號（選填）─────────────────────────────
-                      _label('系列 + 卡號（選填）'),
+                      _label(L.setAndNumber),
                       _setAndNumberRow(),
                       const SizedBox(height: 14),
 
                       // Description
-                      _label('商品說明（選填）'),
+                      _label(L.description),
                       TextField(
                         controller: _descCtrl,
                         maxLines: 3,
                         style: const TextStyle(
                             fontSize: 14, color: Color(0xFF111827)),
                         decoration: InputDecoration(
-                          hintText: '版本資訊、包裝狀況、交易方式...',
+                          hintText: L.descriptionHint,
                           hintStyle: const TextStyle(
                               color: Color(0xFF9CA3AF), fontSize: 13),
                           filled: true,
@@ -637,8 +638,8 @@ class _PostListingSheetState extends State<PostListingSheet> {
                                   height: 20, width: 20,
                                   child: CircularProgressIndicator(
                                       color: Colors.white, strokeWidth: 2))
-                              : const Text('確認上架',
-                                  style: TextStyle(
+                              : Text(L.confirmPost,
+                                  style: const TextStyle(
                                       fontSize: 15, fontWeight: FontWeight.w500)),
                         ),
                       ),
@@ -742,8 +743,8 @@ class _PostListingSheetState extends State<PostListingSheet> {
                           style: const TextStyle(fontSize: 10,
                               color: Color(0xFFE8A52A))),
                     ])
-                  : const Text('選擇系列',
-                      style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)))),
+                  : Text(L.selectSet,
+                      style: const TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)))),
               Icon(Icons.expand_more,
                   size: 18,
                   color: _setIdCtrl.text.isNotEmpty
@@ -762,7 +763,7 @@ class _PostListingSheetState extends State<PostListingSheet> {
           keyboardType: TextInputType.text,
           style: const TextStyle(fontSize: 14, color: Color(0xFF111827)),
           decoration: InputDecoration(
-            hintText: '卡號，如 217',
+            hintText: L.cardNumberHint,
             hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 13),
             filled: true,
             fillColor: const Color(0xFFF9FAFB),
@@ -807,8 +808,8 @@ class _PostListingSheetState extends State<PostListingSheet> {
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
               child: Row(children: [
-                const Text('選擇系列',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600,
+                Text(L.selectSet,
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600,
                         color: Color(0xFF111827))),
                 const Spacer(),
                 if (_setIdCtrl.text.isNotEmpty)
@@ -817,8 +818,8 @@ class _PostListingSheetState extends State<PostListingSheet> {
                       setState(() => _setIdCtrl.clear());
                       Navigator.pop(ctx);
                     },
-                    child: const Text('清除',
-                        style: TextStyle(fontSize: 13, color: Color(0xFFE74C3C))),
+                    child: Text(L.clear,
+                        style: const TextStyle(fontSize: 13, color: Color(0xFFE74C3C))),
                   ),
               ]),
             ),
@@ -831,7 +832,7 @@ class _PostListingSheetState extends State<PostListingSheet> {
                 onChanged: (v) => setModalState(() => _setSearchQuery = v),
                 style: const TextStyle(fontSize: 14),
                 decoration: InputDecoration(
-                  hintText: '搜尋系列名稱或 ID，如 sv8a',
+                  hintText: L.setSearchHint,
                   hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 13),
                   prefixIcon: const Icon(Icons.search, size: 18, color: Color(0xFF9CA3AF)),
                   filled: true,
@@ -1025,7 +1026,7 @@ class _DexCardPickerSheetState extends State<_DexCardPickerSheet> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(children: [
-            const Text('從圖鑑選卡', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+            Text(L.pickFromDexTitle, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
             const Spacer(),
             GestureDetector(
               onTap: () => Navigator.pop(context),
@@ -1041,7 +1042,7 @@ class _DexCardPickerSheetState extends State<_DexCardPickerSheet> {
             autofocus: true,
             onChanged: _search,
             decoration: InputDecoration(
-              hintText: '搜尋卡片名稱（輸入 2 字以上）',
+              hintText: L.dexSearchHint,
               hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
               prefixIcon: const Icon(Icons.search, size: 18, color: Color(0xFF9CA3AF)),
               filled: true, fillColor: const Color(0xFFF9FAFB),
@@ -1058,7 +1059,7 @@ class _DexCardPickerSheetState extends State<_DexCardPickerSheet> {
             ? const Center(child: CircularProgressIndicator(color: Color(0xFFE8A52A), strokeWidth: 2))
             : _results.isEmpty
                 ? Center(child: Text(
-                    _searchCtrl.text.length < 2 ? '輸入卡片名稱搜尋' : '找不到卡片',
+                    _searchCtrl.text.length < 2 ? L.dexSearchPrompt : L.dexNoCard,
                     style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 13)))
                 : ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -1123,13 +1124,13 @@ class _MeetupLocationPicker extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(children: [
-        const Text('優先面交地點', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF374151))),
+        Text(L.preferredMeetup, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF374151))),
         const SizedBox(width: 6),
-        const Text('（選填，可多選）', style: TextStyle(fontSize: 11, color: Color(0xFF9CA3AF))),
+        Text(L.meetupOptionalMulti, style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF))),
         const Spacer(),
         GestureDetector(
           onTap: () => _showPicker(context),
-          child: const Text('選擇', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFFE8A52A))),
+          child: Text(L.select, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFFE8A52A))),
         ),
       ]),
       if (selected.isNotEmpty) ...[
@@ -1169,8 +1170,8 @@ class _MeetupLocationPicker extends StatelessWidget {
               borderRadius: BorderRadius.circular(10),
               border: Border.all(color: const Color(0xFFD1D5DB), width: 0.5),
             ),
-            child: const Center(
-              child: Text('點擊選擇面交地點', style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF))),
+            child: Center(
+              child: Text(L.tapToPickMeetup, style: const TextStyle(fontSize: 13, color: Color(0xFF9CA3AF))),
             ),
           ),
         ),
@@ -1213,11 +1214,11 @@ class _LocationPickerSheetState extends State<_LocationPickerSheet> {
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
           child: Row(children: [
-            const Text('選擇面交地點', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF111827))),
+            Text(L.selectMeetup, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF111827))),
             const Spacer(),
             TextButton(
               onPressed: () => Navigator.pop(context, _selected),
-              child: Text('完成（${_selected.length}）', style: const TextStyle(color: Color(0xFFE8A52A), fontWeight: FontWeight.w700)),
+              child: Text(L.doneCount(_selected.length), style: const TextStyle(color: Color(0xFFE8A52A), fontWeight: FontWeight.w700)),
             ),
           ]),
         ),

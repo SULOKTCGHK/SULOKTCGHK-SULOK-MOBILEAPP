@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/card_model.dart';
 import '../services/offer_service.dart';
+import '../i18n/strings.dart';
 
 class OfferSheet extends StatefulWidget {
   final PokemonCard card;
@@ -23,13 +24,13 @@ class _OfferSheetState extends State<OfferSheet> {
   Future<void> _send() async {
     final amount = int.tryParse(_ctrl.text.replaceAll(',', '').trim());
     if (amount == null || amount <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('請輸入有效金額'), backgroundColor: Color(0xFFE74C3C)));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(L.invalidAmount), backgroundColor: const Color(0xFFE74C3C)));
       return;
     }
     if (amount >= widget.card.price) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('出價需低於賣家定價 HK\$${_fmt(widget.card.price)}'),
+          content: Text(L.offerTooHigh(_fmt(widget.card.price))),
           backgroundColor: const Color(0xFFE74C3C)));
       return;
     }
@@ -44,15 +45,15 @@ class _OfferSheetState extends State<OfferSheet> {
       if (mounted) {
         Navigator.pop(context);
         widget.onSent?.call();
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('出價已送出，等待賣家回覆'),
-          backgroundColor: Color(0xFF16A34A),
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(L.offerSent),
+          backgroundColor: const Color(0xFF16A34A),
         ));
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('出價失敗：$e'),
+            content: Text(L.offerFailed('$e')),
             backgroundColor: const Color(0xFFE74C3C)));
       }
     } finally {
@@ -87,7 +88,7 @@ class _OfferSheetState extends State<OfferSheet> {
         ),
         const SizedBox(height: 16),
 
-        const Text('出價議價', style: TextStyle(fontSize: 18,
+        Text(L.makeOfferTitle, style: const TextStyle(fontSize: 18,
             fontWeight: FontWeight.w700, color: Color(0xFF111827))),
         const SizedBox(height: 16),
 
@@ -114,15 +115,15 @@ class _OfferSheetState extends State<OfferSheet> {
                 children: [
               Text(card.name, style: const TextStyle(fontSize: 14,
                   fontWeight: FontWeight.w600, color: Color(0xFF111827))),
-              Text('${card.grade} · 賣家定價 HK\$${_fmt(card.price)}',
+              Text(L.sellerPriceLine(card.grade, _fmt(card.price)),
                   style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))),
             ])),
           ]),
         ),
         const SizedBox(height: 20),
 
-        const Text('你的出價 (HK\$)',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
+        Text(L.yourOffer,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
                 color: Color(0xFF374151))),
         const SizedBox(height: 8),
 
@@ -160,8 +161,8 @@ class _OfferSheetState extends State<OfferSheet> {
           final tooHigh = amount != null && amount >= card.price;
           return Text(
             tooHigh
-                ? '出價需低於賣家定價 HK\$${_fmt(card.price)}'
-                : '賣家定價 HK\$${_fmt(card.price)}，你可以低於此金額出價',
+                ? L.offerTooHigh(_fmt(card.price))
+                : L.offerHint(_fmt(card.price)),
             style: TextStyle(
                 fontSize: 12,
                 color: tooHigh ? const Color(0xFFE74C3C) : const Color(0xFF9CA3AF)),
@@ -188,8 +189,8 @@ class _OfferSheetState extends State<OfferSheet> {
                 ? const SizedBox(width: 22, height: 22,
                     child: CircularProgressIndicator(
                         color: Colors.white, strokeWidth: 2))
-                : const Text('送出出價',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                : Text(L.submitOffer,
+                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
           );
           }),
         ),

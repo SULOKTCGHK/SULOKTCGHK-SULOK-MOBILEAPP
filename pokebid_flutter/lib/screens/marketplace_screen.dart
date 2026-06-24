@@ -7,6 +7,7 @@ import '../widgets/notification_bell.dart';
 import 'card_detail_screen.dart';
 import 'chat_screen.dart';
 import 'wishlist_screen.dart';
+import '../i18n/strings.dart';
 
 enum SortFilter { latest, priceLow, priceHigh }
 
@@ -115,7 +116,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                 controller: _searchCtrl,
                 style: const TextStyle(fontSize: 14),
                 decoration: InputDecoration(
-                  hintText: '搜尋卡名、賣家、系列 ID...',
+                  hintText: L.searchHint,
                   hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
                   prefixIcon: const Icon(Icons.search, color: Color(0xFF9CA3AF), size: 20),
                   suffixIcon: _query.isNotEmpty
@@ -142,21 +143,21 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
         ),
         titleSpacing: 16,
         title: RichText(
-          text: const TextSpan(
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500,
+          text: TextSpan(
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500,
                 color: Color(0xFF111827)),
             children: [
-              TextSpan(text: 'Poke'),
-              TextSpan(text: 'Bid', style: TextStyle(color: Color(0xFFE8A52A))),
-              TextSpan(text: ' 掛售區',
-                  style: TextStyle(fontSize: 15, color: Color(0xFF6B7280))),
+              const TextSpan(text: 'Poke'),
+              const TextSpan(text: 'Bid', style: TextStyle(color: Color(0xFFE8A52A))),
+              TextSpan(text: L.marketTitleSuffix,
+                  style: const TextStyle(fontSize: 15, color: Color(0xFF6B7280))),
             ],
           ),
         ),
         actions: [
           IconButton(
             icon: const Icon(Icons.favorite_border, color: Color(0xFF374151)),
-            tooltip: '願望清單',
+            tooltip: L.wishlist,
             onPressed: () => Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const WishlistScreen())),
           ),
@@ -205,11 +206,11 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                   ]),
                 ),
                 const SizedBox(width: 8),
-                _chip('最新上架', SortFilter.latest),
+                _chip(L.sortLatest, SortFilter.latest),
                 const SizedBox(width: 8),
-                _chip('價格最低', SortFilter.priceLow),
+                _chip(L.sortPriceLow, SortFilter.priceLow),
                 const SizedBox(width: 8),
-                _chip('價格最高', SortFilter.priceHigh),
+                _chip(L.sortPriceHigh, SortFilter.priceHigh),
               ]),
             ),
           ),
@@ -220,8 +221,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
             child: Row(children: [
               Text(
                 _query.isNotEmpty
-                    ? '搜尋「$_query」：${_sorted.length} 件'
-                    : '共 ${_sorted.length} 件商品',
+                    ? L.searchCount(_query, _sorted.length)
+                    : L.totalCount(_sorted.length),
                 style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))),
             ]),
           ),
@@ -236,7 +237,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                     children: [
                       const Icon(Icons.search_off, size: 48, color: Color(0xFFD1D5DB)),
                       const SizedBox(height: 12),
-                      Text(_query.isNotEmpty ? '找不到「$_query」相關商品' : '目前沒有掛售商品',
+                      Text(_query.isNotEmpty ? L.noSearchResult(_query) : L.noMarketListings,
                           style: const TextStyle(color: Color(0xFF9CA3AF))),
                     ]))
                 : LayoutBuilder(builder: (ctx, c) {
@@ -315,28 +316,28 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                   decoration: BoxDecoration(color: const Color(0xFFE5E7EB),
                       borderRadius: BorderRadius.circular(2)))),
               const SizedBox(height: 16),
-              const Text('篩選條件',
-                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700,
+              Text(L.filterTitle,
+                  style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700,
                       color: Color(0xFF111827))),
               const SizedBox(height: 16),
 
               // 價格區間
-              const Text('價格區間 (HK\$)',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
+              Text(L.priceRange,
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
                       color: Color(0xFF374151))),
               const SizedBox(height: 8),
               Row(children: [
-                Expanded(child: _priceField(minCtrl, '最低')),
+                Expanded(child: _priceField(minCtrl, L.priceMin)),
                 const Padding(padding: EdgeInsets.symmetric(horizontal: 8),
                     child: Text('—', style: TextStyle(color: Color(0xFF9CA3AF)))),
-                Expanded(child: _priceField(maxCtrl, '最高')),
+                Expanded(child: _priceField(maxCtrl, L.priceMax)),
               ]),
               const SizedBox(height: 16),
 
               // 評級
               if (_availableGrades.isNotEmpty) ...[
-                const Text('評級',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
+                Text(L.grade,
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
                         color: Color(0xFF374151))),
                 const SizedBox(height: 8),
                 Wrap(spacing: 8, runSpacing: 8, children: _availableGrades.map((g) {
@@ -353,8 +354,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
 
               // 系列
               if (_availableSets.isNotEmpty) ...[
-                const Text('系列',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
+                Text(L.setSeries,
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
                         color: Color(0xFF374151))),
                 const SizedBox(height: 8),
                 Wrap(spacing: 8, runSpacing: 8, children: _availableSets.map((s) {
@@ -378,7 +379,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                   if (ctx.mounted) Navigator.pop(ctx);
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                      content: const Text('已加入願望清單，有符合的新上架會通知你'),
+                      content: Text(L.wishlistAdded),
                       backgroundColor: const Color(0xFF16A34A),
                       behavior: SnackBarBehavior.floating,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -393,11 +394,11 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: const Color(0xFFE74C3C).withOpacity(0.3)),
                   ),
-                  child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    Icon(Icons.favorite_border, size: 16, color: Color(0xFFE74C3C)),
-                    SizedBox(width: 6),
-                    Text('將此條件加入願望清單',
-                        style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600,
+                  child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                    const Icon(Icons.favorite_border, size: 16, color: Color(0xFFE74C3C)),
+                    const SizedBox(width: 6),
+                    Text(L.addToWishlistCondition,
+                        style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600,
                             color: Color(0xFFE74C3C))),
                   ]),
                 ),
@@ -421,8 +422,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                         color: const Color(0xFFF3F4F6),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Center(child: Text('重設',
-                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
+                      child: Center(child: Text(L.reset,
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
                               color: Color(0xFF6B7280)))),
                     ),
                   ),
@@ -448,8 +449,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                         color: const Color(0xFFE8A52A),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Center(child: Text('套用篩選',
-                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
+                      child: Center(child: Text(L.applyFilter,
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
                               color: Colors.white))),
                     ),
                   ),

@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../models/card_model.dart';
 import '../services/api_service.dart';
 import 'card_type_icon.dart';
+import '../i18n/strings.dart';
 
 class CardGridItem extends StatefulWidget {
   final PokemonCard card;
@@ -96,7 +97,7 @@ class _CardGridItemState extends State<CardGridItem> {
                           Icon(isAuction ? Icons.gavel : Icons.bolt,
                               size: 11, color: priceColor),
                           const SizedBox(width: 3),
-                          Text(isAuction ? '競標' : '直購',
+                          Text(isAuction ? L.auction : L.buyNow,
                               style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, color: priceColor)),
                         ]),
                       ),
@@ -198,7 +199,7 @@ class _CardGridItemState extends State<CardGridItem> {
                     Row(children: [
                       const Icon(Icons.access_time, size: 11, color: Color(0xFFE8A52A)),
                       const SizedBox(width: 3),
-                      Text('${widget.card.timeInfo} · ${widget.card.bids} 出價',
+                      Text(L.bidsCount(widget.card.timeInfo, widget.card.bids),
                           style: const TextStyle(fontSize: 10, color: Color(0xFFE8A52A))),
                     ]),
                   ],

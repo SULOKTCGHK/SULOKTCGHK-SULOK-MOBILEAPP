@@ -15,6 +15,7 @@ import 'offer_sheet.dart';
 import 'seller_profile_screen.dart';
 import 'image_viewer_screen.dart';
 import 'review_sheet.dart';
+import '../i18n/strings.dart';
 
 class CardDetailScreen extends StatefulWidget {
   final PokemonCard card;
@@ -109,7 +110,7 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
 
   void _openReview() async {
     if (widget.card.seller.id == null) return;
-    if (!await requireLogin(context, action: '撰寫評價')) return;
+    if (!await requireLogin(context, action: L.writeReview)) return;
     if (!mounted) return;
     showModalBottomSheet(
       context: context,
@@ -132,7 +133,7 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
 
   void _openOffer() async {
     if (widget.card.supabaseId == null || widget.card.seller.id == null) return;
-    if (!await requireLogin(context, action: '出價')) return;
+    if (!await requireLogin(context, action: L.makeOfferAction)) return;
     if (!mounted) return;
     showModalBottomSheet(
       context: context,
@@ -187,7 +188,7 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
   }
 
   void _openChat() async {
-    if (!await requireLogin(context, action: '聯絡賣家')) return;
+    if (!await requireLogin(context, action: L.contactSeller)) return;
     if (!mounted) return;
     Navigator.push(
       context,
@@ -221,8 +222,8 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
           icon: const Icon(Icons.chevron_left, color: Color(0xFF374151), size: 28),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('商品詳情',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Color(0xFF111827))),
+        title: Text(L.productDetail,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Color(0xFF111827))),
         actions: [
           IconButton(
             icon: const Icon(Icons.share_outlined, color: Color(0xFF374151)),
@@ -277,7 +278,7 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
                       border: Border.all(color: const Color(0xFFE5E7EB), width: 0.5),
                     ),
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      const Text('直購價', style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))),
+                      Text(L.buyPrice, style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))),
                       const SizedBox(height: 4),
                       Text('HK\$ ${_formatPrice(_price)}',
                           style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w700,
@@ -321,10 +322,10 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
                     crossAxisSpacing: 8,
                     childAspectRatio: 2.8,
                     children: [
-                      _metaItem('評級', card.grade),
-                      _metaItem('類型', card.type.label),
-                      _metaItem('狀況', card.condition),
-                      _metaItem('上架時間', card.timeInfo),
+                      _metaItem(L.metaGrade, card.grade),
+                      _metaItem(L.metaType, card.type.label),
+                      _metaItem(L.metaCondition, card.condition),
+                      _metaItem(L.metaListedTime, card.timeInfo),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -344,10 +345,10 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
                         border: Border.all(color: const Color(0xFFE5E7EB), width: 0.5),
                       ),
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Row(children: const [
-                          Icon(Icons.location_on_outlined, size: 15, color: Color(0xFFE8A52A)),
-                          SizedBox(width: 4),
-                          Text('優先面交地點', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF374151))),
+                        Row(children: [
+                          const Icon(Icons.location_on_outlined, size: 15, color: Color(0xFFE8A52A)),
+                          const SizedBox(width: 4),
+                          Text(L.preferredMeetup, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF374151))),
                         ]),
                         const SizedBox(height: 8),
                         Wrap(
@@ -407,7 +408,7 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
                         Row(children: [
                           const Icon(Icons.star, size: 12, color: Color(0xFFE8A52A)),
                           const SizedBox(width: 3),
-                          Text('${card.seller.rating} · ${card.seller.sales} 筆成交',
+                          Text(L.sellerStats('${card.seller.rating}', card.seller.sales),
                               style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))),
                         ]),
                       ])),
@@ -459,12 +460,12 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: const Color(0xFFD1D5DB)),
                       ),
-                      child: const Row(children: [
-                        Icon(Icons.check_circle, size: 18, color: Color(0xFF6B7280)),
-                        SizedBox(width: 8),
+                      child: Row(children: [
+                        const Icon(Icons.check_circle, size: 18, color: Color(0xFF6B7280)),
+                        const SizedBox(width: 8),
                         Expanded(child: Text(
-                          '此商品已成交，僅買賣雙方可查看',
-                          style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
+                          L.soldNotice,
+                          style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
                         )),
                       ]),
                     ),
@@ -480,12 +481,12 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: const Color(0xFFE8A52A).withOpacity(0.3)),
                       ),
-                      child: const Row(children: [
-                        Icon(Icons.storefront_outlined, size: 18, color: Color(0xFFE8A52A)),
-                        SizedBox(width: 8),
+                      child: Row(children: [
+                        const Icon(Icons.storefront_outlined, size: 18, color: Color(0xFFE8A52A)),
+                        const SizedBox(width: 8),
                         Expanded(child: Text(
-                          '這是你的商品，可在「我的 → 我的掛售」管理',
-                          style: TextStyle(fontSize: 13, color: Color(0xFFB45309)),
+                          L.myListingNotice,
+                          style: const TextStyle(fontSize: 13, color: Color(0xFFB45309)),
                         )),
                       ]),
                     ),
@@ -528,10 +529,10 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
                         const SizedBox(width: 8),
                         Expanded(child: Text(
                           _myOffer!.status == 'accepted'
-                              ? '賣家已接受你的出價 HK\$${_formatPrice(_myOffer!.amount)}！請前往聊天室溝通交易'
+                              ? L.offerAcceptedBanner(_formatPrice(_myOffer!.amount))
                               : _myOffer!.status == 'rejected'
-                              ? '你的出價 HK\$${_formatPrice(_myOffer!.amount)} 已被拒絕'
-                              : '你已出價 HK\$${_formatPrice(_myOffer!.amount)}，等待賣家回覆',
+                              ? L.offerRejectedBanner(_formatPrice(_myOffer!.amount))
+                              : L.offerPendingBanner(_formatPrice(_myOffer!.amount)),
                           style: TextStyle(
                             fontSize: 13,
                             color: _myOffer!.status == 'accepted'
@@ -570,11 +571,11 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
     if (_isMyListing) {
       return SizedBox(
         height: 50,
-        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: const [
-          Icon(Icons.storefront_outlined, size: 18, color: Color(0xFF9CA3AF)),
-          SizedBox(width: 8),
-          Text('這是你的商品',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500,
+        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          const Icon(Icons.storefront_outlined, size: 18, color: Color(0xFF9CA3AF)),
+          const SizedBox(width: 8),
+          Text(L.thisIsYourListing,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500,
                   color: Color(0xFF9CA3AF))),
         ]),
       );
@@ -593,13 +594,13 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: const Color(0xFFE8A52A), width: 1),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.chat_bubble_outline, color: Color(0xFFE8A52A), size: 16),
-                  SizedBox(width: 6),
-                  Text('聯絡賣家',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
+                  const Icon(Icons.chat_bubble_outline, color: Color(0xFFE8A52A), size: 16),
+                  const SizedBox(width: 6),
+                  Text(L.contactSellerBtn,
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
                           color: Color(0xFFE8A52A))),
                 ],
               ),
@@ -622,7 +623,7 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
                   Icon(_hasReviewed ? Icons.check : Icons.star_outline,
                       color: _hasReviewed ? const Color(0xFF9CA3AF) : Colors.white, size: 16),
                   const SizedBox(width: 6),
-                  Text(_hasReviewed ? '已評價' : '評價賣家',
+                  Text(_hasReviewed ? L.reviewed : L.reviewSeller,
                       style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
                           color: _hasReviewed ? const Color(0xFF9CA3AF) : Colors.white)),
                 ],
@@ -667,12 +668,12 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: const Color(0xFFE8A52A), width: 1),
             ),
-            child: const Row(
+            child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.chat_bubble_outline, color: Color(0xFFE8A52A), size: 16),
-                SizedBox(width: 5),
-                Text('聯絡', style: TextStyle(fontSize: 13,
+                const Icon(Icons.chat_bubble_outline, color: Color(0xFFE8A52A), size: 16),
+                const SizedBox(width: 5),
+                Text(L.contactShort, style: const TextStyle(fontSize: 13,
                     fontWeight: FontWeight.w500, color: Color(0xFFE8A52A))),
               ],
             ),
@@ -704,7 +705,7 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
                       ? const Color(0xFF9CA3AF)
                       : const Color(0xFF8E44AD)),
               const SizedBox(width: 5),
-              Text(_myOffer?.status == 'pending' ? '出價中' : '出價',
+              Text(_myOffer?.status == 'pending' ? L.offering : L.makeOfferShort,
                   style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500,
                       color: _myOffer?.status == 'pending'
                           ? const Color(0xFF9CA3AF)
@@ -781,11 +782,11 @@ class _SnkrPriceCard extends StatelessWidget {
             decoration: BoxDecoration(color: const Color(0xFFE8A52A), borderRadius: BorderRadius.circular(9)),
             child: const Center(child: Text('🇯🇵', style: TextStyle(fontSize: 18)))),
           const SizedBox(width: 10),
-          const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('SNKRDUNK 日本市場成交',
-                style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: Color(0xFF111827))),
-            Text('近期實際成交價（日圓）',
-                style: TextStyle(fontSize: 10.5, color: Color(0xFF9CA3AF))),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(L.snkrTitle,
+                style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: Color(0xFF111827))),
+            Text(L.snkrSubtitle,
+                style: const TextStyle(fontSize: 10.5, color: Color(0xFF9CA3AF))),
           ])),
           GestureDetector(
             onTap: onTap,
@@ -793,19 +794,19 @@ class _SnkrPriceCard extends StatelessWidget {
         ]),
         const SizedBox(height: 12),
         if (loading)
-          const Padding(padding: EdgeInsets.symmetric(vertical: 8),
-              child: Text('查詢中...', style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))))
+          Padding(padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(L.snkrLoading, style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))))
         else if (data == null)
-          const Padding(padding: EdgeInsets.symmetric(vertical: 8),
-              child: Text('SNKRDUNK 暫無此卡成交資料',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))))
+          Padding(padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(L.snkrNoData,
+                  style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))))
         else ...[
           Row(children: [
             Expanded(child: _gradeBox('PSA 10', data!['psa10'], const Color(0xFFE8A52A))),
             const SizedBox(width: 8),
             Expanded(child: _gradeBox('PSA 9', data!['psa9'], const Color(0xFF2980B9))),
             const SizedBox(width: 8),
-            Expanded(child: _gradeBox('生卡', data!['raw'], const Color(0xFF6B7280))),
+            Expanded(child: _gradeBox(L.rawCard, data!['raw'], const Color(0xFF6B7280))),
           ]),
           if (data!['psa10'] is Map &&
               (((data!['psa10'] as Map)['daily'] as List?)?.length ?? 0) >= 2)
@@ -831,7 +832,7 @@ class _SnkrPriceCard extends StatelessWidget {
         Text(m == null ? '—' : _yen(m['avg'] as num?),
             style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: color),
             maxLines: 1, overflow: TextOverflow.ellipsis),
-        Text(m == null ? '無成交' : '${m['count']} 筆',
+        Text(m == null ? L.noSales : L.salesCount(m['count']),
             style: const TextStyle(fontSize: 9, color: Color(0xFF9CA3AF))),
       ]),
     );
@@ -843,8 +844,8 @@ class _SnkrPriceCard extends StatelessWidget {
     if (recent.isEmpty) return [];
     return [
       const SizedBox(height: 12),
-      const Text('PSA 10 近期成交',
-          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
+      Text(L.snkrRecent,
+          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
       const SizedBox(height: 6),
       ...recent.take(5).map((r) {
         final item = r as Map<String, dynamic>;
@@ -893,10 +894,10 @@ class _SnkrChartState extends State<_SnkrChart> {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       const SizedBox(height: 12),
       Row(children: [
-        Text('PSA 10 走勢',
+        Text(L.snkrTrend,
             style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
         const Spacer(),
-        _tab('7日', !_show30), const SizedBox(width: 6), _tab('30日', _show30),
+        _tab(L.days7, !_show30), const SizedBox(width: 6), _tab(L.days30, _show30),
         const SizedBox(width: 8),
         Text(_chgStr(chg),
             style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: _chgColor(chg))),
@@ -907,7 +908,7 @@ class _SnkrChartState extends State<_SnkrChart> {
   }
 
   Widget _tab(String label, bool active) => GestureDetector(
-    onTap: () => setState(() => _show30 = label == '30日'),
+    onTap: () => setState(() => _show30 = label == L.days30),
     child: Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
@@ -1123,7 +1124,7 @@ class _PsaPopCard extends StatelessWidget {
         ]),
         if (dateStr.isNotEmpty) ...[
           const SizedBox(height: 8),
-          Text('更新：$dateStr',
+          Text(L.psaUpdated(dateStr),
               style: const TextStyle(fontSize: 10, color: Color(0xFF9CA3AF))),
         ],
       ]),
