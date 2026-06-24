@@ -647,9 +647,9 @@ class _PokemonDexScreenState extends State<PokemonDexScreen> {
             : Row(children: [
                 GestureDetector(
                   onTap: () => setState(() { _selectedPokemon = null; _cards = []; }),
-                  child: const Row(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(Icons.chevron_left, size: 20, color: Color(0xFFE8A52A)),
-                    Text('精靈', style: TextStyle(fontSize: 13, color: Color(0xFFE8A52A))),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    const Icon(Icons.chevron_left, size: 20, color: Color(0xFFE8A52A)),
+                    Text(L.pokemonBack, style: const TextStyle(fontSize: 13, color: Color(0xFFE8A52A))),
                   ]),
                 ),
                 const SizedBox(width: 8),
