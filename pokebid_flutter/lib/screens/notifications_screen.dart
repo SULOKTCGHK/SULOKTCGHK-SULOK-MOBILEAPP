@@ -5,6 +5,7 @@ import '../services/offer_service.dart';
 import '../services/chat_service.dart';
 import 'card_detail_screen.dart';
 import 'chat_screen.dart';
+import '../i18n/strings.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -54,8 +55,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         if (!mounted) return;
         Navigator.push(context, MaterialPageRoute(
           builder: (_) => ChatScreen(
-            sellerName: card?.seller.name ?? '賣家',
-            sellerAvatar: (card?.seller.name ?? '賣').substring(0, 1).toUpperCase(),
+            sellerName: card?.seller.name ?? L.sellerFallback,
+            sellerAvatar: (card?.seller.name ?? L.sellerFallback).substring(0, 1).toUpperCase(),
             sellerId: card?.seller.id,
             conversationId: convId,
           ),
@@ -81,14 +82,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   Future<void> _acceptOffer(AppNotification n) async {
     if (n.listingId == null) {
-      _showErr('通知缺少商品資訊');
+      _showErr(L.notifMissingListing);
       return;
     }
     try {
       final offers = await OfferService.getOffersForListing(n.listingId!);
       final pending = offers.where((o) => o.status == 'pending').toList();
       if (pending.isEmpty) {
-        _showErr('找不到待處理的出價（可能已被處理）');
+        _showErr(L.noPendingOfferMaybeHandled);
         return;
       }
       final offer = pending.reduce((a, b) => a.amount >= b.amount ? a : b);
@@ -97,14 +98,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         context: context,
         builder: (_) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('接受出價', style: TextStyle(fontWeight: FontWeight.w700)),
-          content: Text('接受 ${offer.buyerName} 的 HK\$${offer.amount} 出價？\n商品將標示為已售出。'),
+          title: Text(L.acceptOffer, style: const TextStyle(fontWeight: FontWeight.w700)),
+          content: Text(L.acceptOfferConfirm(offer.buyerName, offer.amount)),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('取消')),
+            TextButton(onPressed: () => Navigator.pop(context, false), child: Text(L.cancel)),
             ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
               style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF16A34A), foregroundColor: Colors.white),
-              child: const Text('確認接受'),
+              child: Text(L.confirmAccept),
             ),
           ],
         ),
@@ -131,7 +132,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         ),
       ));
     } catch (e) {
-      _showErr('操作失敗：$e');
+      _showErr(L.actionFailed('$e'));
     }
   }
 
@@ -147,17 +148,17 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     try {
       final offers = await OfferService.getOffersForListing(n.listingId!);
       final pending = offers.where((o) => o.status == 'pending').toList();
-      if (pending.isEmpty) { _showErr('找不到待處理的出價'); return; }
+      if (pending.isEmpty) { _showErr(L.noPendingOffer); return; }
       for (final o in pending) {
         await OfferService.rejectOffer(o.id);
       }
       await NotificationService.markRead(n.id);
       _load();
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('已拒絕出價'), backgroundColor: Color(0xFF6B7280)),
+        SnackBar(content: Text(L.offerRejected), backgroundColor: const Color(0xFF6B7280)),
       );
     } catch (e) {
-      _showErr('操作失敗：$e');
+      _showErr(L.actionFailed('$e'));
     }
   }
 
@@ -177,14 +178,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           icon: const Icon(Icons.chevron_left, color: Color(0xFF374151), size: 28),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('通知',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Color(0xFF111827))),
+        title: Text(L.notifications,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Color(0xFF111827))),
         actions: [
           if (_items.any((n) => !n.isRead))
             TextButton(
               onPressed: _markAllRead,
-              child: const Text('全部已讀',
-                  style: TextStyle(fontSize: 13, color: Color(0xFFE8A52A), fontWeight: FontWeight.w500)),
+              child: Text(L.markAllRead,
+                  style: const TextStyle(fontSize: 13, color: Color(0xFFE8A52A), fontWeight: FontWeight.w500)),
             ),
         ],
       ),
@@ -209,8 +210,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         SizedBox(height: MediaQuery.of(context).size.height * 0.25),
         const Icon(Icons.notifications_none, size: 56, color: Color(0xFFD1D5DB)),
         const SizedBox(height: 12),
-        const Center(child: Text('目前沒有通知',
-            style: TextStyle(fontSize: 14, color: Color(0xFF9CA3AF)))),
+        Center(child: Text(L.noNotifications,
+            style: const TextStyle(fontSize: 14, color: Color(0xFF9CA3AF)))),
       ]);
 
   Widget _tile(AppNotification n) {
@@ -263,10 +264,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             const SizedBox(height: 6),
             GestureDetector(
               onTap: () => _onTap(n),
-              child: const Row(children: [
-                Text('查看商品', style: TextStyle(fontSize: 12, color: Color(0xFF8E44AD), fontWeight: FontWeight.w600)),
-                SizedBox(width: 3),
-                Icon(Icons.arrow_forward_ios, size: 10, color: Color(0xFF8E44AD)),
+              child: Row(children: [
+                Text(L.viewProduct, style: const TextStyle(fontSize: 12, color: Color(0xFF8E44AD), fontWeight: FontWeight.w600)),
+                const SizedBox(width: 3),
+                const Icon(Icons.arrow_forward_ios, size: 10, color: Color(0xFF8E44AD)),
               ]),
             ),
           ],
@@ -283,7 +284,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
-                  child: const Text('拒絕', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                  child: Text(L.rejectOffer, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                 ),
               ),
               const SizedBox(width: 8),
@@ -297,7 +298,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     elevation: 0,
                   ),
-                  child: const Text('接受出價', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                  child: Text(L.acceptOffer, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                 ),
               ),
             ]),
@@ -321,10 +322,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   String _timeAgo(DateTime dt) {
     final d = DateTime.now().difference(dt);
-    if (d.inMinutes < 1) return '剛剛';
-    if (d.inMinutes < 60) return '${d.inMinutes} 分鐘前';
-    if (d.inHours < 24) return '${d.inHours} 小時前';
-    if (d.inDays < 7) return '${d.inDays} 天前';
+    if (d.inMinutes < 1) return L.justNow;
+    if (d.inMinutes < 60) return L.minutesAgo(d.inMinutes);
+    if (d.inHours < 24) return L.hoursAgo(d.inHours);
+    if (d.inDays < 7) return L.daysAgo(d.inDays);
     return '${dt.month}/${dt.day}';
   }
 }

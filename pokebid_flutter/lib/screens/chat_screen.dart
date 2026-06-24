@@ -10,6 +10,7 @@ import '../services/review_service.dart';
 import 'card_detail_screen.dart';
 import 'seller_profile_screen.dart';
 import 'legal_screen.dart';
+import '../i18n/strings.dart';
 
 class ChatScreen extends StatefulWidget {
   final String sellerName;
@@ -260,11 +261,11 @@ class _ChatScreenState extends State<ChatScreen> {
                 Expanded(
                   child: GestureDetector(
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => LegalScreen.safety())),
-                    child: const Text.rich(TextSpan(children: [
-                      TextSpan(text: '平台不經手金流，請查看對方評價、慎防詐騙。',
-                          style: TextStyle(fontSize: 11.5, color: Color(0xFF92400E))),
-                      TextSpan(text: ' 安全提示 ›',
-                          style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFFB8860B))),
+                    child: Text.rich(TextSpan(children: [
+                      TextSpan(text: L.chatSafetyText,
+                          style: const TextStyle(fontSize: 11.5, color: Color(0xFF92400E))),
+                      TextSpan(text: L.chatSafetyLink,
+                          style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFFB8860B))),
                     ])),
                   ),
                 ),
@@ -309,8 +310,8 @@ class _ChatScreenState extends State<ChatScreen> {
                     color: const Color(0xFFF0FDF4),
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: const Text('詢問中',
-                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500,
+                  child: Text(L.inquiring,
+                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500,
                           color: Color(0xFF16A34A))),
                 ),
                 const SizedBox(width: 4),
@@ -328,7 +329,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 ? Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
                     const Icon(Icons.chat_bubble_outline, size: 48, color: Color(0xFFD1D5DB)),
                     const SizedBox(height: 12),
-                    Text('向 ${widget.sellerName} 打聲招呼吧！',
+                    Text(L.sayHello(widget.sellerName),
                         style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 14)),
                   ]))
                 : ListView.builder(
@@ -384,9 +385,9 @@ class _ChatScreenState extends State<ChatScreen> {
                     controller: _msgCtrl,
                     style: const TextStyle(fontSize: 14),
                     maxLines: null,
-                    decoration: const InputDecoration(
-                      hintText: '輸入訊息...',
-                      hintStyle: TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
+                    decoration: InputDecoration(
+                      hintText: L.messageHint,
+                      hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
                       border: InputBorder.none,
                       isDense: true,
                       contentPadding: EdgeInsets.zero,
@@ -425,13 +426,7 @@ class _ChatScreenState extends State<ChatScreen> {
       RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
 
   void _showQuickReplies() {
-    final quickReplies = [
-      '請問還有貨嗎？',
-      '可以議價嗎？',
-      '請問評級是什麼機構？',
-      '可以提供更多圖片嗎？',
-      '請問運費是多少？',
-    ];
+    final quickReplies = L.quickReplyOptions;
     showModalBottomSheet(
       context: context,
       builder: (_) => Container(
@@ -444,8 +439,8 @@ class _ChatScreenState extends State<ChatScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('快速回覆',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Color(0xFF111827))),
+            Text(L.quickReplies,
+                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Color(0xFF111827))),
             const SizedBox(height: 12),
             Wrap(
               spacing: 8, runSpacing: 8,
@@ -588,7 +583,7 @@ class _DealCardState extends State<_DealCard> {
       backgroundColor: Colors.transparent,
       builder: (_) => _ReviewSheet(
         otherPartyId: widget.otherPartyId!,
-        otherPartyName: widget.otherPartyName ?? '對方',
+        otherPartyName: widget.otherPartyName ?? L.otherParty,
         listingId: listingId,
         amISeller: widget.amISeller,
         onDone: () => setState(() => _reviewed = true),
@@ -609,7 +604,7 @@ class _DealCardState extends State<_DealCard> {
         Row(children: [
           const Expanded(child: Divider(color: Color(0xFFE5E7EB))),
           const SizedBox(width: 8),
-          const Text('成交確認', style: TextStyle(fontSize: 11, color: Color(0xFF9CA3AF), fontWeight: FontWeight.w500)),
+          Text(L.dealConfirm, style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF), fontWeight: FontWeight.w500)),
           const SizedBox(width: 8),
           const Expanded(child: Divider(color: Color(0xFFE5E7EB))),
         ]),
@@ -625,10 +620,10 @@ class _DealCardState extends State<_DealCard> {
               border: Border.all(color: const Color(0xFF86EFAC)),
             ),
             child: Column(children: [
-              Row(mainAxisAlignment: MainAxisAlignment.center, children: const [
-                Icon(Icons.check_circle, color: Color(0xFF16A34A), size: 18),
-                SizedBox(width: 6),
-                Text('買賣成交 🎉', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFF15803D))),
+              Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                const Icon(Icons.check_circle, color: Color(0xFF16A34A), size: 18),
+                const SizedBox(width: 6),
+                Text(L.dealDone, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFF15803D))),
               ]),
               const SizedBox(height: 10),
               Container(
@@ -637,15 +632,15 @@ class _DealCardState extends State<_DealCard> {
                   color: const Color(0xFF16A34A),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Text('成交價：HK\$$amount',
+                child: Text(L.dealPrice(amount),
                   style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800)),
               ),
               const SizedBox(height: 10),
               if (listingId.isNotEmpty)
-                Row(mainAxisAlignment: MainAxisAlignment.center, children: const [
-                  Text('查看商品詳情', style: TextStyle(fontSize: 12, color: Color(0xFF16A34A), fontWeight: FontWeight.w600)),
-                  SizedBox(width: 4),
-                  Icon(Icons.arrow_forward_ios, size: 11, color: Color(0xFF16A34A)),
+                Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                  Text(L.viewListingDetail, style: const TextStyle(fontSize: 12, color: Color(0xFF16A34A), fontWeight: FontWeight.w600)),
+                  const SizedBox(width: 4),
+                  const Icon(Icons.arrow_forward_ios, size: 11, color: Color(0xFF16A34A)),
                 ]),
               const SizedBox(height: 4),
               Text(widget.time, style: const TextStyle(fontSize: 10, color: Color(0xFF9CA3AF))),
@@ -661,7 +656,7 @@ class _DealCardState extends State<_DealCard> {
               onPressed: () => _openReview(listingId),
               icon: const Icon(Icons.star_outline, size: 16, color: Color(0xFFE8A52A)),
               label: Text(
-                widget.amISeller ? '評價買家' : '評價賣家',
+                widget.amISeller ? L.reviewBuyer : L.reviewSeller,
                 style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFFB45309)),
               ),
               style: OutlinedButton.styleFrom(
@@ -672,12 +667,12 @@ class _DealCardState extends State<_DealCard> {
             ),
           )
         else if (_reviewed)
-          const Padding(
-            padding: EdgeInsets.only(top: 4),
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
             child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-              Icon(Icons.check_circle_outline, size: 14, color: Color(0xFF16A34A)),
-              SizedBox(width: 4),
-              Text('已完成評價', style: TextStyle(fontSize: 12, color: Color(0xFF16A34A))),
+              const Icon(Icons.check_circle_outline, size: 14, color: Color(0xFF16A34A)),
+              const SizedBox(width: 4),
+              Text(L.reviewDone, style: const TextStyle(fontSize: 12, color: Color(0xFF16A34A))),
             ]),
           ),
       ]),
@@ -711,10 +706,10 @@ class _ReviewSheetState extends State<_ReviewSheet> {
   final _commentCtrl = TextEditingController();
   bool _submitting = false;
 
-  static const _deliveryOptions = [
-    ('meetup', '面交', Icons.handshake_outlined),
-    ('sf', 'SF順豐', Icons.local_shipping_outlined),
-    ('other', '其他', Icons.swap_horiz),
+  static List<(String, String, IconData)> get _deliveryOptions => [
+    ('meetup', L.deliveryMeetup, Icons.handshake_outlined),
+    ('sf', L.deliverySf, Icons.local_shipping_outlined),
+    ('other', L.deliveryOther, Icons.swap_horiz),
   ];
 
   @override
@@ -751,12 +746,12 @@ class _ReviewSheetState extends State<_ReviewSheet> {
         Center(child: Container(width: 36, height: 4,
           decoration: BoxDecoration(color: const Color(0xFFD1D5DB), borderRadius: BorderRadius.circular(2)))),
         const SizedBox(height: 16),
-        Text('評價 ${widget.otherPartyName}',
+        Text(L.reviewTitle(widget.otherPartyName),
           style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: Color(0xFF111827))),
         const SizedBox(height: 16),
 
         // 星星評分
-        const Text('評分', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF374151))),
+        Text(L.rating, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF374151))),
         const SizedBox(height: 8),
         Row(children: List.generate(5, (i) => GestureDetector(
           onTap: () => setState(() => _stars = i + 1),
@@ -769,7 +764,7 @@ class _ReviewSheetState extends State<_ReviewSheet> {
         const SizedBox(height: 16),
 
         // 交易方式
-        const Text('交易方式', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF374151))),
+        Text(L.deliveryMethod, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF374151))),
         const SizedBox(height: 8),
         Row(children: _deliveryOptions.map((opt) {
           final (val, label, icon) = opt;
@@ -797,14 +792,14 @@ class _ReviewSheetState extends State<_ReviewSheet> {
         const SizedBox(height: 16),
 
         // 留言
-        const Text('留言（選填）', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF374151))),
+        Text(L.commentOptional, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF374151))),
         const SizedBox(height: 8),
         TextField(
           controller: _commentCtrl,
           maxLines: 3,
           style: const TextStyle(fontSize: 14),
           decoration: InputDecoration(
-            hintText: '分享你的交易體驗...',
+            hintText: L.commentHint,
             hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 13),
             filled: true,
             fillColor: const Color(0xFFF9FAFB),
@@ -832,7 +827,7 @@ class _ReviewSheetState extends State<_ReviewSheet> {
             ),
             child: _submitting
               ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-              : const Text('送出評價', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+              : Text(L.submitReview, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
           ),
         ),
       ]),

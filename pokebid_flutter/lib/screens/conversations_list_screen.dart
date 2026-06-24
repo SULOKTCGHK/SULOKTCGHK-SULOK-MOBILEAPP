@@ -3,6 +3,7 @@ import '../services/chat_service.dart';
 import '../services/auth_service.dart';
 import 'chat_screen.dart';
 import 'auth/login_screen.dart';
+import '../i18n/strings.dart';
 
 class ConversationsListScreen extends StatefulWidget {
   const ConversationsListScreen({super.key});
@@ -54,10 +55,10 @@ class _ConversationsListScreenState extends State<ConversationsListScreen> {
   String _timeAgo(DateTime? dt) {
     if (dt == null) return '';
     final diff = DateTime.now().difference(dt);
-    if (diff.inMinutes < 1) return '剛剛';
-    if (diff.inMinutes < 60) return '${diff.inMinutes} 分鐘前';
-    if (diff.inHours < 24) return '${diff.inHours} 小時前';
-    if (diff.inDays < 7) return '${diff.inDays} 天前';
+    if (diff.inMinutes < 1) return L.justNow;
+    if (diff.inMinutes < 60) return L.minutesAgo(diff.inMinutes);
+    if (diff.inHours < 24) return L.hoursAgo(diff.inHours);
+    if (diff.inDays < 7) return L.daysAgo(diff.inDays);
     return '${dt.month}/${dt.day}';
   }
 
@@ -77,8 +78,8 @@ class _ConversationsListScreenState extends State<ConversationsListScreen> {
           icon: const Icon(Icons.chevron_left, color: Color(0xFF374151), size: 28),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('訊息',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500,
+        title: Text(L.messages,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500,
                 color: Color(0xFF111827))),
       ),
       body: !AuthService.isLoggedIn
@@ -144,7 +145,7 @@ class _ConversationsListScreenState extends State<ConversationsListScreen> {
                         : const Color(0xFFF0FDF4),
                     borderRadius: BorderRadius.circular(4),
                   ),
-                  child: Text(c.amISeller ? '買家' : '賣家',
+                  child: Text(c.amISeller ? L.buyerLabel : L.sellerLabel,
                       style: TextStyle(fontSize: 10,
                           color: c.amISeller
                               ? const Color(0xFF2980B9)
@@ -161,7 +162,7 @@ class _ConversationsListScreenState extends State<ConversationsListScreen> {
                   maxLines: 1, overflow: TextOverflow.ellipsis,
                   style: const TextStyle(fontSize: 11, color: Color(0xFFE8A52A))),
             const SizedBox(height: 2),
-            Text(c.lastMessage ?? '尚無訊息，點擊開始對話',
+            Text(c.lastMessage ?? L.noMessagesYet,
                 maxLines: 1, overflow: TextOverflow.ellipsis,
                 style: TextStyle(fontSize: 13,
                     color: c.lastMessage != null
@@ -174,22 +175,22 @@ class _ConversationsListScreenState extends State<ConversationsListScreen> {
   }
 
   Widget _empty() => Center(child: Column(
-      mainAxisAlignment: MainAxisAlignment.center, children: const [
-    Icon(Icons.forum_outlined, size: 56, color: Color(0xFFD1D5DB)),
-    SizedBox(height: 14),
-    Text('還沒有任何對話',
-        style: TextStyle(fontSize: 15, color: Color(0xFF9CA3AF))),
-    SizedBox(height: 6),
-    Text('在商品頁聯絡賣家即可開始對話',
-        style: TextStyle(fontSize: 13, color: Color(0xFFD1D5DB))),
+      mainAxisAlignment: MainAxisAlignment.center, children: [
+    const Icon(Icons.forum_outlined, size: 56, color: Color(0xFFD1D5DB)),
+    const SizedBox(height: 14),
+    Text(L.noConversations,
+        style: const TextStyle(fontSize: 15, color: Color(0xFF9CA3AF))),
+    const SizedBox(height: 6),
+    Text(L.noConversationsHint,
+        style: const TextStyle(fontSize: 13, color: Color(0xFFD1D5DB))),
   ]));
 
   Widget _loginPrompt() => Center(child: Column(
       mainAxisAlignment: MainAxisAlignment.center, children: [
     const Icon(Icons.forum_outlined, size: 56, color: Color(0xFFD1D5DB)),
     const SizedBox(height: 14),
-    const Text('請先登入以查看訊息',
-        style: TextStyle(fontSize: 15, color: Color(0xFF9CA3AF))),
+    Text(L.loginToViewMessages,
+        style: const TextStyle(fontSize: 15, color: Color(0xFF9CA3AF))),
     const SizedBox(height: 16),
     ElevatedButton(
       onPressed: () => Navigator.push(context,
@@ -200,7 +201,7 @@ class _ConversationsListScreenState extends State<ConversationsListScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         elevation: 0,
       ),
-      child: const Text('登入'),
+      child: Text(L.login),
     ),
   ]));
 }

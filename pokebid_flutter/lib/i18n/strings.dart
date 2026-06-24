@@ -220,4 +220,92 @@ class L {
   static String get tapToPickMeetup => _t('點擊選擇面交地點', 'Tap to choose meetup spots');
   static String get selectMeetup => _t('選擇面交地點', 'Choose meetup spots');
   static String doneCount(int n) => _t('完成（$n）', 'Done ($n)');
+
+  // ── Notifications ──────────────────────────────────────────────────────
+  static String get notifications => _t('通知', 'Notifications');
+  static String get markAllRead => _t('全部已讀', 'Mark all read');
+  static String get noNotifications => _t('目前沒有通知', 'No notifications');
+  static String get viewProduct => _t('查看商品', 'View listing');
+  static String get acceptOffer => _t('接受出價', 'Accept offer');
+  static String get rejectOffer => _t('拒絕', 'Decline');
+  static String get confirmAccept => _t('確認接受', 'Confirm');
+  static String acceptOfferConfirm(String buyer, int amount) =>
+      _t('接受 $buyer 的 HK\$$amount 出價？\n商品將標示為已售出。',
+        'Accept $buyer\'s offer of HK\$$amount?\nThe listing will be marked as sold.');
+  static String get notifMissingListing => _t('通知缺少商品資訊', 'Notification is missing listing info');
+  static String get noPendingOfferMaybeHandled =>
+      _t('找不到待處理的出價（可能已被處理）', 'No pending offer found (may already be handled)');
+  static String get noPendingOffer => _t('找不到待處理的出價', 'No pending offer found');
+  static String get offerRejected => _t('已拒絕出價', 'Offer declined');
+  static String actionFailed(String e) => _t('操作失敗：$e', 'Action failed: $e');
+  static String get sellerFallback => _t('賣家', 'Seller');
+
+  // ── Relative time ──────────────────────────────────────────────────────
+  static String get justNow => _t('剛剛', 'just now');
+  static String minutesAgo(int n) => _t('$n 分鐘前', '${n}m ago');
+  static String hoursAgo(int n) => _t('$n 小時前', '${n}h ago');
+  static String daysAgo(int n) => _t('$n 天前', '${n}d ago');
+
+  // ── Chat ───────────────────────────────────────────────────────────────
+  static String get chatSafetyText =>
+      _t('平台不經手金流，請查看對方評價、慎防詐騙。',
+        'We don\'t handle payments. Check the other party\'s reviews and beware of scams.');
+  static String get chatSafetyLink => _t(' 安全提示 ›', ' Safety tips ›');
+  static String get inquiring => _t('詢問中', 'Inquiring');
+  static String sayHello(String name) => _t('向 $name 打聲招呼吧！', 'Say hello to $name!');
+  static String get messageHint => _t('輸入訊息...', 'Type a message...');
+  static String get quickReplies => _t('快速回覆', 'Quick replies');
+  static List<String> get quickReplyOptions => _en
+      ? const [
+          'Is this still available?',
+          'Is the price negotiable?',
+          'Which grading company?',
+          'Can you share more photos?',
+          'How much is shipping?',
+        ]
+      : const ['請問還有貨嗎？', '可以議價嗎？', '請問評級是什麼機構？', '可以提供更多圖片嗎？', '請問運費是多少？'];
+
+  // ── Deal card ──────────────────────────────────────────────────────────
+  static String get dealConfirm => _t('成交確認', 'Deal confirmed');
+  static String get dealDone => _t('買賣成交 🎉', 'Deal closed 🎉');
+  static String dealPrice(int amount) => _t('成交價：HK\$$amount', 'Final price: HK\$$amount');
+  static String get viewListingDetail => _t('查看商品詳情', 'View listing details');
+  static String get reviewBuyer => _t('評價買家', 'Review buyer');
+  static String get reviewDone => _t('已完成評價', 'Review submitted');
+  static String get otherParty => _t('對方', 'the other party');
+
+  // ── Review sheet ───────────────────────────────────────────────────────
+  static String reviewTitle(String name) => _t('評價 $name', 'Review $name');
+  static String get rating => _t('評分', 'Rating');
+  static String get deliveryMethod => _t('交易方式', 'Delivery method');
+  static String get deliveryMeetup => _t('面交', 'Meetup');
+  static String get deliverySf => _t('SF順豐', 'SF Express');
+  static String get deliveryOther => _t('其他', 'Other');
+  static String get commentOptional => _t('留言（選填）', 'Comment (optional)');
+  static String get commentHint => _t('分享你的交易體驗...', 'Share your trading experience...');
+  static String get submitReview => _t('送出評價', 'Submit review');
+
+  // ── Conversations list ─────────────────────────────────────────────────
+  static String get buyerLabel => _t('買家', 'Buyer');
+  static String get sellerLabel => _t('賣家', 'Seller');
+  static String get noMessagesYet => _t('尚無訊息，點擊開始對話', 'No messages yet — tap to start');
+  static String get noConversations => _t('還沒有任何對話', 'No conversations yet');
+  static String get noConversationsHint =>
+      _t('在商品頁聯絡賣家即可開始對話', 'Contact a seller on a listing to start chatting');
+  static String get loginToViewMessages => _t('請先登入以查看訊息', 'Log in to view your messages');
+  static String get login => _t('登入', 'Log in');
+
+  // ── Received offers ────────────────────────────────────────────────────
+  static String get receivedOffers => _t('收到的出價', 'Offers received');
+  static String acceptAmountConfirm(String amount) =>
+      _t('接受 HK\$$amount 的出價？', 'Accept the offer of HK\$$amount?');
+  static String get acceptOfferDetail =>
+      _t('商品將會自動下架，其他出價將被拒絕。\n接受後請在聊天室中與買家商討交易方式。',
+        'The listing will be delisted and other offers declined.\nArrange the trade with the buyer in chat afterwards.');
+  static String get offerAcceptedToast =>
+      _t('已接受出價！請在聊天室中與買家溝通交易方式',
+        'Offer accepted! Arrange the trade with the buyer in chat.');
+  static String get noReceivedOffers => _t('目前沒有收到出價', 'No offers received yet');
+  static String get pendingReply => _t('待回覆', 'Pending');
+  static String get offerAmount => _t('出價金額', 'Offer amount');
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/offer_service.dart';
 import '../services/chat_service.dart';
 import 'chat_screen.dart';
+import '../i18n/strings.dart';
 
 class ReceivedOffersScreen extends StatefulWidget {
   const ReceivedOffersScreen({super.key});
@@ -31,16 +32,16 @@ class _ReceivedOffersScreenState extends State<ReceivedOffersScreen> {
       context: context,
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('接受出價', style: TextStyle(fontWeight: FontWeight.w700)),
+        title: Text(L.acceptOffer, style: const TextStyle(fontWeight: FontWeight.w700)),
         content: Column(mainAxisSize: MainAxisSize.min, children: [
-          Text('接受 HK\$${_fmt(offer.amount)} 的出價？'),
+          Text(L.acceptAmountConfirm(_fmt(offer.amount))),
           const SizedBox(height: 8),
-          const Text('商品將會自動下架，其他出價將被拒絕。\n接受後請在聊天室中與買家商討交易方式。',
-              style: TextStyle(fontSize: 13, color: Color(0xFF6B7280))),
+          Text(L.acceptOfferDetail,
+              style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280))),
         ]),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false),
-              child: const Text('取消')),
+              child: Text(L.cancel)),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
@@ -48,7 +49,7 @@ class _ReceivedOffersScreenState extends State<ReceivedOffersScreen> {
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
-            child: const Text('確認接受'),
+            child: Text(L.confirmAccept),
           ),
         ],
       ),
@@ -60,9 +61,9 @@ class _ReceivedOffersScreenState extends State<ReceivedOffersScreen> {
 
     // Open chat with buyer automatically
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('已接受出價！請在聊天室中與買家溝通交易方式'),
-        backgroundColor: Color(0xFF16A34A),
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(L.offerAcceptedToast),
+        backgroundColor: const Color(0xFF16A34A),
       ));
       _openChatWithBuyer(offer);
     }
@@ -90,8 +91,8 @@ class _ReceivedOffersScreenState extends State<ReceivedOffersScreen> {
   Future<void> _reject(Offer offer) async {
     await OfferService.rejectOffer(offer.id);
     await _load();
-    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('已拒絕出價')));
+    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(L.offerRejected)));
   }
 
   String _fmt(int p) => p.toString().replaceAllMapped(
@@ -113,8 +114,8 @@ class _ReceivedOffersScreenState extends State<ReceivedOffersScreen> {
           icon: const Icon(Icons.chevron_left, color: Color(0xFF374151), size: 28),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('收到的出價',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500,
+        title: Text(L.receivedOffers,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500,
                 color: Color(0xFF111827))),
         actions: [
           IconButton(icon: const Icon(Icons.refresh, color: Color(0xFF374151)),
@@ -126,12 +127,12 @@ class _ReceivedOffersScreenState extends State<ReceivedOffersScreen> {
           ? const Center(child: CircularProgressIndicator(
               color: Color(0xFFE8A52A), strokeWidth: 2))
           : _offers.isEmpty
-          ? const Center(child: Column(mainAxisAlignment: MainAxisAlignment.center,
+          ? Center(child: Column(mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.local_offer_outlined, size: 48, color: Color(0xFFD1D5DB)),
-                SizedBox(height: 12),
-                Text('目前沒有收到出價',
-                    style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 15)),
+                const Icon(Icons.local_offer_outlined, size: 48, color: Color(0xFFD1D5DB)),
+                const SizedBox(height: 12),
+                Text(L.noReceivedOffers,
+                    style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 15)),
               ]))
           : ListView.separated(
               padding: const EdgeInsets.all(16),
@@ -206,7 +207,7 @@ class _OfferCard extends StatelessWidget {
               color: const Color(0xFFFEF9EC),
               borderRadius: BorderRadius.circular(6),
             ),
-            child: const Text('待回覆', style: TextStyle(fontSize: 11,
+            child: Text(L.pendingReply, style: const TextStyle(fontSize: 11,
                 fontWeight: FontWeight.w500, color: Color(0xFFE8A52A))),
           ),
         ]),
@@ -217,7 +218,7 @@ class _OfferCard extends StatelessWidget {
 
         // Offer amount
         Row(children: [
-          const Text('出價金額', style: TextStyle(fontSize: 12,
+          Text(L.offerAmount, style: const TextStyle(fontSize: 12,
               color: Color(0xFF9CA3AF))),
           const Spacer(),
           Text('HK\$${formatPrice(offer.amount)}',
@@ -256,8 +257,8 @@ class _OfferCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: const Color(0xFFE74C3C).withOpacity(0.4)),
                 ),
-                child: const Center(child: Text('拒絕',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
+                child: Center(child: Text(L.rejectOffer,
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
                         color: Color(0xFFE74C3C)))),
               ),
             ),
@@ -275,8 +276,8 @@ class _OfferCard extends StatelessWidget {
                   color: const Color(0xFF16A34A),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Center(child: Text('接受出價',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
+                child: Center(child: Text(L.acceptOffer,
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
                         color: Colors.white))),
               ),
             ),
@@ -288,8 +289,8 @@ class _OfferCard extends StatelessWidget {
 
   String _timeAgo(DateTime dt) {
     final diff = DateTime.now().difference(dt);
-    if (diff.inMinutes < 60) return '${diff.inMinutes} 分鐘前';
-    if (diff.inHours < 24) return '${diff.inHours} 小時前';
-    return '${diff.inDays} 天前';
+    if (diff.inMinutes < 60) return L.minutesAgo(diff.inMinutes);
+    if (diff.inHours < 24) return L.hoursAgo(diff.inHours);
+    return L.daysAgo(diff.inDays);
   }
 }
