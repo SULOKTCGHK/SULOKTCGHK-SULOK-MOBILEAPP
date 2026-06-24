@@ -16,6 +16,7 @@ import 'conversations_list_screen.dart';
 import 'legal_screen.dart';
 import '../widgets/unread_dot.dart';
 import '../services/push_service.dart';
+import '../i18n/locale_controller.dart';
 import '../widgets/verified_badge.dart';
 import '../widgets/ig_link.dart';
 import '../widgets/login_required.dart';
@@ -1581,10 +1582,10 @@ class _ProfileScreenState extends State<ProfileScreen>
             const SizedBox(height: 12),
             ...['繁體中文', 'English'].map((lang) =>
                 GestureDetector(
-                  onTap: () {
+                  onTap: () async {
                     setState(() => _language = lang);
-                    _savePrefs();
-                    Navigator.pop(context);
+                    await LocaleController.instance.toggleByLabel(lang);
+                    if (mounted) Navigator.pop(context);
                   },
                   child: Container(
                     padding: const EdgeInsets.symmetric(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'screens/main_shell.dart';
@@ -9,10 +10,14 @@ import 'services/profile_service.dart';
 import 'services/push_service.dart';
 import 'config/env.dart';
 import 'firebase_options.dart';
+import 'i18n/locale_controller.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   Env.assertValid();
+
+  // 載入已儲存的語言設定
+  await LocaleController.instance.load();
 
   // Firebase（Web 略過，避免未設定時 crash）
   if (!kIsWeb) {
@@ -43,18 +48,30 @@ class PokeBidApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'PokeBid',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFFE8A52A),
-          brightness: Brightness.light,
-        ),
-        scaffoldBackgroundColor: const Color(0xFFF5F6FA),
-        useMaterial3: true,
-      ),
-      home: const AuthGate(),
+    return ValueListenableBuilder<Locale>(
+      valueListenable: LocaleController.instance,
+      builder: (context, locale, _) {
+        return MaterialApp(
+          title: 'TCGspot',
+          debugShowCheckedModeBanner: false,
+          locale: locale,
+          supportedLocales: const [Locale('zh'), Locale('en')],
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: const Color(0xFFE8A52A),
+              brightness: Brightness.light,
+            ),
+            scaffoldBackgroundColor: const Color(0xFFF5F6FA),
+            useMaterial3: true,
+          ),
+          home: const AuthGate(),
+        );
+      },
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../i18n/strings.dart';
 
 class SplashScreen extends StatefulWidget {
   final VoidCallback onComplete;
@@ -308,9 +309,9 @@ class _SplashScreenState extends State<SplashScreen>
                   ),
                 ),
                 const SizedBox(height: 4),
-                const Text(
-                  '香港寶可夢卡牌交易',
-                  style: TextStyle(
+                Text(
+                  L.splashTagline,
+                  style: const TextStyle(
                     color: Color(0xFF4CAF50),
                     fontSize: 9,
                     letterSpacing: 1.5,

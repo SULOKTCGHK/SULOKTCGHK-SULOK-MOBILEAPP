@@ -9,6 +9,7 @@ import 'profile_screen.dart';
 import '../models/card_model.dart';
 import '../services/listing_service.dart';
 import '../widgets/unread_dot.dart';
+import '../i18n/strings.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -40,7 +41,7 @@ class _MainShellState extends State<MainShell> {
 
 
   void _openPost() async {
-    if (!await requireLogin(context, action: '發佈商品')) return;
+    if (!await requireLogin(context, action: L.postProduct)) return;
     if (!mounted) return;
     showModalBottomSheet(
       context: context,
@@ -51,7 +52,7 @@ class _MainShellState extends State<MainShell> {
           _loadListings(); // refresh from Supabase
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('商品已上架！'),
+              content: Text(L.listingPosted),
               backgroundColor: const Color(0xFF16A34A),
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -94,8 +95,8 @@ class _MainShellState extends State<MainShell> {
             height: 62,
             child: Row(
               children: [
-                _navItem(0, Icons.home_outlined, Icons.home, '首頁'),
-                _navItem(1, Icons.sell_outlined, Icons.sell, '掛售區'),
+                _navItem(0, Icons.home_outlined, Icons.home, L.navHome),
+                _navItem(1, Icons.sell_outlined, Icons.sell, L.navMarket),
                 // Post button (centre)
                 Expanded(
                   child: GestureDetector(
@@ -121,14 +122,14 @@ class _MainShellState extends State<MainShell> {
                           child: const Icon(Icons.add, color: Colors.white, size: 26),
                         ),
                         const SizedBox(height: 2),
-                        const Text('發佈',
-                            style: TextStyle(fontSize: 10, color: Color(0xFF9CA3AF))),
+                        Text(L.navPost,
+                            style: const TextStyle(fontSize: 10, color: Color(0xFF9CA3AF))),
                       ],
                     ),
                   ),
                 ),
-                _navItem(3, Icons.menu_book_outlined, Icons.menu_book, '圖鑑'),
-                _navItem(4, Icons.person_outline, Icons.person, '我的', showUnread: true),
+                _navItem(3, Icons.menu_book_outlined, Icons.menu_book, L.navDex),
+                _navItem(4, Icons.person_outline, Icons.person, L.navMe, showUnread: true),
               ],
             ),
           ),

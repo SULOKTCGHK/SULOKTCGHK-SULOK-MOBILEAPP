@@ -14,6 +14,7 @@ import '../widgets/unread_dot.dart';
 import '../services/notification_service.dart';
 import '../services/recently_viewed_service.dart';
 import '../services/listing_service.dart';
+import '../i18n/strings.dart';
 
 class HomeScreen extends StatefulWidget {
   final List<PokemonCard> listings;
@@ -36,7 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Fallback announcements shown while loading or if Supabase has none
   static const List<Map<String, dynamic>> _fallback = [
-    {'title': '歡迎來到 PokeBid', 'subtitle': '日本寶可夢卡牌交易平台', 'colorHex': 'E8A52A', 'icon': '🎴'},
+    {'colorHex': 'E8A52A', 'icon': '🎴'},
   ];
 
   @override
@@ -131,10 +132,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     color: const Color(0xFFE8A52A),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Row(children: [
-                    Icon(Icons.add, color: Colors.white, size: 14),
-                    SizedBox(width: 3),
-                    Text('發佈', style: TextStyle(
+                  child: Row(children: [
+                    const Icon(Icons.add, color: Colors.white, size: 14),
+                    const SizedBox(width: 3),
+                    Text(L.navPost, style: const TextStyle(
                         fontSize: 13, fontWeight: FontWeight.w600,
                         color: Colors.white)),
                   ]),
@@ -145,7 +146,7 @@ class _HomeScreenState extends State<HomeScreen> {
             types: const ['message'],
             child: IconButton(
               icon: const Icon(Icons.forum_outlined, color: Color(0xFF374151)),
-              tooltip: '訊息',
+              tooltip: L.messages,
               onPressed: () {
                 NotificationService.markReadByTypes(['message']);
                 Navigator.push(context, MaterialPageRoute(
@@ -234,11 +235,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: const Icon(Icons.storefront, color: Color(0xFFE8A52A), size: 20),
                   ),
                   const SizedBox(width: 12),
-                  const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text('附近卡鋪',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF111827))),
-                    Text('找出離你最近的實體卡店',
-                        style: TextStyle(fontSize: 11.5, color: Color(0xFF9CA3AF))),
+                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(L.nearbyShops,
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF111827))),
+                    Text(L.nearbyShopsSubtitle,
+                        style: const TextStyle(fontSize: 11.5, color: Color(0xFF9CA3AF))),
                   ])),
                   const Icon(Icons.chevron_right, color: Color(0xFF9CA3AF), size: 20),
                 ]),
@@ -251,16 +252,16 @@ class _HomeScreenState extends State<HomeScreen> {
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
               child: Row(children: [
-                const Text('最近瀏覽',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF111827))),
+                Text(L.recentlyViewed,
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF111827))),
                 const Spacer(),
                 GestureDetector(
                   onTap: () async {
                     await RecentlyViewedService.clear();
                     if (mounted) setState(() => _recentlyViewed = []);
                   },
-                  child: const Text('清除',
-                      style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF), fontWeight: FontWeight.w500)),
+                  child: Text(L.clear,
+                      style: const TextStyle(fontSize: 13, color: Color(0xFF9CA3AF), fontWeight: FontWeight.w500)),
                 ),
               ]),
             ),
@@ -296,11 +297,11 @@ class _HomeScreenState extends State<HomeScreen> {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
             child: Row(children: [
-              const Text('最新上架',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF111827))),
+              Text(L.latestListings,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF111827))),
               const Spacer(),
-              const Text('查看全部',
-                  style: TextStyle(fontSize: 13, color: Color(0xFFE8A52A), fontWeight: FontWeight.w500)),
+              Text(L.viewAll,
+                  style: const TextStyle(fontSize: 13, color: Color(0xFFE8A52A), fontWeight: FontWeight.w500)),
             ]),
           ),
 
@@ -312,10 +313,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: Color(0xFFE8A52A), strokeWidth: 2)),
             )
           else if (widget.listings.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 32),
-              child: Center(child: Text('目前沒有上架商品',
-                  style: TextStyle(color: Color(0xFF9CA3AF)))),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 32),
+              child: Center(child: Text(L.noListings,
+                  style: const TextStyle(color: Color(0xFF9CA3AF)))),
             )
           else
             Padding(
@@ -495,11 +496,11 @@ class _FallbackBannerCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(data['title'] as String,
+              Text(L.welcomeTitle,
                   style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: color),
                   maxLines: 2, overflow: TextOverflow.ellipsis),
               const SizedBox(height: 5),
-              Text(data['subtitle'] as String,
+              Text(L.welcomeSubtitle,
                   style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
                   maxLines: 2, overflow: TextOverflow.ellipsis),
             ],
@@ -652,8 +653,8 @@ class _RecentCard extends StatelessWidget {
                   Container(
                     color: Colors.black45,
                     alignment: Alignment.center,
-                    child: const Text('已售出',
-                        style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+                    child: Text(L.sold,
+                        style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
                   ),
               ]),
             ),
