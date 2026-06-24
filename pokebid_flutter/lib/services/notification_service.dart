@@ -42,7 +42,7 @@ class NotificationService {
       ? AuthService.userId
       : await SupabaseService.getUserId();
 
-  /// 建立一則通知（發給指定 userId）
+  /// 建立一則通知（發給指定 userId）並同時發送 Push Notification
   static Future<void> create({
     required String userId,
     required String type,
@@ -52,6 +52,7 @@ class NotificationService {
   }) async {
     if (userId.isEmpty) return;
     try {
+      // 站內通知
       await _client.from('notifications').insert({
         'user_id': userId,
         'type': type,
@@ -60,6 +61,14 @@ class NotificationService {
         'listing_id': listingId,
         'is_read': false,
       });
+
+      // Push Notification（App 關閉時也能收到）
+      _client.functions.invoke('send-push', body: {
+        'user_id': userId,
+        'title': title,
+        'body': body ?? '',
+        'data': {'type': type, if (listingId != null) 'listing_id': listingId},
+      }).ignore(); // fire-and-forget，不阻塞主流程
     } catch (_) {}
   }
 

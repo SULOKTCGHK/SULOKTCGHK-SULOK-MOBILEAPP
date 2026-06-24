@@ -1,0 +1,111 @@
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, content-type',
+}
+
+Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS })
+
+  try {
+    const { user_id, title, body, data } = await req.json()
+    if (!user_id || !title) {
+      return new Response(JSON.stringify({ error: 'missing user_id or title' }), { status: 400, headers: CORS })
+    }
+
+    const adminClient = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    )
+
+    // 取得用戶 FCM token
+    const { data: profile } = await adminClient
+      .from('profiles')
+      .select('fcm_token')
+      .eq('id', user_id)
+      .maybeSingle()
+
+    const token = profile?.fcm_token
+    if (!token) {
+      return new Response(JSON.stringify({ skipped: 'no fcm_token' }), { headers: CORS })
+    }
+
+    // 取得 Firebase service account 憑證（存在 Supabase Secrets）
+    const serviceAccountJson = Deno.env.get('FIREBASE_SERVICE_ACCOUNT')
+    if (!serviceAccountJson) {
+      return new Response(JSON.stringify({ error: 'FIREBASE_SERVICE_ACCOUNT not set' }), { status: 500, headers: CORS })
+    }
+    const serviceAccount = JSON.parse(serviceAccountJson)
+
+    // 取得 FCM OAuth token（使用 JWT + Google Auth）
+    const fcmToken = await getGoogleAccessToken(serviceAccount)
+    const projectId = serviceAccount.project_id
+
+    // 發送 FCM v1 訊息
+    const fcmRes = await fetch(
+      `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${fcmToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: {
+            token,
+            notification: { title, body: body ?? '' },
+            data: data ?? {},
+            android: { priority: 'high' },
+            apns: { payload: { aps: { sound: 'default', badge: 1 } } },
+          },
+        }),
+      }
+    )
+
+    const fcmJson = await fcmRes.json()
+    if (!fcmRes.ok) throw new Error(JSON.stringify(fcmJson))
+
+    return new Response(JSON.stringify({ success: true, fcm: fcmJson }), { headers: CORS })
+  } catch (e) {
+    return new Response(JSON.stringify({ error: String(e) }), { status: 500, headers: CORS })
+  }
+})
+
+// Google Service Account → OAuth2 access token（RS256 JWT）
+async function getGoogleAccessToken(sa: Record<string, string>): Promise<string> {
+  const now = Math.floor(Date.now() / 1000)
+  const header = btoa(JSON.stringify({ alg: 'RS256', typ: 'JWT' }))
+  const claim = btoa(JSON.stringify({
+    iss: sa.client_email,
+    scope: 'https://www.googleapis.com/auth/firebase.messaging',
+    aud: 'https://oauth2.googleapis.com/token',
+    iat: now,
+    exp: now + 3600,
+  }))
+
+  const key = await crypto.subtle.importKey(
+    'pkcs8',
+    pemToDer(sa.private_key),
+    { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+    false, ['sign'],
+  )
+  const sig = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', key, new TextEncoder().encode(`${header}.${claim}`))
+  const jwt = `${header}.${claim}.${btoa(String.fromCharCode(...new Uint8Array(sig)))}`
+
+  const res = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`,
+  })
+  const json = await res.json()
+  return json.access_token
+}
+
+function pemToDer(pem: string): ArrayBuffer {
+  const b64 = pem.replace(/-----[^-]+-----/g, '').replace(/\s/g, '')
+  const bin = atob(b64)
+  const buf = new Uint8Array(bin.length)
+  for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i)
+  return buf.buffer
+}

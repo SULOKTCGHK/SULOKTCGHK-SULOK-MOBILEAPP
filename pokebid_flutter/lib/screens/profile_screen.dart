@@ -15,6 +15,7 @@ import 'edit_profile_screen.dart';
 import 'conversations_list_screen.dart';
 import 'legal_screen.dart';
 import '../widgets/unread_dot.dart';
+import '../services/push_service.dart';
 import '../widgets/verified_badge.dart';
 import '../widgets/ig_link.dart';
 import '../widgets/login_required.dart';
@@ -350,6 +351,7 @@ class _ProfileScreenState extends State<ProfileScreen>
       ),
     );
     if (confirm == true) {
+      await PushService.clearToken();
       await AuthService.signOut();
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(

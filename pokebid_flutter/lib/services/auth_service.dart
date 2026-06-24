@@ -42,7 +42,6 @@ class AuthService {
   // 登出
   static Future<void> signOut() async {
     await _client.auth.signOut();
-    // 清除本地快取的 user_id
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('user_id');
   }

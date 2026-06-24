@@ -1,14 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'screens/main_shell.dart';
 import 'screens/auth/login_screen.dart';
 import 'services/api_service.dart';
 import 'services/profile_service.dart';
+import 'services/push_service.dart';
 import 'config/env.dart';
+import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   Env.assertValid();
+
+  // Firebase（Web 略過，避免未設定時 crash）
+  if (!kIsWeb) {
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  }
 
   await Supabase.initialize(
     url: Env.supabaseUrl,
@@ -17,6 +26,11 @@ void main() async {
       authFlowType: AuthFlowType.pkce,
     ),
   );
+
+  // Push notification 初始化（非 Web）
+  if (!kIsWeb) {
+    await PushService.init();
+  }
 
   // Pre-fetch Traditional Chinese set names in background (non-blocking)
   PokemonApiService.fetchZhTwSetNames();
@@ -59,9 +73,10 @@ class _AuthGateState extends State<AuthGate> {
     super.initState();
     // Listen for auth state changes (login, logout, token refresh, deep link callback)
     Supabase.instance.client.auth.onAuthStateChange.listen((data) async {
-      // 登入後確保已建立個人檔案（id = 帳號 uid）
       if (data.session != null) {
         await ProfileService.getOrCreateMyProfile();
+        // 登入後儲存 FCM token
+        if (!kIsWeb) await PushService.init();
       }
       if (mounted) setState(() {});
     });
