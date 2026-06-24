@@ -45,6 +45,9 @@ class LocaleController extends ValueNotifier<Locale> {
 
   Future<void> toggleByLabel(String label) =>
       setLocale(Locale(label == 'English' ? 'en' : 'zh'));
+
+  /// 強制通知監聽者重建（例如非同步抓回的系列名稱就緒後刷新畫面）。
+  void refresh() => notifyListeners();
 }
 
 /// 全域便捷存取

@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import '../data/set_name_zh.dart';
 import '../config/env.dart';
 import 'supabase_service.dart';
+import '../i18n/locale_controller.dart';
 
 // TCGdex 日版 API — 免費、支援 CORS、有日文資料
 const String _baseUrl = 'https://api.tcgdex.net/v2/ja';
@@ -22,8 +23,9 @@ const Map<String, Map<String, String>> kPromoSetConfig = {
   'DP-P': { 'justId': 'diamond-and-pearl-promos-pokemon',       'filter': '/DP-P' },
 };
 
-// zh-tw set name cache: lowercased id → Traditional Chinese name
+// TCGdex set name caches: lowercased id → localized name
 Map<String, String> _zhTwSetNamesCache = {};
+Map<String, String> _enSetNamesCache = {};
 
 /// 球種/花紋變體 → 繁中標籤（找不到時去掉 " Pattern" 原樣顯示）
 String variantLabelZh(String? variant) {
@@ -122,9 +124,16 @@ class ApiSet {
     this.total = 0,
   });
 
-  /// 繁體中文顯示名稱（優先 zh-tw API cache → 靜態 map → 日文原名）
+  /// 顯示名稱（依當前語言）。
+  /// 英文：TCGdex en 快取 → 日文原名。
+  /// 中文：TCGdex zh-tw 快取 → 靜態繁中 map → 日文原名。
   String get displayName {
-    final cached = _zhTwSetNamesCache[id.toLowerCase()];
+    final key = id.toLowerCase();
+    if (localeController.isEnglish) {
+      final en = _enSetNamesCache[key];
+      return (en != null && en.isNotEmpty) ? en : name;
+    }
+    final cached = _zhTwSetNamesCache[key];
     if (cached != null && cached.isNotEmpty) return cached;
     return setNameZh(id, name);
   }
@@ -167,28 +176,51 @@ class ApiSet {
 
 class PokemonApiService {
   static bool _zhTwFetched = false;
+  static bool _enFetched = false;
 
-  /// Fetch zh-tw set names from TCGdex once and populate [_zhTwSetNamesCache].
-  static Future<void> fetchZhTwSetNames() async {
-    if (_zhTwFetched) return;
-    _zhTwFetched = true;
+  /// 抓取系列名稱（依當前語言抓 TCGdex 對應端點，各語言只抓一次並快取）。
+  /// 保留舊名 fetchZhTwSetNames 以相容既有呼叫點。
+  static Future<void> fetchZhTwSetNames() => fetchSetNames();
+
+  /// 依當前語言抓 TCGdex 系列名稱。語言切換後可再呼叫一次補抓英文。
+  static Future<void> fetchSetNames() async {
+    if (localeController.isEnglish) {
+      if (_enFetched) return;
+      _enFetched = true;
+      await _fetchInto('https://api.tcgdex.net/v2/en/sets', _enSetNamesCache);
+    } else {
+      if (_zhTwFetched) return;
+      _zhTwFetched = true;
+      await _fetchInto('https://api.tcgdex.net/v2/zh-tw/sets', _zhTwSetNamesCache);
+    }
+    // 名稱抓回後刷新畫面，讓已渲染的系列名更新為對應語言
+    localeController.refresh();
+  }
+
+  static Future<void> _fetchInto(String url, Map<String, String> cache) async {
     try {
-      final uri = Uri.parse('https://api.tcgdex.net/v2/zh-tw/sets');
-      final res = await http.get(uri, headers: {'Content-Type': 'application/json'});
+      final res = await http.get(Uri.parse(url),
+          headers: {'Content-Type': 'application/json'});
       if (res.statusCode == 200) {
         final List raw = jsonDecode(res.body);
-        _zhTwSetNamesCache = {
-          for (final e in raw)
-            if (e['id'] != null && e['name'] != null)
-              (e['id'] as String).toLowerCase(): e['name'] as String,
-        };
+        for (final e in raw) {
+          if (e['id'] != null && e['name'] != null) {
+            cache[(e['id'] as String).toLowerCase()] = e['name'] as String;
+          }
+        }
       }
     } catch (_) {}
   }
 
-  /// Look up a set's Traditional Chinese name from API cache, falling back to static map.
+  /// 依當前語言查系列名稱。
+  /// 英文：TCGdex en 快取 → 日文原名（靜態 map 無對應）→ setId。
+  /// 中文：TCGdex zh-tw 快取 → 靜態繁中 map → setId。
+  /// （函式名保留 zhTwSetName 以相容既有呼叫點。）
   static String zhTwSetName(String setId) {
     final key = setId.toLowerCase();
+    if (localeController.isEnglish) {
+      return _enSetNamesCache[key] ?? setId;
+    }
     return _zhTwSetNamesCache[key] ?? kSetNameZh[key] ?? setId;
   }
 

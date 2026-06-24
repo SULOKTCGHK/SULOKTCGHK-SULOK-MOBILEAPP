@@ -51,6 +51,8 @@ class PokeBidApp extends StatelessWidget {
     return ValueListenableBuilder<Locale>(
       valueListenable: LocaleController.instance,
       builder: (context, locale, _) {
+        // 確保當前語言的系列名稱已抓取（各語言只抓一次，抓完會自動刷新）
+        PokemonApiService.fetchSetNames();
         return MaterialApp(
           title: 'TCGspot',
           debugShowCheckedModeBanner: false,
