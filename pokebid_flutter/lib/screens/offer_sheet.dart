@@ -39,6 +39,7 @@ class _OfferSheetState extends State<OfferSheet> {
         listingId: widget.card.supabaseId!,
         sellerId: widget.card.seller.id!,
         amount: amount,
+        listingName: widget.card.name,
       );
       if (mounted) {
         Navigator.pop(context);

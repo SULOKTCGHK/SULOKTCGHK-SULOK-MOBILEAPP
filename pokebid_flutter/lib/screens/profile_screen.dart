@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../services/auth_service.dart';
 import '../services/supabase_service.dart';
 import '../services/listing_service.dart';
+import '../services/offer_service.dart';
 import '../services/profile_service.dart';
 import '../models/card_model.dart';
 import 'auth/login_screen.dart';
@@ -21,6 +22,7 @@ import 'phone_verify_screen.dart';
 import 'admin/admin_screen.dart';
 import '../services/admin_service.dart';
 import '../services/notification_service.dart';
+import '../services/review_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -51,20 +53,27 @@ class _ProfileScreenState extends State<ProfileScreen>
   List<PokemonCard> _myListings = [];
   bool _loadingMyListings = false;
 
+  // My reviews
+  List<Review> _reviews = [];
+  bool _loadingReviews = false;
+
+  // Transaction history
+  List<PokemonCard> _soldListings = [];
+  List<Map<String, dynamic>> _purchases = [];
+  bool _loadingTx = false;
+  int _txTab = 0; // 0 售出 / 1 買入
+
   @override
   void initState() {
     super.initState();
-    _tabCtrl = TabController(length: 3, vsync: this);
+    _tabCtrl = TabController(length: 1, vsync: this);
     _loadPrefs();
     _loadCollection();
     _loadMyListings();
     _loadProfile();
+    _loadReviews();
+    _loadTxHistory();
     AdminService.isAdmin().then((v) { if (mounted) setState(() => _isAdmin = v); });
-    // Reload data when switching tabs
-    _tabCtrl.addListener(() {
-      if (_tabCtrl.index == 0) _loadMyListings();
-      if (_tabCtrl.index == 1) _loadCollection();
-    });
   }
 
   Future<void> _loadProfile() async {
@@ -92,6 +101,29 @@ class _ProfileScreenState extends State<ProfileScreen>
       if (mounted) setState(() => _myListings = res);
     } finally {
       if (mounted) setState(() => _loadingMyListings = false);
+    }
+  }
+
+  Future<void> _loadReviews() async {
+    if (!AuthService.isLoggedIn) return;
+    setState(() => _loadingReviews = true);
+    try {
+      final res = await ReviewService.getForSeller(AuthService.userId);
+      if (mounted) setState(() => _reviews = res);
+    } finally {
+      if (mounted) setState(() => _loadingReviews = false);
+    }
+  }
+
+  Future<void> _loadTxHistory() async {
+    if (!AuthService.isLoggedIn) return;
+    setState(() => _loadingTx = true);
+    try {
+      final sold = await ListingService.getMySoldListings(AuthService.userId);
+      final bought = await OfferService.getMyPurchases();
+      if (mounted) setState(() { _soldListings = sold; _purchases = bought; });
+    } finally {
+      if (mounted) setState(() => _loadingTx = false);
     }
   }
 
@@ -350,6 +382,17 @@ class _ProfileScreenState extends State<ProfileScreen>
                           IgLink(handle: _profile!.igHandle, size: 15),
                         ],
                       ]),
+                      if (_reviews.isNotEmpty) ...[
+                        const SizedBox(height: 3),
+                        Row(children: [
+                          const Icon(Icons.star_rounded, color: Color(0xFFE8A52A), size: 14),
+                          const SizedBox(width: 2),
+                          Text(
+                            '${(_reviews.fold<int>(0, (s, r) => s + r.rating) / _reviews.length).toStringAsFixed(1)}  (${_reviews.length})',
+                            style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280), fontWeight: FontWeight.w500),
+                          ),
+                        ]),
+                      ],
                       if (username.isNotEmpty) ...[
                         const SizedBox(height: 2),
                         Text('@$username',
@@ -421,8 +464,6 @@ class _ProfileScreenState extends State<ProfileScreen>
               labelStyle: const TextStyle(fontSize: 13,
                   fontWeight: FontWeight.w500),
               tabs: const [
-                Tab(text: '我的掛售'),
-                Tab(text: '我的收藏'),
                 Tab(text: '設定'),
               ],
             ),
@@ -432,8 +473,6 @@ class _ProfileScreenState extends State<ProfileScreen>
             child: TabBarView(
               controller: _tabCtrl,
               children: [
-                _buildMyListings(),
-                _buildMyCollection(),
                 _buildSettings(),
               ],
             ),
@@ -556,6 +595,129 @@ class _ProfileScreenState extends State<ProfileScreen>
     color: card.type.bgColor,
     child: Center(child: Text(card.type.emoji,
         style: const TextStyle(fontSize: 24))),
+  );
+
+  // 我的掛售頁（供 Navigator.push 用）
+  Widget _myListingsPage() => Scaffold(
+    backgroundColor: const Color(0xFFF5F6FA),
+    appBar: AppBar(
+      backgroundColor: Colors.white,
+      elevation: 0,
+      surfaceTintColor: Colors.transparent,
+      leading: IconButton(
+        icon: const Icon(Icons.chevron_left, color: Color(0xFF374151), size: 28),
+        onPressed: () => Navigator.pop(context),
+      ),
+      title: const Text('我的掛售', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF111827))),
+      bottom: PreferredSize(preferredSize: const Size.fromHeight(0.5),
+        child: Container(height: 0.5, color: const Color(0xFFE5E7EB))),
+    ),
+    body: _buildMyListings(),
+  );
+
+  Widget _myCollectionPage() => Scaffold(
+    backgroundColor: const Color(0xFFF5F6FA),
+    appBar: AppBar(
+      backgroundColor: Colors.white,
+      elevation: 0,
+      surfaceTintColor: Colors.transparent,
+      leading: IconButton(
+        icon: const Icon(Icons.chevron_left, color: Color(0xFF374151), size: 28),
+        onPressed: () => Navigator.pop(context),
+      ),
+      title: const Text('我的收藏', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF111827))),
+      bottom: PreferredSize(preferredSize: const Size.fromHeight(0.5),
+        child: Container(height: 0.5, color: const Color(0xFFE5E7EB))),
+    ),
+    body: _buildMyCollection(),
+  );
+
+  Widget _myReviewsPage() {
+    final avg = _reviews.isEmpty ? 0.0 : _reviews.fold<int>(0, (s, r) => s + r.rating) / _reviews.length;
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F6FA),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        leading: IconButton(
+          icon: const Icon(Icons.chevron_left, color: Color(0xFF374151), size: 28),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text('我的評價', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF111827))),
+        bottom: PreferredSize(preferredSize: const Size.fromHeight(0.5),
+          child: Container(height: 0.5, color: const Color(0xFFE5E7EB))),
+      ),
+      body: _reviews.isEmpty
+        ? const Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Icon(Icons.star_outline, size: 56, color: Color(0xFFD1D5DB)),
+            SizedBox(height: 12),
+            Text('還沒有評價', style: TextStyle(fontSize: 14, color: Color(0xFF9CA3AF))),
+          ]))
+        : ListView(padding: const EdgeInsets.all(16), children: [
+            // 評分摘要
+            Container(
+              margin: const EdgeInsets.only(bottom: 14),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFE5E7EB), width: 0.5),
+              ),
+              child: Row(children: [
+                Column(children: [
+                  Text(avg.toStringAsFixed(1),
+                    style: const TextStyle(fontSize: 40, fontWeight: FontWeight.w800, color: Color(0xFF111827))),
+                  Row(children: List.generate(5, (i) => Icon(
+                    i < avg.round() ? Icons.star_rounded : Icons.star_outline_rounded,
+                    color: const Color(0xFFE8A52A), size: 18))),
+                  const SizedBox(height: 4),
+                  Text('共 ${_reviews.length} 則', style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
+                ]),
+                const SizedBox(width: 24),
+                Expanded(child: Column(children: List.generate(5, (i) {
+                  final star = 5 - i;
+                  final count = _reviews.where((r) => r.rating == star).length;
+                  final pct = count / _reviews.length;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Row(children: [
+                      Text('$star', style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280))),
+                      const SizedBox(width: 4),
+                      const Icon(Icons.star_rounded, size: 11, color: Color(0xFFE8A52A)),
+                      const SizedBox(width: 6),
+                      Expanded(child: ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(value: pct, minHeight: 6,
+                          backgroundColor: const Color(0xFFF3F4F6), color: const Color(0xFFE8A52A)),
+                      )),
+                      const SizedBox(width: 6),
+                      Text('$count', style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280))),
+                    ]),
+                  );
+                }))),
+              ]),
+            ),
+            ..._reviews.map((r) => Padding(padding: const EdgeInsets.only(bottom: 10), child: _reviewTile(r))),
+          ]),
+    );
+  }
+
+  Widget _txHistoryPage() => Scaffold(
+    backgroundColor: const Color(0xFFF5F6FA),
+    appBar: AppBar(
+      backgroundColor: Colors.white,
+      elevation: 0,
+      surfaceTintColor: Colors.transparent,
+      leading: IconButton(
+        icon: const Icon(Icons.chevron_left, color: Color(0xFF374151), size: 28),
+        onPressed: () => Navigator.pop(context),
+      ),
+      title: const Text('交易紀錄', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF111827))),
+      bottom: PreferredSize(preferredSize: const Size.fromHeight(0.5),
+        child: Container(height: 0.5, color: const Color(0xFFE5E7EB))),
+    ),
+    body: _buildTxHistory(),
   );
 
   Widget _buildMyCollection() {
@@ -809,10 +971,258 @@ class _ProfileScreenState extends State<ProfileScreen>
     ]);
   }
 
+  Widget _reviewTile(Review r) {
+    final deliveryLabel = switch (r.deliveryMethod) {
+      'meetup' => '面交',
+      'sf' => 'SF順豐',
+      'other' => '其他',
+      _ => null,
+    };
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 0.5),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          CircleAvatar(
+            radius: 16,
+            backgroundColor: const Color(0xFFE8A52A).withOpacity(0.15),
+            child: Text(r.reviewerName.substring(0, 1).toUpperCase(),
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFFB45309))),
+          ),
+          const SizedBox(width: 10),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(r.reviewerName, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF111827))),
+            Row(children: [
+              ...List.generate(5, (i) => Icon(
+                i < r.rating ? Icons.star_rounded : Icons.star_outline_rounded,
+                color: const Color(0xFFE8A52A), size: 14)),
+              if (deliveryLabel != null) ...[
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF3F4F6),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(deliveryLabel, style: const TextStyle(fontSize: 10, color: Color(0xFF6B7280))),
+                ),
+              ],
+            ]),
+          ])),
+          Text(_reviewDate(r.createdAt), style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF))),
+        ]),
+        if (r.comment != null && r.comment!.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Text(r.comment!, style: const TextStyle(fontSize: 13, color: Color(0xFF374151), height: 1.5)),
+        ],
+      ]),
+    );
+  }
+
+  String _reviewDate(DateTime dt) {
+    return '${dt.year}/${dt.month.toString().padLeft(2,'0')}/${dt.day.toString().padLeft(2,'0')}';
+  }
+
+  // ── Transaction History Tab ───────────────────────────────────────────────
+  Widget _buildTxHistory() {
+    return Column(children: [
+      // 售出 / 買入 切換
+      Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+        child: Container(
+          decoration: BoxDecoration(color: const Color(0xFFF3F4F6), borderRadius: BorderRadius.circular(10)),
+          padding: const EdgeInsets.all(3),
+          child: Row(children: [
+            _txSeg('售出紀錄 (${_soldListings.length})', 0),
+            _txSeg('購買紀錄 (${_purchases.length})', 1),
+          ]),
+        ),
+      ),
+      const SizedBox(height: 8),
+      Expanded(
+        child: _loadingTx
+          ? const Center(child: CircularProgressIndicator(color: Color(0xFFE8A52A), strokeWidth: 2))
+          : _txTab == 0 ? _buildSoldList() : _buildBoughtList(),
+      ),
+    ]);
+  }
+
+  Widget _txSeg(String label, int idx) => Expanded(
+    child: GestureDetector(
+      onTap: () => setState(() { _txTab = idx; _loadTxHistory(); }),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 7),
+        decoration: BoxDecoration(
+          color: _txTab == idx ? Colors.white : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: _txTab == idx ? [BoxShadow(color: Colors.black.withValues(alpha: 0.07), blurRadius: 4)] : [],
+        ),
+        child: Text(label,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 12.5, fontWeight: FontWeight.w600,
+            color: _txTab == idx ? const Color(0xFF111827) : const Color(0xFF9CA3AF),
+          )),
+      ),
+    ),
+  );
+
+  Widget _buildSoldList() {
+    if (_soldListings.isEmpty) {
+      return const Center(child: Text('還沒有售出紀錄', style: TextStyle(color: Color(0xFF9CA3AF))));
+    }
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      itemCount: _soldListings.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 8),
+      itemBuilder: (_, i) {
+        final c = _soldListings[i];
+        return GestureDetector(
+          onTap: () => Navigator.push(context, MaterialPageRoute(
+            builder: (_) => CardDetailScreen(card: c, isFavorited: false, onFavChanged: (_) {}),
+          )),
+          child: _txCard(
+            imageUrls: c.imageUrls,
+            name: c.name,
+            sub: '售價 HK\$${c.price}',
+            tag: '已售出',
+            tagColor: const Color(0xFF16A34A),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildBoughtList() {
+    if (_purchases.isEmpty) {
+      return const Center(child: Text('還沒有購買紀錄', style: TextStyle(color: Color(0xFF9CA3AF))));
+    }
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      itemCount: _purchases.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 8),
+      itemBuilder: (_, i) {
+        final p = _purchases[i];
+        final listing = p['listings'] as Map<String, dynamic>?;
+        final name = listing?['name'] as String? ?? '商品';
+        final imageUrls = (listing?['image_urls'] as List?)?.cast<String>() ?? [];
+        final sellerName = listing?['seller_name'] as String? ?? '';
+        final amount = p['amount'] as int? ?? 0;
+        final listingId = p['listing_id'] as String?;
+        return GestureDetector(
+          onTap: listingId == null ? null : () async {
+            final card = await ListingService.getListingById(listingId);
+            if (card != null && mounted) {
+              Navigator.push(context, MaterialPageRoute(
+                builder: (_) => CardDetailScreen(card: card, isFavorited: false, onFavChanged: (_) {}),
+              ));
+            }
+          },
+          child: _txCard(
+            imageUrls: imageUrls,
+            name: name,
+            sub: '成交價 HK\$$amount${sellerName.isNotEmpty ? '  賣家：$sellerName' : ''}',
+            tag: '已購買',
+            tagColor: const Color(0xFF2980B9),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _txCard({
+    required List<String> imageUrls,
+    required String name,
+    required String sub,
+    required String tag,
+    required Color tagColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Row(children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: imageUrls.isNotEmpty
+            ? Image.network(imageUrls.first, width: 56, height: 56, fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => _txImgPlaceholder())
+            : _txImgPlaceholder(),
+        ),
+        const SizedBox(width: 12),
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(name,
+            maxLines: 1, overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF111827))),
+          const SizedBox(height: 3),
+          Text(sub, style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
+        ])),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(color: tagColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
+          child: Text(tag, style: TextStyle(fontSize: 11, color: tagColor, fontWeight: FontWeight.w600)),
+        ),
+      ]),
+    );
+  }
+
+  Widget _txImgPlaceholder() => Container(
+    width: 56, height: 56, color: const Color(0xFFF3F4F6),
+    child: const Icon(Icons.image_not_supported_outlined, size: 24, color: Color(0xFFD1D5DB)),
+  );
+
   Widget _buildSettings() {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        // 我的功能入口
+        _sectionHeader('我的'),
+        _settingCard(children: [
+          _arrowTile(
+            icon: Icons.storefront_outlined,
+            iconColor: const Color(0xFFE8A52A),
+            title: '我的掛售',
+            trailing: '${_myListings.length} 項',
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => _myListingsPage())),
+          ),
+          const Divider(height: 0.5, color: Color(0xFFF3F4F6)),
+          _arrowTile(
+            icon: Icons.collections_bookmark_outlined,
+            iconColor: const Color(0xFF8E44AD),
+            title: '我的收藏',
+            trailing: '${_collection.length} 張',
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => _myCollectionPage())),
+          ),
+          const Divider(height: 0.5, color: Color(0xFFF3F4F6)),
+          _arrowTile(
+            icon: Icons.receipt_long_outlined,
+            iconColor: const Color(0xFF2980B9),
+            title: '交易紀錄',
+            trailing: '${_soldListings.length + _purchases.length} 筆',
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => _txHistoryPage())),
+          ),
+          const Divider(height: 0.5, color: Color(0xFFF3F4F6)),
+          _arrowTile(
+            icon: Icons.star_outline_rounded,
+            iconColor: const Color(0xFFE8A52A),
+            title: '我的評價',
+            trailing: _reviews.isEmpty ? '暫無' : '${(_reviews.fold<int>(0, (s, r) => s + r.rating) / _reviews.length).toStringAsFixed(1)} ★ (${_reviews.length}則)',
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => _myReviewsPage())),
+          ),
+        ]),
+
+        const SizedBox(height: 16),
+
+        const SizedBox(height: 4),
         // 交易
         _sectionHeader('交易'),
         _settingCard(children: [

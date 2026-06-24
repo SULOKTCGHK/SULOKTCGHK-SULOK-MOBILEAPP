@@ -333,6 +333,41 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
                   if (_psaPop != null) _PsaPopCard(pop: _psaPop!),
                   if (_psaPop != null) const SizedBox(height: 12),
 
+                  // 面交地點
+                  if (card.meetupLocations.isNotEmpty) ...[
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFE5E7EB), width: 0.5),
+                      ),
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Row(children: const [
+                          Icon(Icons.location_on_outlined, size: 15, color: Color(0xFFE8A52A)),
+                          SizedBox(width: 4),
+                          Text('優先面交地點', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF374151))),
+                        ]),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: card.meetupLocations.map((loc) => Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFEF3C7),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: const Color(0xFFFCD34D)),
+                            ),
+                            child: Text(loc, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFFB45309))),
+                          )).toList(),
+                        ),
+                      ]),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+
                   // Seller row
                   GestureDetector(
                     onTap: _openSellerProfile,

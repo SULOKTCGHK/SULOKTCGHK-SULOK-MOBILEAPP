@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'auth_service.dart';
 import 'supabase_service.dart';
 import 'notification_service.dart';
+import 'chat_service.dart';
 
 class Offer {
   final String id;
@@ -49,6 +51,7 @@ class OfferService {
     required String listingId,
     required String sellerId,
     required int amount,
+    String? listingName,
   }) async {
     final myId = await _myId();
     await _client.from('offers').insert({
@@ -60,14 +63,40 @@ class OfferService {
       'status': 'pending',
     });
 
+    // 取得商品名稱（如未傳入則從 DB 取）
+    String cardName = listingName ?? '';
+    if (cardName.isEmpty) {
+      try {
+        final row = await _client.from('listings').select('name').eq('id', listingId).maybeSingle();
+        cardName = row?['name'] as String? ?? '';
+      } catch (_) {}
+    }
+
     // 通知賣家收到出價
     await NotificationService.create(
       userId: sellerId,
       type: 'offer_received',
-      title: '收到新出價 💰',
+      title: cardName.isNotEmpty ? '「$cardName」收到新出價 💰' : '收到新出價 💰',
       body: '${_myName()} 出價 HK\$$amount',
       listingId: listingId,
     );
+  }
+
+  // ── Get accepted offers by buyer (purchase history) ──────────────────────
+  static Future<List<Map<String, dynamic>>> getMyPurchases() async {
+    final myId = await _myId();
+    try {
+      // Join offers + listings to get full purchase info
+      final res = await Supabase.instance.client
+          .from('offers')
+          .select('*, listings(name, image_urls, seller_name, seller_id, set_id, card_number)')
+          .eq('buyer_id', myId)
+          .eq('status', 'accepted')
+          .order('created_at', ascending: false);
+      return (res as List).cast<Map<String, dynamic>>();
+    } catch (_) {
+      return [];
+    }
   }
 
   // ── Get offers received by seller (for a listing) ────────────────────────
@@ -106,10 +135,8 @@ class OfferService {
         .neq('id', offer.id)
         .eq('status', 'pending');
 
-    // Mark listing as sold (not active)
-    await _client.from('listings')
-        .update({'is_active': false, 'status': 'sold'})
-        .eq('id', offer.listingId);
+    // Mark listing as sold via security definer function (bypasses RLS)
+    await _client.rpc('mark_listing_sold', params: {'p_listing_id': offer.listingId});
 
     // 通知買家：出價被接受
     await NotificationService.create(
@@ -119,6 +146,26 @@ class OfferService {
       body: '你的出價 HK\$${offer.amount} 已被賣家接受，請前往聊天室完成交易',
       listingId: offer.listingId,
     );
+
+    // 在聊天室發送成交系統訊息
+    try {
+      final myId = await _myId();
+      final convId = await ChatService.getOrCreateConversationFor(
+        buyerId: offer.buyerId,
+        sellerId: myId,
+        cardId: offer.listingId,
+        forceNew: true, // 每筆成交獨立對話
+      );
+      final dealMsg = '__DEAL__:${jsonEncode({
+        'listing_id': offer.listingId,
+        'amount': offer.amount,
+        'buyer_name': offer.buyerName,
+      })}';
+      await ChatService.sendSystemMessage(
+        conversationId: convId,
+        content: dealMsg,
+      );
+    } catch (_) {}
   }
 
   // ── Reject single offer ───────────────────────────────────────────────────

@@ -1,9 +1,14 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/card_model.dart';
+import '../services/auth_service.dart';
 import '../services/chat_service.dart';
+import '../services/listing_service.dart';
+import '../services/review_service.dart';
 import 'card_detail_screen.dart';
+import 'seller_profile_screen.dart';
 import 'legal_screen.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -159,6 +164,16 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  void _openSellerProfile() {
+    if (widget.sellerId == null) return;
+    Navigator.push(context, MaterialPageRoute(
+      builder: (_) => SellerProfileScreen(
+        sellerId: widget.sellerId!,
+        sellerName: widget.sellerName,
+      ),
+    ));
+  }
+
   Future<void> _openIG() async {
     final ig = widget.sellerIg?.replaceAll('@', '') ?? '';
     if (ig.isEmpty) return;
@@ -187,7 +202,9 @@ class _ChatScreenState extends State<ChatScreen> {
           icon: const Icon(Icons.chevron_left, color: Color(0xFF374151), size: 28),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Row(children: [
+        title: GestureDetector(
+          onTap: widget.sellerId != null ? _openSellerProfile : null,
+          child: Row(children: [
           Container(
             width: 36, height: 36,
             decoration: BoxDecoration(
@@ -210,7 +227,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
               ),
           ]),
-        ]),
+        ])),
         actions: [
           if (widget.sellerIg != null && widget.sellerIg!.isNotEmpty)
             IconButton(
@@ -320,6 +337,16 @@ class _ChatScreenState extends State<ChatScreen> {
                     itemCount: _messages.length,
                     itemBuilder: (_, i) {
                       final msg = _messages[i];
+                      if (msg.content.startsWith('__DEAL__:')) {
+                        final amISeller = widget.sellerId != _myId;
+                        return _DealCard(
+                          content: msg.content,
+                          time: _timeStr(msg.createdAt),
+                          otherPartyId: widget.sellerId,
+                          otherPartyName: widget.sellerName,
+                          amISeller: amISeller,
+                        );
+                      }
                       final isMine = msg.senderId == _myId;
                       return _MessageBubble(
                         text: msg.content,
@@ -510,6 +537,305 @@ class _MessageBubble extends StatelessWidget {
           if (isMine) const SizedBox(width: 4),
         ],
       ),
+    );
+  }
+}
+
+// ── 成交系統訊息卡片 ────────────────────────────────────────────────────────────
+class _DealCard extends StatefulWidget {
+  final String content;
+  final String time;
+  final String? otherPartyId;   // 對方的 userId
+  final String? otherPartyName;
+  final bool amISeller;
+
+  const _DealCard({
+    required this.content,
+    required this.time,
+    this.otherPartyId,
+    this.otherPartyName,
+    this.amISeller = false,
+  });
+
+  @override
+  State<_DealCard> createState() => _DealCardState();
+}
+
+class _DealCardState extends State<_DealCard> {
+  bool _reviewed = false;
+
+  Map<String, dynamic>? get _data {
+    try {
+      final json = widget.content.substring('__DEAL__:'.length);
+      return jsonDecode(json) as Map<String, dynamic>;
+    } catch (_) { return null; }
+  }
+
+  void _openListing(String listingId) async {
+    final card = await ListingService.getListingById(listingId);
+    if (card != null && mounted) {
+      Navigator.push(context, MaterialPageRoute(
+        builder: (_) => CardDetailScreen(card: card, isFavorited: false, onFavChanged: (_) {}),
+      ));
+    }
+  }
+
+  void _openReview(String listingId) async {
+    if (widget.otherPartyId == null) return;
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _ReviewSheet(
+        otherPartyId: widget.otherPartyId!,
+        otherPartyName: widget.otherPartyName ?? '對方',
+        listingId: listingId,
+        amISeller: widget.amISeller,
+        onDone: () => setState(() => _reviewed = true),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final data = _data;
+    if (data == null) return const SizedBox.shrink();
+    final amount = data['amount'] as int? ?? 0;
+    final listingId = data['listing_id'] as String? ?? '';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      child: Column(children: [
+        Row(children: [
+          const Expanded(child: Divider(color: Color(0xFFE5E7EB))),
+          const SizedBox(width: 8),
+          const Text('成交確認', style: TextStyle(fontSize: 11, color: Color(0xFF9CA3AF), fontWeight: FontWeight.w500)),
+          const SizedBox(width: 8),
+          const Expanded(child: Divider(color: Color(0xFFE5E7EB))),
+        ]),
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTap: listingId.isNotEmpty ? () => _openListing(listingId) : null,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF0FDF4),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFF86EFAC)),
+            ),
+            child: Column(children: [
+              Row(mainAxisAlignment: MainAxisAlignment.center, children: const [
+                Icon(Icons.check_circle, color: Color(0xFF16A34A), size: 18),
+                SizedBox(width: 6),
+                Text('買賣成交 🎉', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFF15803D))),
+              ]),
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF16A34A),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text('成交價：HK\$$amount',
+                  style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800)),
+              ),
+              const SizedBox(height: 10),
+              if (listingId.isNotEmpty)
+                Row(mainAxisAlignment: MainAxisAlignment.center, children: const [
+                  Text('查看商品詳情', style: TextStyle(fontSize: 12, color: Color(0xFF16A34A), fontWeight: FontWeight.w600)),
+                  SizedBox(width: 4),
+                  Icon(Icons.arrow_forward_ios, size: 11, color: Color(0xFF16A34A)),
+                ]),
+              const SizedBox(height: 4),
+              Text(widget.time, style: const TextStyle(fontSize: 10, color: Color(0xFF9CA3AF))),
+            ]),
+          ),
+        ),
+        const SizedBox(height: 8),
+        // 評價按鈕
+        if (widget.otherPartyId != null && !_reviewed)
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => _openReview(listingId),
+              icon: const Icon(Icons.star_outline, size: 16, color: Color(0xFFE8A52A)),
+              label: Text(
+                widget.amISeller ? '評價買家' : '評價賣家',
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFFB45309)),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Color(0xFFE8A52A)),
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
+          )
+        else if (_reviewed)
+          const Padding(
+            padding: EdgeInsets.only(top: 4),
+            child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              Icon(Icons.check_circle_outline, size: 14, color: Color(0xFF16A34A)),
+              SizedBox(width: 4),
+              Text('已完成評價', style: TextStyle(fontSize: 12, color: Color(0xFF16A34A))),
+            ]),
+          ),
+      ]),
+    );
+  }
+}
+
+// ── 評價 BottomSheet ────────────────────────────────────────────────────────────
+class _ReviewSheet extends StatefulWidget {
+  final String otherPartyId;
+  final String otherPartyName;
+  final String listingId;
+  final bool amISeller;
+  final VoidCallback onDone;
+
+  const _ReviewSheet({
+    required this.otherPartyId,
+    required this.otherPartyName,
+    required this.listingId,
+    required this.amISeller,
+    required this.onDone,
+  });
+
+  @override
+  State<_ReviewSheet> createState() => _ReviewSheetState();
+}
+
+class _ReviewSheetState extends State<_ReviewSheet> {
+  int _stars = 5;
+  String? _delivery; // meetup / sf / other
+  final _commentCtrl = TextEditingController();
+  bool _submitting = false;
+
+  static const _deliveryOptions = [
+    ('meetup', '面交', Icons.handshake_outlined),
+    ('sf', 'SF順豐', Icons.local_shipping_outlined),
+    ('other', '其他', Icons.swap_horiz),
+  ];
+
+  @override
+  void dispose() { _commentCtrl.dispose(); super.dispose(); }
+
+  Future<void> _submit() async {
+    setState(() => _submitting = true);
+    await ReviewService.submitReview(
+      sellerId: widget.otherPartyId,
+      listingId: widget.listingId,
+      rating: _stars,
+      comment: _commentCtrl.text.trim().isEmpty ? null : _commentCtrl.text.trim(),
+      deliveryMethod: _delivery,
+      role: widget.amISeller ? 'seller' : 'buyer',
+    );
+    if (mounted) {
+      Navigator.pop(context);
+      widget.onDone();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      padding: EdgeInsets.only(
+        left: 20, right: 20, top: 16,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+      ),
+      child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Center(child: Container(width: 36, height: 4,
+          decoration: BoxDecoration(color: const Color(0xFFD1D5DB), borderRadius: BorderRadius.circular(2)))),
+        const SizedBox(height: 16),
+        Text('評價 ${widget.otherPartyName}',
+          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: Color(0xFF111827))),
+        const SizedBox(height: 16),
+
+        // 星星評分
+        const Text('評分', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF374151))),
+        const SizedBox(height: 8),
+        Row(children: List.generate(5, (i) => GestureDetector(
+          onTap: () => setState(() => _stars = i + 1),
+          child: Padding(
+            padding: const EdgeInsets.only(right: 6),
+            child: Icon(i < _stars ? Icons.star_rounded : Icons.star_outline_rounded,
+              color: const Color(0xFFE8A52A), size: 36),
+          ),
+        ))),
+        const SizedBox(height: 16),
+
+        // 交易方式
+        const Text('交易方式', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF374151))),
+        const SizedBox(height: 8),
+        Row(children: _deliveryOptions.map((opt) {
+          final (val, label, icon) = opt;
+          final sel = _delivery == val;
+          return Expanded(child: GestureDetector(
+            onTap: () => setState(() => _delivery = sel ? null : val),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              margin: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              decoration: BoxDecoration(
+                color: sel ? const Color(0xFFE8A52A) : const Color(0xFFF3F4F6),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: sel ? const Color(0xFFE8A52A) : const Color(0xFFE5E7EB)),
+              ),
+              child: Column(children: [
+                Icon(icon, size: 20, color: sel ? Colors.white : const Color(0xFF6B7280)),
+                const SizedBox(height: 4),
+                Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600,
+                  color: sel ? Colors.white : const Color(0xFF374151))),
+              ]),
+            ),
+          ));
+        }).toList()),
+        const SizedBox(height: 16),
+
+        // 留言
+        const Text('留言（選填）', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF374151))),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _commentCtrl,
+          maxLines: 3,
+          style: const TextStyle(fontSize: 14),
+          decoration: InputDecoration(
+            hintText: '分享你的交易體驗...',
+            hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 13),
+            filled: true,
+            fillColor: const Color(0xFFF9FAFB),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Color(0xFFD1D5DB), width: 0.5)),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Color(0xFFD1D5DB), width: 0.5)),
+            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Color(0xFFE8A52A), width: 1)),
+            contentPadding: const EdgeInsets.all(12),
+          ),
+        ),
+        const SizedBox(height: 20),
+
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: _submitting ? null : _submit,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFE8A52A),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              elevation: 0,
+            ),
+            child: _submitting
+              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+              : const Text('送出評價', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+          ),
+        ),
+      ]),
     );
   }
 }

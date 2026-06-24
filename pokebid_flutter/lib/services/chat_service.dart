@@ -181,17 +181,20 @@ class ChatService {
     String? cardId,
     String? cardName,
     int? cardPrice,
+    bool forceNew = false,
   }) async {
-    var query = _client
-        .from('conversations')
-        .select('id')
-        .eq('buyer_id', buyerId)
-        .eq('seller_id', sellerId);
-    if (cardId != null && cardId.isNotEmpty) {
-      query = query.eq('card_id', cardId);
+    // 每個 listing 一個獨立對話，必須有 cardId 才能查找
+    if (!forceNew && cardId != null && cardId.isNotEmpty) {
+      final existing = await _client
+          .from('conversations')
+          .select('id')
+          .eq('buyer_id', buyerId)
+          .eq('seller_id', sellerId)
+          .eq('card_id', cardId)
+          .limit(1)
+          .maybeSingle();
+      if (existing != null) return existing['id'] as String;
     }
-    final existing = await query.limit(1).maybeSingle();
-    if (existing != null) return existing['id'] as String;
 
     final res = await _client.from('conversations').insert({
       'buyer_id': buyerId,
@@ -254,6 +257,18 @@ class ChatService {
         }
       }
     } catch (_) {}
+  }
+
+  // ── Send system message (no notification, system sender) ─────────────────
+  static Future<void> sendSystemMessage({
+    required String conversationId,
+    required String content,
+  }) async {
+    await _client.from('messages').insert({
+      'conversation_id': conversationId,
+      'sender_id': 'system',
+      'content': content,
+    });
   }
 
   // ── Subscribe to realtime messages ────────────────────────────────────────

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import '../services/notification_service.dart';
 import '../services/listing_service.dart';
+import '../services/offer_service.dart';
+import '../services/chat_service.dart';
 import 'card_detail_screen.dart';
+import 'chat_screen.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -32,7 +35,37 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   Future<void> _onTap(AppNotification n) async {
     if (!n.isRead) await NotificationService.markRead(n.id);
-    // 有關聯商品 → 開啟商品詳情
+
+    // 出價被接受：買家點通知 → 進聊天室
+    if (n.type == 'offer_accepted' && n.listingId != null) {
+      final myId = await ChatService.myId();
+      // 找到這個 listing 的 accepted offer 以取得賣家 ID
+      final offers = await OfferService.getOffersForListing(n.listingId!);
+      final accepted = offers.where((o) => o.status == 'accepted' && o.buyerId == myId).toList();
+      if (accepted.isNotEmpty && mounted) {
+        final offer = accepted.first;
+        final convId = await ChatService.getOrCreateConversationFor(
+          buyerId: myId,
+          sellerId: offer.listingId, // 用 listing 找 seller
+          cardId: offer.listingId,
+        );
+        // 取得賣家名稱：從 listing 取
+        final card = await ListingService.getListingById(n.listingId!);
+        if (!mounted) return;
+        Navigator.push(context, MaterialPageRoute(
+          builder: (_) => ChatScreen(
+            sellerName: card?.seller.name ?? '賣家',
+            sellerAvatar: (card?.seller.name ?? '賣').substring(0, 1).toUpperCase(),
+            sellerId: card?.seller.id,
+            conversationId: convId,
+          ),
+        ));
+      }
+      _load();
+      return;
+    }
+
+    // 其他通知：開商品詳情
     if (n.listingId != null) {
       final card = await ListingService.getListingById(n.listingId!);
       if (card != null && mounted) {
@@ -44,6 +77,88 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       }
     }
     _load();
+  }
+
+  Future<void> _acceptOffer(AppNotification n) async {
+    if (n.listingId == null) {
+      _showErr('通知缺少商品資訊');
+      return;
+    }
+    try {
+      final offers = await OfferService.getOffersForListing(n.listingId!);
+      final pending = offers.where((o) => o.status == 'pending').toList();
+      if (pending.isEmpty) {
+        _showErr('找不到待處理的出價（可能已被處理）');
+        return;
+      }
+      final offer = pending.reduce((a, b) => a.amount >= b.amount ? a : b);
+      if (!mounted) return;
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder: (_) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('接受出價', style: TextStyle(fontWeight: FontWeight.w700)),
+          content: Text('接受 ${offer.buyerName} 的 HK\$${offer.amount} 出價？\n商品將標示為已售出。'),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('取消')),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF16A34A), foregroundColor: Colors.white),
+              child: const Text('確認接受'),
+            ),
+          ],
+        ),
+      );
+      if (confirm != true || !mounted) return;
+      await OfferService.acceptOffer(offer);
+      await NotificationService.markRead(n.id);
+      _load();
+      if (!mounted) return;
+      final myId = await ChatService.myId();
+      final convId = await ChatService.getOrCreateConversationFor(
+        buyerId: offer.buyerId,
+        sellerId: myId,
+        cardId: offer.listingId,
+        forceNew: true,
+      );
+      if (!mounted) return;
+      Navigator.push(context, MaterialPageRoute(
+        builder: (_) => ChatScreen(
+          sellerName: offer.buyerName,
+          sellerAvatar: offer.buyerName.substring(0, 1).toUpperCase(),
+          sellerId: offer.buyerId,
+          conversationId: convId,
+        ),
+      ));
+    } catch (e) {
+      _showErr('操作失敗：$e');
+    }
+  }
+
+  void _showErr(String msg) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg), backgroundColor: const Color(0xFFE74C3C)),
+    );
+  }
+
+  Future<void> _rejectOffer(AppNotification n) async {
+    if (n.listingId == null) return;
+    try {
+      final offers = await OfferService.getOffersForListing(n.listingId!);
+      final pending = offers.where((o) => o.status == 'pending').toList();
+      if (pending.isEmpty) { _showErr('找不到待處理的出價'); return; }
+      for (final o in pending) {
+        await OfferService.rejectOffer(o.id);
+      }
+      await NotificationService.markRead(n.id);
+      _load();
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('已拒絕出價'), backgroundColor: Color(0xFF6B7280)),
+      );
+    } catch (e) {
+      _showErr('操作失敗：$e');
+    }
   }
 
   @override
@@ -100,6 +215,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   Widget _tile(AppNotification n) {
     final (icon, color) = _style(n.type);
+    final isOffer = n.type == 'offer_received';
     return GestureDetector(
       onTap: () => _onTap(n),
       child: Container(
@@ -112,34 +228,80 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             width: 0.5,
           ),
         ),
-        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Container(
-            width: 38, height: 38,
-            decoration: BoxDecoration(color: color.withOpacity(0.12), borderRadius: BorderRadius.circular(10)),
-            child: Icon(icon, size: 19, color: color),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Row(children: [
-                Expanded(
-                  child: Text(n.title,
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF111827))),
-                ),
-                if (!n.isRead)
-                  Container(width: 8, height: 8,
-                      decoration: const BoxDecoration(color: Color(0xFFE74C3C), shape: BoxShape.circle)),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Container(
+              width: 38, height: 38,
+              decoration: BoxDecoration(color: color.withOpacity(0.12), borderRadius: BorderRadius.circular(10)),
+              child: Icon(icon, size: 19, color: color),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Row(children: [
+                  Expanded(
+                    child: Text(n.title,
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF111827))),
+                  ),
+                  if (!n.isRead)
+                    Container(width: 8, height: 8,
+                        decoration: const BoxDecoration(color: Color(0xFFE74C3C), shape: BoxShape.circle)),
+                ]),
+                if (n.body != null) ...[
+                  const SizedBox(height: 3),
+                  Text(n.body!,
+                      style: const TextStyle(fontSize: 12.5, color: Color(0xFF6B7280), height: 1.4)),
+                ],
+                const SizedBox(height: 4),
+                Text(_timeAgo(n.createdAt),
+                    style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF))),
               ]),
-              if (n.body != null) ...[
-                const SizedBox(height: 3),
-                Text(n.body!,
-                    style: const TextStyle(fontSize: 12.5, color: Color(0xFF6B7280), height: 1.4)),
-              ],
-              const SizedBox(height: 4),
-              Text(_timeAgo(n.createdAt),
-                  style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF))),
+            ),
+          ]),
+          // 查看商品連結
+          if (isOffer && n.listingId != null) ...[
+            const SizedBox(height: 6),
+            GestureDetector(
+              onTap: () => _onTap(n),
+              child: const Row(children: [
+                Text('查看商品', style: TextStyle(fontSize: 12, color: Color(0xFF8E44AD), fontWeight: FontWeight.w600)),
+                SizedBox(width: 3),
+                Icon(Icons.arrow_forward_ios, size: 10, color: Color(0xFF8E44AD)),
+              ]),
+            ),
+          ],
+          // 出價操作按鈕（僅未讀的 offer_received 才顯示）
+          if (isOffer && !n.isRead) ...[
+            const SizedBox(height: 10),
+            Row(children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => _rejectOffer(n),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF6B7280),
+                    side: const BorderSide(color: Color(0xFFD1D5DB)),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: const Text('拒絕', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => _acceptOffer(n),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF16A34A),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    elevation: 0,
+                  ),
+                  child: const Text('接受出價', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                ),
+              ),
             ]),
-          ),
+          ],
         ]),
       ),
     );

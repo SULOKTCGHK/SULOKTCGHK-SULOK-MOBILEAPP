@@ -23,7 +23,9 @@ class _MainShellState extends State<MainShell> {
   bool _loadingListings = true;
   bool _splashDone = false;
 
-  bool get _showSplash => _loadingListings || !_splashDone;
+  final _postBtnKey = GlobalKey();
+
+  bool get _showSplash => !_splashDone;
 
   @override
   void initState() {
@@ -35,6 +37,7 @@ class _MainShellState extends State<MainShell> {
     final data = await ListingService.getListings();
     if (mounted) setState(() { _listings = data; _loadingListings = false; });
   }
+
 
   void _openPost() async {
     if (!await requireLogin(context, action: '發佈商品')) return;
@@ -62,7 +65,10 @@ class _MainShellState extends State<MainShell> {
   @override
   Widget build(BuildContext context) {
     if (_showSplash) return SplashScreen(
-      onComplete: () { if (mounted) setState(() => _splashDone = true); },
+      onComplete: () {
+        if (!mounted) return;
+        setState(() => _splashDone = true);
+      },
     );
 
     final pages = [
@@ -98,6 +104,7 @@ class _MainShellState extends State<MainShell> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Container(
+                          key: _postBtnKey,
                           width: 46,
                           height: 46,
                           decoration: const BoxDecoration(
@@ -130,12 +137,13 @@ class _MainShellState extends State<MainShell> {
     );
   }
 
-  Widget _navItem(int index, IconData icon, IconData activeIcon, String label, {bool showUnread = false}) {
+  Widget _navItem(int index, IconData icon, IconData activeIcon, String label, {bool showUnread = false, Key? key}) {
     final active = _currentIndex == index;
     final iconWidget = Icon(active ? activeIcon : icon, size: 22,
         color: active ? const Color(0xFFE8A52A) : const Color(0xFF9CA3AF));
     return Expanded(
       child: GestureDetector(
+        key: key,
         onTap: () => setState(() => _currentIndex = index),
         behavior: HitTestBehavior.opaque,
         child: Column(

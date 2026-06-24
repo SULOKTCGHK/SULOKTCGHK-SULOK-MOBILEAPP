@@ -24,12 +24,10 @@ class _SplashScreenState extends State<SplashScreen>
   static const _bootLines = [
     'POKEBID SYSTEM v1.0',
     '--------------------',
-    'Initializing Pokedex...',
     'Loading card database...',
     'Connecting to market...',
-    'Checking PSA records...',
     '--------------------',
-    'ALL SYSTEMS READY.',
+    'READY.',
   ];
 
   @override
@@ -51,40 +49,40 @@ class _SplashScreenState extends State<SplashScreen>
 
   Future<void> _runSequence() async {
     // Phase 0: 全黑停頓
-    await Future.delayed(const Duration(milliseconds: 500));
+    await Future.delayed(const Duration(milliseconds: 200));
 
-    // Phase 1: 屏幕閃爍（像舊機開機）
+    // Phase 1: 屏幕閃爍
     if (!mounted) return;
     setState(() => _phase = 1);
-    for (var i = 0; i < 5; i++) {
-      await Future.delayed(const Duration(milliseconds: 80));
+    for (var i = 0; i < 3; i++) {
+      await Future.delayed(const Duration(milliseconds: 60));
       if (!mounted) return;
       setState(() => _screenOn = !_screenOn);
     }
     setState(() => _screenOn = true);
-    await Future.delayed(const Duration(milliseconds: 150));
+    await Future.delayed(const Duration(milliseconds: 100));
 
     // Phase 2: Boot 文字逐行出現
     if (!mounted) return;
     setState(() => _phase = 2);
     for (var i = 0; i < _bootLines.length; i++) {
-      final delay = i < 2 ? 60 : (i < 6 ? 200 : 120);
+      final delay = i < 2 ? 50 : 120;
       await Future.delayed(Duration(milliseconds: delay));
       if (!mounted) return;
       setState(() => _visibleLines = i + 1);
     }
-    await Future.delayed(const Duration(milliseconds: 400));
+    await Future.delayed(const Duration(milliseconds: 200));
 
     // Phase 3: Logo 彈出
     if (!mounted) return;
     setState(() => _phase = 3);
     _logoCtrl.forward();
-    await Future.delayed(const Duration(milliseconds: 1400));
+    await Future.delayed(const Duration(milliseconds: 800));
 
     // Phase 4: 淡出
     if (!mounted) return;
     setState(() => _fadeOut = true);
-    await Future.delayed(const Duration(milliseconds: 600));
+    await Future.delayed(const Duration(milliseconds: 400));
     widget.onComplete();
   }
 

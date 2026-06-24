@@ -11,6 +11,8 @@ class Review {
   final String? listingId;
   final int rating;        // 1-5
   final String? comment;
+  final String? deliveryMethod; // meetup / sf / other
+  final String? role;           // buyer / seller
   final DateTime createdAt;
 
   const Review({
@@ -21,6 +23,8 @@ class Review {
     this.listingId,
     required this.rating,
     this.comment,
+    this.deliveryMethod,
+    this.role,
     required this.createdAt,
   });
 
@@ -32,6 +36,8 @@ class Review {
         listingId: r['listing_id'] as String?,
         rating: (r['rating'] as num).toInt(),
         comment: r['comment'] as String?,
+        deliveryMethod: r['delivery_method'] as String?,
+        role: r['role'] as String?,
         createdAt: DateTime.parse(r['created_at'] as String).toLocal(),
       );
 }
@@ -58,6 +64,8 @@ class ReviewService {
     String? listingId,
     required int rating,
     String? comment,
+    String? deliveryMethod,
+    String? role,
   }) async {
     try {
       final myId = await _myId();
@@ -68,6 +76,8 @@ class ReviewService {
         'listing_id': listingId,
         'rating': rating,
         'comment': comment,
+        if (deliveryMethod != null) 'delivery_method': deliveryMethod,
+        if (role != null) 'role': role,
       }, onConflict: 'reviewer_id,listing_id');
 
       // 通知賣家

@@ -34,6 +34,7 @@ class ListingService {
     String? cardNumber,
     String? psaCert,
     String? cachedCardId,
+    List<String> meetupLocations = const [],
   }) async {
     try {
       final sellerId = AuthService.isLoggedIn
@@ -61,6 +62,7 @@ class ListingService {
         if (cardNumber != null && cardNumber.isNotEmpty) 'card_number': cardNumber,
         if (psaCert != null && psaCert.isNotEmpty) 'psa_cert': psaCert,
         if (cachedCardId != null && cachedCardId.isNotEmpty) 'cached_card_id': cachedCardId,
+        if (meetupLocations.isNotEmpty) 'meetup_locations': meetupLocations,
       }).select().maybeSingle();
 
       // 通知所有願望清單符合此新商品的用戶
@@ -81,6 +83,21 @@ class ListingService {
           .select()
           .eq('seller_id', sellerId)
           .eq('is_active', true)
+          .order('created_at', ascending: false);
+      return (res as List).map((r) => _fromRow(r)).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  // ── Get sold listings by seller ───────────────────────────────────────────
+  static Future<List<PokemonCard>> getMySoldListings(String sellerId) async {
+    try {
+      final res = await _client
+          .from('listings')
+          .select()
+          .eq('seller_id', sellerId)
+          .eq('status', 'sold')
           .order('created_at', ascending: false);
       return (res as List).map((r) => _fromRow(r)).toList();
     } catch (_) {
@@ -150,6 +167,7 @@ class ListingService {
       cardNumber: row['card_number'] as String?,
       psaCert: row['psa_cert'] as String?,
       psaSpecId: row['psa_spec_id'] as String?,
+      meetupLocations: (row['meetup_locations'] as List?)?.cast<String>() ?? [],
     );
   }
 

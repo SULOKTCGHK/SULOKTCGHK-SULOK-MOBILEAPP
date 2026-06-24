@@ -31,6 +31,7 @@ class PokemonCard {
   final String? cardNumber; // 卡號，如 217
   final String? psaCert;    // PSA cert number（用戶上架時輸入）
   final String? psaSpecId;  // PSA SpecID（cert 查到 / admin 設定）
+  final List<String> meetupLocations; // 優先面交地點
 
   PokemonCard({
     required this.id,
@@ -50,6 +51,7 @@ class PokemonCard {
     this.cardNumber,
     this.psaCert,
     this.psaSpecId,
+    this.meetupLocations = const [],
   });
 }
 
