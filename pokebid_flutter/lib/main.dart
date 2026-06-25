@@ -56,6 +56,7 @@ class PokeBidApp extends StatelessWidget {
         return MaterialApp(
           title: 'TCGspot',
           debugShowCheckedModeBanner: false,
+          navigatorKey: PushService.navigatorKey,
           locale: locale,
           supportedLocales: const [Locale('zh'), Locale('en')],
           localizationsDelegates: const [
