@@ -20,18 +20,20 @@ class DefaultFirebaseOptions {
   }
 
   // ⚠️  以下為佔位值，執行 flutterfire configure 後會自動填入真實數值
-  static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'REPLACE_WITH_FLUTTERFIRE_CONFIGURE',
-    appId: 'REPLACE_WITH_FLUTTERFIRE_CONFIGURE',
-    messagingSenderId: 'REPLACE_WITH_FLUTTERFIRE_CONFIGURE',
-    projectId: 'REPLACE_WITH_FLUTTERFIRE_CONFIGURE',
-  );
 
+  static const FirebaseOptions android = FirebaseOptions(
+    apiKey: 'AIzaSyBurica74D1piQF1neYl3eY1izoaBGXo4Y',
+    appId: '1:728802234868:android:b27ef6aca55980dcfde9a1',
+    messagingSenderId: '728802234868',
+    projectId: 'tcgspot',
+    storageBucket: 'tcgspot.firebasestorage.app',
+  );
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'REPLACE_WITH_FLUTTERFIRE_CONFIGURE',
-    appId: 'REPLACE_WITH_FLUTTERFIRE_CONFIGURE',
-    messagingSenderId: 'REPLACE_WITH_FLUTTERFIRE_CONFIGURE',
-    projectId: 'REPLACE_WITH_FLUTTERFIRE_CONFIGURE',
-    iosBundleId: 'com.tcgspot.app',
+    apiKey: 'AIzaSyDmx64HHugIiTLQ5hMTWjxxUgC2zfLm0Mg',
+    appId: '1:728802234868:ios:1fe6f26da22305c1fde9a1',
+    messagingSenderId: '728802234868',
+    projectId: 'tcgspot',
+    storageBucket: 'tcgspot.firebasestorage.app',
+    iosBundleId: 'com.example.pokebid',
   );
 }

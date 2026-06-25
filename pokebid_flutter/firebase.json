@@ -1,0 +1,1 @@
+{"flutter":{"platforms":{"android":{"default":{"projectId":"tcgspot","appId":"1:728802234868:android:b27ef6aca55980dcfde9a1","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"tcgspot","configurations":{"android":"1:728802234868:android:b27ef6aca55980dcfde9a1","ios":"1:728802234868:ios:1fe6f26da22305c1fde9a1"}}}}}}
