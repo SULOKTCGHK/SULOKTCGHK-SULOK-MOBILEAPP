@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../data/set_name_zh.dart';
 import '../config/env.dart';
 import 'supabase_service.dart';
@@ -175,41 +177,44 @@ class ApiSet {
 }
 
 class PokemonApiService {
-  static bool _zhTwFetched = false;
-  static bool _enFetched = false;
+  static bool _setNamesFetched = false;
 
-  /// 抓取系列名稱（依當前語言抓 TCGdex 對應端點，各語言只抓一次並快取）。
-  /// 保留舊名 fetchZhTwSetNames 以相容既有呼叫點。
+  /// 相容舊名：載入系列名稱（en/zh）。
   static Future<void> fetchZhTwSetNames() => fetchSetNames();
 
-  /// 依當前語言抓 TCGdex 系列名稱。語言切換後可再呼叫一次補抓英文。
+  /// 從 Supabase set_names 表載入系列名稱（一次取得 en + zh），
+  /// 成功後快取到本機；失敗（離線）時用上次快取。之後可在 DB 直接改名。
   static Future<void> fetchSetNames() async {
-    if (localeController.isEnglish) {
-      if (_enFetched) return;
-      _enFetched = true;
-      await _fetchInto('https://api.tcgdex.net/v2/en/sets', _enSetNamesCache);
-    } else {
-      if (_zhTwFetched) return;
-      _zhTwFetched = true;
-      await _fetchInto('https://api.tcgdex.net/v2/zh-tw/sets', _zhTwSetNamesCache);
-    }
-    // 名稱抓回後刷新畫面，讓已渲染的系列名更新為對應語言
-    localeController.refresh();
-  }
-
-  static Future<void> _fetchInto(String url, Map<String, String> cache) async {
+    if (_setNamesFetched) return;
+    _setNamesFetched = true;
+    const cacheKey = 'set_names_cache';
+    List? rows;
     try {
-      final res = await http.get(Uri.parse(url),
-          headers: {'Content-Type': 'application/json'});
-      if (res.statusCode == 200) {
-        final List raw = jsonDecode(res.body);
-        for (final e in raw) {
-          if (e['id'] != null && e['name'] != null) {
-            cache[(e['id'] as String).toLowerCase()] = e['name'] as String;
-          }
-        }
+      final res = await Supabase.instance.client
+          .from('set_names')
+          .select('set_id, en, zh');
+      rows = res as List;
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(cacheKey, jsonEncode(rows));
+    } catch (_) {
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final cached = prefs.getString(cacheKey);
+        if (cached != null) rows = jsonDecode(cached) as List;
+      } catch (_) {}
+    }
+    if (rows != null) {
+      for (final e in rows) {
+        final id = (e['set_id'] as String?)?.toLowerCase();
+        if (id == null) continue;
+        final en = e['en'] as String?;
+        final zh = e['zh'] as String?;
+        if (en != null && en.isNotEmpty) _enSetNamesCache[id] = en;
+        if (zh != null && zh.isNotEmpty) _zhTwSetNamesCache[id] = zh;
       }
-    } catch (_) {}
+    }
+    // 名稱載入後刷新畫面
+    localeController.refresh();
   }
 
   /// 依當前語言查系列名稱。
