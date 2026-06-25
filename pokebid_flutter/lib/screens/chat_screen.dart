@@ -11,6 +11,8 @@ import 'card_detail_screen.dart';
 import 'seller_profile_screen.dart';
 import 'legal_screen.dart';
 import '../i18n/strings.dart';
+import '../services/block_service.dart';
+import '../widgets/report_sheet.dart';
 
 class ChatScreen extends StatefulWidget {
   final String sellerName;
@@ -165,6 +167,31 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  Future<void> _blockUser() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(L.block, style: const TextStyle(fontWeight: FontWeight.w700)),
+        content: Text(L.blockConfirm(widget.sellerName)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(L.cancel)),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE74C3C), foregroundColor: Colors.white),
+            child: Text(L.block),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || widget.sellerId == null) return;
+    await BlockService.block(widget.sellerId!);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(L.blocked)));
+      Navigator.pop(context); // 封鎖後離開聊天室
+    }
+  }
+
   void _openSellerProfile() {
     if (widget.sellerId == null) return;
     Navigator.push(context, MaterialPageRoute(
@@ -244,6 +271,28 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
                 child: const Icon(Icons.camera_alt, color: Colors.white, size: 16),
               ),
+            ),
+          if (widget.sellerId != null && widget.sellerId!.isNotEmpty && widget.sellerId != _myId)
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert, color: Color(0xFF374151)),
+              onSelected: (v) {
+                if (v == 'report') {
+                  showReportSheet(context, targetType: 'user', targetId: widget.sellerId!);
+                } else if (v == 'block') {
+                  _blockUser();
+                }
+              },
+              itemBuilder: (_) => [
+                PopupMenuItem(value: 'report', child: Row(children: [
+                  const Icon(Icons.flag_outlined, size: 18, color: Color(0xFF6B7280)),
+                  const SizedBox(width: 10), Text(L.report),
+                ])),
+                PopupMenuItem(value: 'block', child: Row(children: [
+                  const Icon(Icons.block, size: 18, color: Color(0xFFE74C3C)),
+                  const SizedBox(width: 10),
+                  Text(L.block, style: const TextStyle(color: Color(0xFFE74C3C))),
+                ])),
+              ],
             ),
           const SizedBox(width: 8),
         ],

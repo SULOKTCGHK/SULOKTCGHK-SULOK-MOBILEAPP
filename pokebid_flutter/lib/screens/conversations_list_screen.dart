@@ -4,6 +4,7 @@ import '../services/auth_service.dart';
 import 'chat_screen.dart';
 import 'auth/login_screen.dart';
 import '../i18n/strings.dart';
+import '../services/block_service.dart';
 
 class ConversationsListScreen extends StatefulWidget {
   const ConversationsListScreen({super.key});
@@ -31,7 +32,11 @@ class _ConversationsListScreenState extends State<ConversationsListScreen> {
     setState(() => _loading = true);
     try {
       final convs = await ChatService.getMyConversations();
-      if (mounted) setState(() { _conversations = convs; _loading = false; });
+      final blocked = await BlockService.blockedIds();
+      final filtered = blocked.isEmpty
+          ? convs
+          : convs.where((c) => !blocked.contains(c.otherPartyId)).toList();
+      if (mounted) setState(() { _conversations = filtered; _loading = false; });
     } catch (_) {
       if (mounted) setState(() => _loading = false);
     }

@@ -18,6 +18,7 @@ import '../widgets/unread_dot.dart';
 import '../services/push_service.dart';
 import '../i18n/locale_controller.dart';
 import '../i18n/strings.dart';
+import '../services/block_service.dart';
 import '../widgets/verified_badge.dart';
 import '../widgets/ig_link.dart';
 import '../widgets/login_required.dart';
@@ -354,6 +355,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     );
     if (confirm == true) {
       await PushService.clearToken();
+      BlockService.reset();
       await AuthService.signOut();
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(
@@ -765,6 +767,8 @@ class _ProfileScreenState extends State<ProfileScreen>
           ]),
     );
   }
+
+  Widget _blockedUsersPage() => const _BlockedUsersPage();
 
   Widget _txHistoryPage() => Scaffold(
     backgroundColor: const Color(0xFFF5F6FA),
@@ -1353,6 +1357,15 @@ class _ProfileScreenState extends State<ProfileScreen>
               if (ok == true) _loadProfile();
             },
           ),
+          const Divider(height: 0.5, color: Color(0xFFF3F4F6)),
+          _arrowTile(
+            icon: Icons.block,
+            iconColor: const Color(0xFFE74C3C),
+            title: L.blockedUsers,
+            trailing: '',
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => _blockedUsersPage())),
+          ),
           if (_isAdmin) ...[
             const Divider(height: 0.5, color: Color(0xFFF3F4F6)),
             _arrowTile(
@@ -1609,6 +1622,101 @@ class _ProfileScreenState extends State<ProfileScreen>
           ],
         ),
       ),
+    );
+  }
+}
+
+// ── 封鎖的用戶管理頁 ──────────────────────────────────────────────────────────
+class _BlockedUsersPage extends StatefulWidget {
+  const _BlockedUsersPage();
+  @override
+  State<_BlockedUsersPage> createState() => _BlockedUsersPageState();
+}
+
+class _BlockedUsersPageState extends State<_BlockedUsersPage> {
+  List<Map<String, dynamic>> _users = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final u = await BlockService.blockedUsers();
+    if (mounted) setState(() { _users = u; _loading = false; });
+  }
+
+  Future<void> _unblock(String id) async {
+    await BlockService.unblock(id);
+    if (mounted) {
+      setState(() => _users.removeWhere((e) => e['id'] == id));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(L.unblocked)));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F6FA),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        leading: IconButton(
+          icon: const Icon(Icons.chevron_left, color: Color(0xFF374151), size: 28),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(L.blockedUsers,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF111827))),
+        bottom: PreferredSize(preferredSize: const Size.fromHeight(0.5),
+          child: Container(height: 0.5, color: const Color(0xFFE5E7EB))),
+      ),
+      body: _loading
+          ? const Center(child: CircularProgressIndicator(color: Color(0xFFE8A52A), strokeWidth: 2))
+          : _users.isEmpty
+              ? Center(child: Text(L.noBlockedUsers,
+                  style: const TextStyle(fontSize: 14, color: Color(0xFF9CA3AF))))
+              : ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: _users.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  itemBuilder: (_, i) {
+                    final u = _users[i];
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFE5E7EB), width: 0.5),
+                      ),
+                      child: Row(children: [
+                        Container(
+                          width: 40, height: 40,
+                          decoration: const BoxDecoration(color: Color(0xFFFEF9EC), shape: BoxShape.circle),
+                          child: Center(child: Text(u['avatar'] as String? ?? '🎴',
+                              style: const TextStyle(fontSize: 20))),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(child: Text(
+                          (u['name'] as String?)?.isNotEmpty == true ? u['name'] as String : (u['id'] as String),
+                          maxLines: 1, overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Color(0xFF111827)))),
+                        OutlinedButton(
+                          onPressed: () => _unblock(u['id'] as String),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFF6B7280),
+                            side: const BorderSide(color: Color(0xFFD1D5DB)),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                          child: Text(L.unblock, style: const TextStyle(fontSize: 12)),
+                        ),
+                      ]),
+                    );
+                  },
+                ),
     );
   }
 }

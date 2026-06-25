@@ -640,6 +640,37 @@ class L {
       _t('查閱每張卡的 SNKRDUNK 日本市場成交價、PSA Pop 數量，並追蹤你的收藏總價值。',
         'Check each card\'s SNKRDUNK Japan sale prices and PSA Pop counts, and track your collection\'s total value.');
 
+  // ── Report & Block ─────────────────────────────────────────────────────
+  static String get report => _t('檢舉', 'Report');
+  static String get reportTitle => _t('檢舉', 'Report');
+  static String get reportReason => _t('檢舉原因', 'Reason');
+  static String get reportDetailsHint =>
+      _t('補充說明（選填）', 'Additional details (optional)');
+  static String get reportSubmit => _t('送出檢舉', 'Submit report');
+  static String get reportSubmitted =>
+      _t('已收到你的檢舉，我們會盡快處理。', 'Report received. We\'ll review it shortly.');
+  static String get reportFailed => _t('檢舉失敗，請稍後再試', 'Report failed. Please try again.');
+  static String get reportNeedLogin => _t('檢舉', 'report');
+  // 檢舉原因選項
+  static String get reasonScam => _t('懷疑詐騙', 'Suspected scam');
+  static String get reasonFake => _t('仿冒 / 假貨', 'Counterfeit / fake');
+  static String get reasonProhibited => _t('違禁 / 違法物品', 'Prohibited / illegal item');
+  static String get reasonOffensive => _t('冒犯 / 不當內容', 'Offensive / inappropriate');
+  static String get reasonSpam => _t('垃圾訊息 / 廣告', 'Spam / advertising');
+  static String get reasonHarassment => _t('騷擾 / 辱罵', 'Harassment / abuse');
+  static String get reasonOther => _t('其他', 'Other');
+
+  static String get block => _t('封鎖', 'Block');
+  static String get unblock => _t('解除封鎖', 'Unblock');
+  static String blockConfirm(String name) =>
+      _t('確定要封鎖 $name 嗎？\n你將不再看到對方的掛售與訊息。',
+        'Block $name?\nYou will no longer see their listings or messages.');
+  static String get blocked => _t('已封鎖', 'Blocked');
+  static String get unblocked => _t('已解除封鎖', 'Unblocked');
+  static String get blockNeedLogin => _t('封鎖用戶', 'block users');
+  static String get blockedUsers => _t('封鎖的用戶', 'Blocked users');
+  static String get noBlockedUsers => _t('沒有封鎖任何用戶', 'No blocked users');
+
   // ── Coach mark ─────────────────────────────────────────────────────────
   static String coachStep(int cur, int total) => _t('步驟 $cur / $total', 'Step $cur / $total');
   static String get coachSkip => _t('跳過引導', 'Skip tour');

@@ -16,6 +16,7 @@ import 'seller_profile_screen.dart';
 import 'image_viewer_screen.dart';
 import 'review_sheet.dart';
 import '../i18n/strings.dart';
+import '../widgets/report_sheet.dart';
 
 class CardDetailScreen extends StatefulWidget {
   final PokemonCard card;
@@ -225,10 +226,21 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
         title: Text(L.productDetail,
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Color(0xFF111827))),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.share_outlined, color: Color(0xFF374151)),
-            onPressed: () {},
-          ),
+          if (!_isMyListing && card.supabaseId != null)
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert, color: Color(0xFF374151)),
+              onSelected: (v) {
+                if (v == 'report') {
+                  showReportSheet(context, targetType: 'listing', targetId: card.supabaseId!);
+                }
+              },
+              itemBuilder: (_) => [
+                PopupMenuItem(value: 'report', child: Row(children: [
+                  const Icon(Icons.flag_outlined, size: 18, color: Color(0xFF6B7280)),
+                  const SizedBox(width: 10), Text(L.report),
+                ])),
+              ],
+            ),
         ],
       ),
       body: SingleChildScrollView(

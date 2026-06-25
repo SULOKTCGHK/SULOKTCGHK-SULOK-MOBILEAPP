@@ -8,6 +8,7 @@ import 'dex_screen.dart';
 import 'profile_screen.dart';
 import '../models/card_model.dart';
 import '../services/listing_service.dart';
+import '../services/block_service.dart';
 import '../widgets/unread_dot.dart';
 import '../i18n/strings.dart';
 
@@ -36,7 +37,12 @@ class _MainShellState extends State<MainShell> {
 
   Future<void> _loadListings() async {
     final data = await ListingService.getListings();
-    if (mounted) setState(() { _listings = data; _loadingListings = false; });
+    // 過濾掉被封鎖賣家的掛售
+    final blocked = await BlockService.blockedIds();
+    final filtered = blocked.isEmpty
+        ? data
+        : data.where((c) => c.seller.id == null || !blocked.contains(c.seller.id)).toList();
+    if (mounted) setState(() { _listings = filtered; _loadingListings = false; });
   }
 
 

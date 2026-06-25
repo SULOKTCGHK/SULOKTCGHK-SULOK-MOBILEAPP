@@ -14,6 +14,9 @@ import '../services/review_service.dart';
 import 'card_detail_screen.dart';
 import 'chat_screen.dart';
 import '../i18n/strings.dart';
+import '../services/block_service.dart';
+import '../widgets/report_sheet.dart';
+import '../widgets/login_required.dart';
 
 class SellerProfileScreen extends StatefulWidget {
   final String sellerId;
@@ -40,6 +43,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
   List<Review> _reviews = [];
   bool _sellerVerified = false;
   String _sellerIg = '';
+  bool _isBlocked = false;
 
   @override
   void initState() {
@@ -72,6 +76,42 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
         _sellerIg = sp?.igHandle ?? '';
         _loading = false;
       });
+    }
+    final blocked = await BlockService.isBlocked(widget.sellerId);
+    if (mounted) setState(() => _isBlocked = blocked);
+  }
+
+  Future<void> _toggleBlock() async {
+    if (!await requireLogin(context, action: L.blockNeedLogin)) return;
+    if (_isBlocked) {
+      await BlockService.unblock(widget.sellerId);
+      if (mounted) {
+        setState(() => _isBlocked = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(L.unblocked)));
+      }
+      return;
+    }
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(L.block, style: const TextStyle(fontWeight: FontWeight.w700)),
+        content: Text(L.blockConfirm(widget.sellerName)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(L.cancel)),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE74C3C), foregroundColor: Colors.white),
+            child: Text(L.block),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    await BlockService.block(widget.sellerId);
+    if (mounted) {
+      setState(() => _isBlocked = true);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(L.blocked)));
     }
   }
 
@@ -136,6 +176,32 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
         title: Text(L.sellerHome,
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500,
                 color: Color(0xFF111827))),
+        actions: [
+          if (!_isSelf)
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert, color: Color(0xFF374151)),
+              onSelected: (v) {
+                if (v == 'report') {
+                  showReportSheet(context, targetType: 'user', targetId: widget.sellerId);
+                } else if (v == 'block') {
+                  _toggleBlock();
+                }
+              },
+              itemBuilder: (_) => [
+                PopupMenuItem(value: 'report', child: Row(children: [
+                  const Icon(Icons.flag_outlined, size: 18, color: Color(0xFF6B7280)),
+                  const SizedBox(width: 10), Text(L.report),
+                ])),
+                PopupMenuItem(value: 'block', child: Row(children: [
+                  Icon(_isBlocked ? Icons.lock_open_outlined : Icons.block,
+                      size: 18, color: const Color(0xFFE74C3C)),
+                  const SizedBox(width: 10),
+                  Text(_isBlocked ? L.unblock : L.block,
+                      style: const TextStyle(color: Color(0xFFE74C3C))),
+                ])),
+              ],
+            ),
+        ],
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator(
