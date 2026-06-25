@@ -248,6 +248,33 @@ class SupabaseService {
     }
   }
 
+  /// 取得精靈名稱（en/zh）。優先從 Supabase 抓，成功後快取到本機；
+  /// 失敗（如離線）時用上次快取，確保畫面不空白。
+  static Future<List<Map<String, dynamic>>> getPokemonNames() async {
+    const cacheKey = 'pokemon_names_cache';
+    try {
+      final res = await _client
+          .from('pokemon_names')
+          .select('id, en, zh')
+          .order('id', ascending: true);
+      final list = List<Map<String, dynamic>>.from(res);
+      if (list.isNotEmpty) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(cacheKey, jsonEncode(list));
+        return list;
+      }
+    } catch (_) {}
+    // fallback：本機快取
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final cached = prefs.getString(cacheKey);
+      if (cached != null) {
+        return List<Map<String, dynamic>>.from(jsonDecode(cached) as List);
+      }
+    } catch (_) {}
+    return [];
+  }
+
   static Future<bool> isSetsStale() async {
     try {
       final res = await _client
