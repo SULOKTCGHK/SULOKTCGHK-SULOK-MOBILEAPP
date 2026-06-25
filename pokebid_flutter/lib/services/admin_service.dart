@@ -39,4 +39,25 @@ class AdminService {
       return [];
     }
   }
+
+  // ── 檢舉管理 ───────────────────────────────────────────────────────────────
+  static Future<List<Map<String, dynamic>>> listReports({String status = 'pending'}) async {
+    try {
+      var q = _client.from('reports').select();
+      if (status != 'all') q = q.eq('status', status);
+      final res = await q.order('created_at', ascending: false).limit(200);
+      return List<Map<String, dynamic>>.from(res);
+    } catch (_) {
+      return [];
+    }
+  }
+
+  static Future<bool> setReportStatus(String id, String status) async {
+    try {
+      await _client.from('reports').update({'status': status}).eq('id', id);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
 }

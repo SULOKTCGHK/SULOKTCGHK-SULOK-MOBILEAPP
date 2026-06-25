@@ -13,7 +13,7 @@ class AdminScreen extends StatefulWidget {
 }
 
 class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStateMixin {
-  late final TabController _tab = TabController(length: 4, vsync: this);
+  late final TabController _tab = TabController(length: 5, vsync: this);
 
   @override
   void dispose() { _tab.dispose(); super.dispose(); }
@@ -32,11 +32,11 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
           unselectedLabelColor: const Color(0xFF6B7280),
           indicatorColor: const Color(0xFFE8A52A),
           isScrollable: true,
-          tabs: const [Tab(text: '公告'), Tab(text: '卡鋪'), Tab(text: '帳號'), Tab(text: '圖片')],
+          tabs: const [Tab(text: '檢舉'), Tab(text: '公告'), Tab(text: '卡鋪'), Tab(text: '帳號'), Tab(text: '圖片')],
         ),
       ),
       body: TabBarView(controller: _tab, children: const [
-        _AnnouncementsTab(), _ShopsTab(), _AccountsTab(), ImageAdminTab(),
+        _ReportsTab(), _AnnouncementsTab(), _ShopsTab(), _AccountsTab(), ImageAdminTab(),
       ]),
     );
   }
@@ -271,6 +271,148 @@ class _AccountsTabState extends State<_AccountsTab> {
                     }),
       ),
     ]);
+  }
+}
+
+// ── 檢舉管理 ──────────────────────────────────────────────────────────────────
+class _ReportsTab extends StatefulWidget {
+  const _ReportsTab();
+  @override
+  State<_ReportsTab> createState() => _ReportsTabState();
+}
+
+class _ReportsTabState extends State<_ReportsTab> {
+  List<Map<String, dynamic>> _items = [];
+  bool _loading = true;
+  String _filter = 'pending'; // pending | all
+
+  @override
+  void initState() { super.initState(); _load(); }
+
+  Future<void> _load() async {
+    setState(() => _loading = true);
+    final r = await AdminService.listReports(status: _filter);
+    if (mounted) setState(() { _items = r; _loading = false; });
+  }
+
+  static const _reasonZh = {
+    'scam': '懷疑詐騙', 'fake': '仿冒/假貨', 'prohibited': '違禁/違法',
+    'offensive': '冒犯/不當', 'spam': '垃圾/廣告', 'harassment': '騷擾/辱罵', 'other': '其他',
+  };
+  static const _typeZh = {
+    'listing': '商品', 'user': '用戶', 'message': '訊息', 'review': '評價',
+  };
+
+  Future<void> _setStatus(String id, String status) async {
+    await AdminService.setReportStatus(id, status);
+    _load();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(children: [
+      // 篩選
+      Padding(
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+        child: Row(children: [
+          _seg('待處理', 'pending'),
+          const SizedBox(width: 8),
+          _seg('全部', 'all'),
+          const Spacer(),
+          IconButton(icon: const Icon(Icons.refresh, size: 20), onPressed: _load),
+        ]),
+      ),
+      Expanded(
+        child: _loading
+            ? const Center(child: CircularProgressIndicator(color: Color(0xFFE8A52A), strokeWidth: 2))
+            : _items.isEmpty
+                ? const Center(child: Text('沒有檢舉', style: TextStyle(color: Color(0xFF9CA3AF))))
+                : ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+                    itemCount: _items.length,
+                    itemBuilder: (_, i) {
+                      final r = _items[i];
+                      final id = r['id'] as String;
+                      final status = r['status'] as String? ?? 'pending';
+                      final type = _typeZh[r['target_type']] ?? (r['target_type'] as String? ?? '');
+                      final reason = _reasonZh[r['reason']] ?? (r['reason'] as String? ?? '');
+                      final details = r['details'] as String?;
+                      final date = (r['created_at'] as String?)?.replaceFirst('T', ' ').substring(0, 16) ?? '';
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFE5E7EB), width: 0.5)),
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          Row(children: [
+                            _chip('$type · $reason', const Color(0xFFE74C3C)),
+                            const Spacer(),
+                            _statusChip(status),
+                          ]),
+                          const SizedBox(height: 6),
+                          Text('對象 ID：${r['target_id']}', style: const TextStyle(fontSize: 11.5, color: Color(0xFF6B7280))),
+                          if (details != null && details.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Text(details, style: const TextStyle(fontSize: 12.5, color: Color(0xFF374151))),
+                          ],
+                          const SizedBox(height: 4),
+                          Text('檢舉者 ${r['reporter_id']} · $date',
+                              style: const TextStyle(fontSize: 10.5, color: Color(0xFFB6BCC6))),
+                          if (status == 'pending') ...[
+                            const SizedBox(height: 8),
+                            Row(children: [
+                              Expanded(child: OutlinedButton(
+                                onPressed: () => _setStatus(id, 'dismissed'),
+                                style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 6)),
+                                child: const Text('忽略', style: TextStyle(fontSize: 12.5, color: Color(0xFF6B7280))),
+                              )),
+                              const SizedBox(width: 8),
+                              Expanded(child: ElevatedButton(
+                                onPressed: () => _setStatus(id, 'actioned'),
+                                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF16A34A),
+                                    foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 6), elevation: 0),
+                                child: const Text('已處理', style: TextStyle(fontSize: 12.5)),
+                              )),
+                            ]),
+                          ],
+                        ]),
+                      );
+                    }),
+      ),
+    ]);
+  }
+
+  Widget _seg(String label, String val) {
+    final on = _filter == val;
+    return GestureDetector(
+      onTap: () { setState(() => _filter = val); _load(); },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        decoration: BoxDecoration(
+          color: on ? const Color(0xFFE8A52A) : const Color(0xFFF3F4F6),
+          borderRadius: BorderRadius.circular(20)),
+        child: Text(label, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600,
+            color: on ? Colors.white : const Color(0xFF6B7280))),
+      ),
+    );
+  }
+
+  Widget _chip(String text, Color c) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+    decoration: BoxDecoration(color: c.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
+    child: Text(text, style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: c)),
+  );
+
+  Widget _statusChip(String status) {
+    final map = {
+      'pending': ['待處理', const Color(0xFFE8A52A)],
+      'actioned': ['已處理', const Color(0xFF16A34A)],
+      'dismissed': ['已忽略', const Color(0xFF6B7280)],
+      'reviewed': ['已檢視', const Color(0xFF2980B9)],
+    };
+    final v = map[status] ?? ['—', const Color(0xFF6B7280)];
+    final c = v[1] as Color;
+    return Text(v[0] as String, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: c));
   }
 }
 
