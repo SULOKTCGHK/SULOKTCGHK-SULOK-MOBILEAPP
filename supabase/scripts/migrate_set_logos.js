@@ -5,6 +5,7 @@
  *  - 可重複執行（idempotent）：已搬到 Storage 的會自動跳過，
  *    所以之後在 DB 新增系列後，再跑一次就只會搬新的。
  *  - 不改動圖檔內容，只下載 → 上傳 → 更新 cached_sets.logo_image 網址。
+ *  - 按系列分資料夾儲存：set-logos/<series_id>/<set_id>.png（資料整齊）。
  *
  * 執行方式（在專案根目錄）：
  *   npm install @supabase/supabase-js
@@ -47,8 +48,11 @@ async function run() {
 
   const { data: rows, error } = await sb
     .from('cached_sets')
-    .select('id, logo_image');
+    .select('id, logo_image, series_id');
   if (error) throw error;
+
+  // 清理資料夾/檔名用（去掉非法字元）
+  const safe = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9_-]/g, '') || 'other';
 
   let migrated = 0, skipped = 0, failed = 0;
   const prefix = publicPrefix();
@@ -66,7 +70,9 @@ async function run() {
       if (!res.ok) throw new Error(`下載失敗 HTTP ${res.status}`);
       const buf = Buffer.from(await res.arrayBuffer());
 
-      const path = `${id}.png`;
+      // 按系列分資料夾：set-logos/<series_id>/<set_id>.png
+      const series = safe(row.series_id);
+      const path = `${series}/${safe(id)}.png`;
       const up = await sb.storage.from(BUCKET).upload(path, buf, {
         contentType: 'image/png', upsert: true,
       });
