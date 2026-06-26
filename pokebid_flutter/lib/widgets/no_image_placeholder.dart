@@ -22,27 +22,31 @@ class NoImagePlaceholder extends StatelessWidget {
           // 容器太小(小縮圖)就只顯示圖示,不顯示文字以免溢出
           final showText = c.maxHeight >= 70 && c.maxWidth >= 70;
           return Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (icon != null) icon!,
-                if (showText) ...[
-                  SizedBox(height: icon != null ? 8 : 0),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Text(
-                      L.imageNotAvailable,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        height: 1.3,
-                        color: Color(0xFF9CA3AF),
-                        fontWeight: FontWeight.w500,
+            child: Padding(
+              padding: const EdgeInsets.all(4),
+              // FittedBox：內容自動縮放以符合容器，永不溢出
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (icon != null) icon!,
+                    if (showText) ...[
+                      SizedBox(height: icon != null ? 8 : 0),
+                      Text(
+                        L.imageNotAvailable,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          height: 1.3,
+                          color: Color(0xFF9CA3AF),
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                    ),
-                  ),
-                ],
-              ],
+                    ],
+                  ],
+                ),
+              ),
             ),
           );
         },
