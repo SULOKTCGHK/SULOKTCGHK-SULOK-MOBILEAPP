@@ -1,4 +1,7 @@
+import 'package:flutter/foundation.dart'
+    show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import '../../services/auth_service.dart';
 import '../main_shell.dart';
 import '../../i18n/strings.dart';
@@ -13,9 +16,21 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   bool _loading = false;
 
+  // Apple 登入按鈕只在 Apple 平台顯示（Apple 規定 iOS 上必須提供）
+  bool get _showApple =>
+      !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.iOS ||
+          defaultTargetPlatform == TargetPlatform.macOS);
+
   Future<void> _googleSignIn() async {
     setState(() => _loading = true);
     await AuthService.signInWithGoogle();
+    if (mounted) setState(() => _loading = false);
+  }
+
+  Future<void> _appleSignIn() async {
+    setState(() => _loading = true);
+    await AuthService.signInWithApple();
     if (mounted) setState(() => _loading = false);
   }
 
@@ -48,8 +63,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700,
                       color: Color(0xFF111827)),
                   children: [
-                    TextSpan(text: 'Poke'),
-                    TextSpan(text: 'Bid',
+                    TextSpan(text: 'TCG'),
+                    TextSpan(text: 'spot',
                         style: TextStyle(color: Color(0xFFE8A52A))),
                   ],
                 ),
@@ -69,6 +84,18 @@ class _LoginScreenState extends State<LoginScreen> {
               _featureRow('📊', L.featRecordTitle, L.featRecordSub),
 
               const Spacer(flex: 2),
+
+              // Sign in with Apple（Apple 平台才顯示，App Store 規定）
+              if (_showApple && !_loading) ...[
+                SignInWithAppleButton(
+                  onPressed: _appleSignIn,
+                  text: L.signInAppleBtn,
+                  height: 50,
+                  style: SignInWithAppleButtonStyle.black,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                const SizedBox(height: 12),
+              ],
 
               // Google Sign In button
               _loading
