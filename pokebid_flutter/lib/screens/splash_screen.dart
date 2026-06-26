@@ -23,7 +23,7 @@ class _SplashScreenState extends State<SplashScreen>
   late final Animation<double> _logoFade;
 
   static const _bootLines = [
-    'POKEBID SYSTEM v1.0',
+    'TCGSPOT SYSTEM v1.0',
     '--------------------',
     'Loading card database...',
     'Connecting to market...',

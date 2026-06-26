@@ -420,6 +420,7 @@ class L {
   static String get featRecordTitle => _t('成交紀錄', 'Trade records');
   static String get featRecordSub => _t('追蹤收藏市值變化', 'Track your collection\'s value');
   static String get signInGoogleBtn => _t('使用 Google 帳號登入', 'Sign in with Google');
+  static String get signInAppleBtn => _t('透過 Apple 登入', 'Sign in with Apple');
   static String get browseWithoutLogin => _t('先瀏覽，不登入', 'Browse without signing in');
   static String get loginAgreement =>
       _t('登入即代表同意使用條款及隱私政策', 'By signing in you agree to the Terms and Privacy Policy');
@@ -461,10 +462,11 @@ class L {
   // ── Legal screen ───────────────────────────────────────────────────────
   static String effectiveDate(String date) => _t('生效日期：$date', 'Effective date: $date');
   static String get legalContact =>
-      _t('如對本文件有任何疑問，請透過 PokeBid 內的客服管道或電子郵件與我們聯絡。',
-        'If you have any questions about this document, please contact us through PokeBid\'s in-app support channel or by email.');
+      _t('如對本文件有任何疑問，請透過 TCGspot 內的客服管道或電子郵件與我們聯絡。',
+        'If you have any questions about this document, please contact us through TCGspot\'s in-app support channel or by email.');
 
   // ── Dex ────────────────────────────────────────────────────────────────
+  static String get imageNotAvailable => _t('暫時未提供該卡圖', 'Card image not available yet');
   static String get dexTitleSuffix => _t(' 圖鑑', ' Dex');
   static String get searchCardHint => _t('搜尋卡牌名稱...', 'Search card name...');
   static String get tabSetDex => _t('📦 系列圖鑑', '📦 Sets');
@@ -619,7 +621,7 @@ class L {
   static String get obSkip => _t('跳過', 'Skip');
   static String get obNext => _t('下一步', 'Next');
   static String get obStart => _t('開始使用 🎉', 'Get started 🎉');
-  static String get obWelcomeTitle => _t('歡迎來到 PokeBid', 'Welcome to PokeBid');
+  static String get obWelcomeTitle => _t('歡迎來到 TCGspot', 'Welcome to TCGspot');
   static String get obWelcomeSubtitle => _t('香港最大的寶可夢卡牌\nC2C 交易平台', 'Hong Kong\'s largest Pokémon\nTCG C2C marketplace');
   static String get obWelcomeBody =>
       _t('在這裡你可以買賣珍稀卡牌，查閱市場行情，建立你的收藏圖鑑。',

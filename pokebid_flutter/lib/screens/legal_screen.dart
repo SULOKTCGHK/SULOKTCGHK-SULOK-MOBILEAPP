@@ -100,7 +100,7 @@ class LegalSection {
 // ── 私隱政策（香港 PDPO）──────────────────────────────────────────────────────
 const List<LegalSection> _privacySections = [
   LegalSection('1. 前言',
-      'PokeBid（以下稱「本平台」）是一個寶可夢卡牌交易與收藏的社群平台。本平台依據香港《個人資料（私隱）條例》（香港法例第 486 章，下稱「PDPO」）處理您的個人資料。本政策說明我們蒐集哪些資料、如何使用以及您擁有的權利。使用本平台即表示您同意本政策。'),
+      'TCGspot（以下稱「本平台」）是一個寶可夢卡牌交易與收藏的社群平台。本平台依據香港《個人資料（私隱）條例》（香港法例第 486 章，下稱「PDPO」）處理您的個人資料。本政策說明我們蒐集哪些資料、如何使用以及您擁有的權利。使用本平台即表示您同意本政策。'),
   LegalSection('2. 我們蒐集的資料',
       '• 帳戶資料：當您以 Google 帳戶登入時，我們會取得您的名稱、電子郵件與頭像。\n'
       '• 交易與內容資料：您建立的掛售商品、出價、聊天訊息、評價、收藏與願望清單。\n'
@@ -129,12 +129,12 @@ const List<LegalSection> _privacySections = [
   LegalSection('11. 政策變更',
       '我們可能不時更新本政策，重大變更將於平台內公告。變更後您繼續使用本平台，即視為同意更新後的政策。'),
   LegalSection('12. 聯絡我們',
-      '若您對本私隱政策或個人資料處理有任何疑問或要求，請透過 PokeBid 平台內的客服管道或電子郵件與我們聯絡。'),
+      '若您對本私隱政策或個人資料處理有任何疑問或要求，請透過 TCGspot 平台內的客服管道或電子郵件與我們聯絡。'),
 ];
 
 const List<LegalSection> _privacySectionsEn = [
   LegalSection('1. Introduction',
-      'PokeBid ("the Platform") is a community marketplace for trading and collecting Pokémon cards. We process your personal data in accordance with Hong Kong\'s Personal Data (Privacy) Ordinance (Cap. 486, "PDPO"). This policy explains what data we collect, how we use it, and the rights you have. By using the Platform you agree to this policy.'),
+      'TCGspot ("the Platform") is a community marketplace for trading and collecting Pokémon cards. We process your personal data in accordance with Hong Kong\'s Personal Data (Privacy) Ordinance (Cap. 486, "PDPO"). This policy explains what data we collect, how we use it, and the rights you have. By using the Platform you agree to this policy.'),
   LegalSection('2. Data We Collect',
       '• Account data: when you sign in with Google, we receive your name, email, and avatar.\n'
       '• Transaction & content data: listings, offers, chat messages, reviews, collection, and wishlist you create.\n'
@@ -169,11 +169,11 @@ const List<LegalSection> _privacySectionsEn = [
 // ── 服務條款（香港，C2C 媒合平台）────────────────────────────────────────────
 const List<LegalSection> _termsSections = [
   LegalSection('1. 條款的接受',
-      '歡迎使用 PokeBid。當您註冊、登入或使用本平台任何功能時，即表示您已閱讀、理解並同意本服務條款。若您不同意，請勿使用本平台。'),
+      '歡迎使用 TCGspot。當您註冊、登入或使用本平台任何功能時，即表示您已閱讀、理解並同意本服務條款。若您不同意，請勿使用本平台。'),
   LegalSection('2. 服務說明',
-      'PokeBid 提供寶可夢卡牌的掛售、出價、聊天、收藏管理、圖鑑查詢與市場行情參考等功能。本平台為使用者之間（C2C）的交易媒合場所，所有交易由買賣雙方自行協商與完成。'),
+      'TCGspot 提供寶可夢卡牌的掛售、出價、聊天、收藏管理、圖鑑查詢與市場行情參考等功能。本平台為使用者之間（C2C）的交易媒合場所，所有交易由買賣雙方自行協商與完成。'),
   LegalSection('3. 平台角色與交易免責（重要）',
-      'PokeBid 僅為買賣雙方提供刊登與聯絡的媒合服務，並非任何交易的一方。本平台：\n'
+      'TCGspot 僅為買賣雙方提供刊登與聯絡的媒合服務，並非任何交易的一方。本平台：\n'
       '• 不經手任何款項，亦不參與議價；\n'
       '• 不負責驗證卡牌的真偽、品相或所有權；\n'
       '• 不處理寄送、交付、退款或退換。\n'
@@ -205,11 +205,11 @@ const List<LegalSection> _termsSections = [
 
 const List<LegalSection> _termsSectionsEn = [
   LegalSection('1. Acceptance of Terms',
-      'Welcome to PokeBid. By registering, signing in, or using any feature of the Platform, you confirm that you have read, understood, and agree to these Terms of Service. If you do not agree, please do not use the Platform.'),
+      'Welcome to TCGspot. By registering, signing in, or using any feature of the Platform, you confirm that you have read, understood, and agree to these Terms of Service. If you do not agree, please do not use the Platform.'),
   LegalSection('2. Description of Service',
-      'PokeBid provides features for listing, offering, chatting, collection management, Dex lookup, and market price reference for Pokémon cards. The Platform is a consumer-to-consumer (C2C) marketplace; all transactions are negotiated and completed directly between buyers and sellers.'),
+      'TCGspot provides features for listing, offering, chatting, collection management, Dex lookup, and market price reference for Pokémon cards. The Platform is a consumer-to-consumer (C2C) marketplace; all transactions are negotiated and completed directly between buyers and sellers.'),
   LegalSection('3. Platform Role & Transaction Disclaimer (Important)',
-      'PokeBid only provides listing and contact services to connect buyers and sellers, and is not a party to any transaction. The Platform:\n'
+      'TCGspot only provides listing and contact services to connect buyers and sellers, and is not a party to any transaction. The Platform:\n'
       '• does not handle any payment, nor take part in negotiation;\n'
       '• does not verify the authenticity, condition, or ownership of cards;\n'
       '• does not handle shipping, delivery, refunds, or returns.\n'
@@ -241,7 +241,7 @@ const List<LegalSection> _termsSectionsEn = [
 
 // ── 安全交易提示 ──────────────────────────────────────────────────────────────
 const List<LegalSection> _safetySections = [
-  LegalSection('PokeBid 不經手金流',
+  LegalSection('TCGspot 不經手金流',
       '本平台只負責媒合買賣雙方，不參與付款或寄送。所有交易由你和對方自行完成，請務必採取以下措施保障自己。'),
   LegalSection('交易前',
       '• 先查看對方的評價與交易紀錄，信用低或全新帳戶要特別小心。\n'
@@ -265,7 +265,7 @@ const List<LegalSection> _safetySections = [
 ];
 
 const List<LegalSection> _safetySectionsEn = [
-  LegalSection('PokeBid does not handle payments',
+  LegalSection('TCGspot does not handle payments',
       'The Platform only connects buyers and sellers; it does not take part in payment or shipping. All transactions are completed between you and the other party, so be sure to take the following measures to protect yourself.'),
   LegalSection('Before trading',
       '• Check the other party\'s reviews and trade history first; be extra careful with low-reputation or brand-new accounts.\n'
