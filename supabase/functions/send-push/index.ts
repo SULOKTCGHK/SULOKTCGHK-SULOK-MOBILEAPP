@@ -28,8 +28,10 @@ Deno.serve(async (req) => {
 
     const token = profile?.fcm_token
     if (!token) {
+      console.log('[send-push] no fcm_token for user', user_id)
       return new Response(JSON.stringify({ skipped: 'no fcm_token' }), { headers: CORS })
     }
+    console.log('[send-push] sending to token', String(token).slice(0, 24), '…')
 
     // 取得 Firebase service account 憑證（存在 Supabase Secrets）
     const serviceAccountJson = Deno.env.get('FIREBASE_SERVICE_ACCOUNT')
@@ -56,7 +58,10 @@ Deno.serve(async (req) => {
             token,
             notification: { title, body: body ?? '' },
             data: data ?? {},
-            android: { priority: 'high' },
+            android: {
+              priority: 'high',
+              notification: { channel_id: 'tcgspot_high' },
+            },
             apns: { payload: { aps: { sound: 'default', badge: 1 } } },
           },
         }),
@@ -64,10 +69,12 @@ Deno.serve(async (req) => {
     )
 
     const fcmJson = await fcmRes.json()
+    console.log('[send-push] FCM status', fcmRes.status, JSON.stringify(fcmJson))
     if (!fcmRes.ok) throw new Error(JSON.stringify(fcmJson))
 
     return new Response(JSON.stringify({ success: true, fcm: fcmJson }), { headers: CORS })
   } catch (e) {
+    console.error('[send-push] error', String(e))
     return new Response(JSON.stringify({ error: String(e) }), { status: 500, headers: CORS })
   }
 })
@@ -75,8 +82,8 @@ Deno.serve(async (req) => {
 // Google Service Account → OAuth2 access token（RS256 JWT）
 async function getGoogleAccessToken(sa: Record<string, string>): Promise<string> {
   const now = Math.floor(Date.now() / 1000)
-  const header = btoa(JSON.stringify({ alg: 'RS256', typ: 'JWT' }))
-  const claim = btoa(JSON.stringify({
+  const header = b64url(JSON.stringify({ alg: 'RS256', typ: 'JWT' }))
+  const claim = b64url(JSON.stringify({
     iss: sa.client_email,
     scope: 'https://www.googleapis.com/auth/firebase.messaging',
     aud: 'https://oauth2.googleapis.com/token',
@@ -91,7 +98,7 @@ async function getGoogleAccessToken(sa: Record<string, string>): Promise<string>
     false, ['sign'],
   )
   const sig = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', key, new TextEncoder().encode(`${header}.${claim}`))
-  const jwt = `${header}.${claim}.${btoa(String.fromCharCode(...new Uint8Array(sig)))}`
+  const jwt = `${header}.${claim}.${b64url(String.fromCharCode(...new Uint8Array(sig)))}`
 
   const res = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
@@ -99,7 +106,16 @@ async function getGoogleAccessToken(sa: Record<string, string>): Promise<string>
     body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`,
   })
   const json = await res.json()
+  if (!json.access_token) {
+    console.error('[send-push] google token exchange failed', JSON.stringify(json))
+    throw new Error('google_token_exchange_failed: ' + JSON.stringify(json))
+  }
   return json.access_token
+}
+
+// JWT 要用 base64URL（btoa 是標準 base64，會讓簽章驗證失敗）
+function b64url(input: string): string {
+  return btoa(input).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
 }
 
 function pemToDer(pem: string): ArrayBuffer {
