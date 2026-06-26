@@ -4,7 +4,12 @@ import 'package:shimmer/shimmer.dart';
 import '../services/api_service.dart';
 import '../services/supabase_service.dart';
 import 'dex_card_detail_screen.dart';
+import '../widgets/no_image_placeholder.dart';
 import '../i18n/strings.dart';
+
+Widget _noCardImage() => const NoImagePlaceholder(
+      icon: Icon(Icons.style, color: Color(0xFFD1D5DB), size: 24),
+    );
 
 class DexSetGridScreen extends StatefulWidget {
   final ApiSet set;
@@ -360,13 +365,10 @@ class _CardGridItem extends StatelessWidget {
                     ? CachedNetworkImage(
                         imageUrl: card.imageSmall!,
                         fit: BoxFit.cover,
-                        placeholder: (_, __) => Container(color: const Color(0xFFF3F4F6),
-                            child: const Center(child: Icon(Icons.style, color: Color(0xFFD1D5DB), size: 24))),
-                        errorWidget: (_, __, ___) => Container(color: const Color(0xFFF3F4F6),
-                            child: const Center(child: Icon(Icons.style, color: Color(0xFFD1D5DB), size: 24))),
+                        placeholder: (_, __) => _noCardImage(),
+                        errorWidget: (_, __, ___) => _noCardImage(),
                       )
-                    : Container(color: const Color(0xFFF3F4F6),
-                        child: const Center(child: Icon(Icons.style, color: Color(0xFFD1D5DB), size: 24))),
+                    : _noCardImage(),
               ),
             ),
             // Card name + collect button

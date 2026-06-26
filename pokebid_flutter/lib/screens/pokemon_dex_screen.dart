@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/no_image_placeholder.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../services/supabase_service.dart';
 import '../services/api_service.dart';
@@ -301,12 +302,13 @@ class _PokemonDexScreenState extends State<PokemonDexScreen> {
                         placeholder: (_, __) => const Center(
                             child: SizedBox(width: 20, height: 20,
                                 child: CircularProgressIndicator(strokeWidth: 1.5, color: Color(0xFFD1D5DB)))),
-                        errorWidget: (_, __, ___) => const Center(
-                            child: Icon(Icons.image_not_supported_outlined,
+                        errorWidget: (_, __, ___) => const NoImagePlaceholder(
+                            icon: Icon(Icons.image_not_supported_outlined,
                                 size: 28, color: Color(0xFFD1D5DB))),
                       )
-                    : const Center(child: Icon(Icons.image_not_supported_outlined,
-                        size: 28, color: Color(0xFFD1D5DB))),
+                    : const NoImagePlaceholder(
+                        icon: Icon(Icons.image_not_supported_outlined,
+                            size: 28, color: Color(0xFFD1D5DB))),
               ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(5, 3, 5, 4),

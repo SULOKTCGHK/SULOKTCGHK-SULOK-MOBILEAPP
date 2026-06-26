@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/no_image_placeholder.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 import '../widgets/login_required.dart';
@@ -812,9 +813,13 @@ class _SetCard extends StatelessWidget {
                         imageUrl: set.logoImage!,
                         fit: BoxFit.contain,
                         placeholder: (_, __) => Center(child: _SetBadge(setId: set.id, color: color)),
-                        errorWidget: (_, __, ___) => Center(child: _SetBadge(setId: set.id, color: color)),
+                        errorWidget: (_, __, ___) => NoImagePlaceholder(
+                            background: const Color(0xFFF9FAFB),
+                            icon: _SetBadge(setId: set.id, color: color)),
                       )
-                    : Center(child: _SetBadge(setId: set.id, color: color)),
+                    : NoImagePlaceholder(
+                        background: const Color(0xFFF9FAFB),
+                        icon: _SetBadge(setId: set.id, color: color)),
               ),
             ),
           ),

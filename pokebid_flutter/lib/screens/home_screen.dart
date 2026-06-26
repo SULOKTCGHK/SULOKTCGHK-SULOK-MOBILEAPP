@@ -11,6 +11,7 @@ import 'admin/post_announcement_sheet.dart';
 import 'conversations_list_screen.dart';
 import '../widgets/notification_bell.dart';
 import '../widgets/unread_dot.dart';
+import '../widgets/no_image_placeholder.dart';
 import '../services/notification_service.dart';
 import '../services/recently_viewed_service.dart';
 import '../services/listing_service.dart';
@@ -600,10 +601,9 @@ class _GridListingCard extends StatelessWidget {
     );
   }
 
-  Widget _placeholder(PokemonCard card) => Container(
-    color: card.type.bgColor,
-    child: Center(child: Text(card.type.emoji,
-        style: const TextStyle(fontSize: 28))),
+  Widget _placeholder(PokemonCard card) => NoImagePlaceholder(
+    background: card.type.bgColor,
+    icon: Text(card.type.emoji, style: const TextStyle(fontSize: 28)),
   );
 }
 
@@ -644,11 +644,12 @@ class _RecentCard extends StatelessWidget {
               child: Stack(fit: StackFit.expand, children: [
                 image != null && image.isNotEmpty
                     ? CachedNetworkImage(imageUrl: image, fit: BoxFit.cover,
-                        placeholder: (_, __) => Container(color: const Color(0xFFF3F4F6)),
-                        errorWidget: (_, __, ___) => Container(color: const Color(0xFFF3F4F6),
-                            child: const Icon(Icons.style, color: Color(0xFFD1D5DB))))
-                    : Container(color: const Color(0xFFF3F4F6),
-                        child: const Icon(Icons.style, color: Color(0xFFD1D5DB))),
+                        placeholder: (_, __) => const NoImagePlaceholder(
+                            icon: Icon(Icons.style, color: Color(0xFFD1D5DB))),
+                        errorWidget: (_, __, ___) => const NoImagePlaceholder(
+                            icon: Icon(Icons.style, color: Color(0xFFD1D5DB))))
+                    : const NoImagePlaceholder(
+                        icon: Icon(Icons.style, color: Color(0xFFD1D5DB))),
                 if (isSold)
                   Container(
                     color: Colors.black45,

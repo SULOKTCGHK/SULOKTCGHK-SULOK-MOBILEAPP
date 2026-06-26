@@ -5,6 +5,7 @@ import '../services/api_service.dart';
 import '../services/supabase_service.dart';
 import '../services/currency_service.dart';
 import '../widgets/login_required.dart';
+import '../widgets/no_image_placeholder.dart';
 import '../i18n/strings.dart';
 
 class DexCardDetailScreen extends StatefulWidget {
@@ -292,16 +293,20 @@ class _DexCardDetailScreenState extends State<DexCardDetailScreen> {
                             color: Color(0xFFE8A52A), strokeWidth: 2),
                         ),
                       ),
-                      errorWidget: (_, __, ___) => Container(
+                      errorWidget: (_, __, ___) => const SizedBox(
                         height: 280,
-                        color: const Color(0xFFF9FAFB),
-                        child: const Icon(Icons.broken_image, size: 64, color: Color(0xFFD1D5DB)),
+                        child: NoImagePlaceholder(
+                          background: Color(0xFFF9FAFB),
+                          icon: Icon(Icons.broken_image, size: 56, color: Color(0xFFD1D5DB)),
+                        ),
                       ),
                     )
-                  : Container(
+                  : const SizedBox(
                       height: 280,
-                      color: const Color(0xFFF9FAFB),
-                      child: const Icon(Icons.style, size: 64, color: Color(0xFFD1D5DB)),
+                      child: NoImagePlaceholder(
+                        background: Color(0xFFF9FAFB),
+                        icon: Icon(Icons.style, size: 56, color: Color(0xFFD1D5DB)),
+                      ),
                     ),
             ),
           ),

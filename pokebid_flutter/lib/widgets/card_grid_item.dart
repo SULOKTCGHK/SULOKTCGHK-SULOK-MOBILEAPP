@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../models/card_model.dart';
 import '../services/api_service.dart';
 import 'card_type_icon.dart';
+import 'no_image_placeholder.dart';
 import '../i18n/strings.dart';
 
 class CardGridItem extends StatefulWidget {
@@ -64,13 +65,10 @@ class _CardGridItemState extends State<CardGridItem> {
                         ? CachedNetworkImage(
                             imageUrl: widget.card.imageUrls.first,
                             fit: BoxFit.cover,
-                            placeholder: (_, __) => Container(color: widget.card.type.bgColor,
-                                child: Center(child: CardTypeIcon(type: widget.card.type, size: 60))),
-                            errorWidget: (_, __, ___) => Container(color: widget.card.type.bgColor,
-                                child: Center(child: CardTypeIcon(type: widget.card.type, size: 60))),
+                            placeholder: (_, __) => _noImage(),
+                            errorWidget: (_, __, ___) => _noImage(),
                           )
-                        : Container(color: widget.card.type.bgColor,
-                            child: Center(child: CardTypeIcon(type: widget.card.type, size: 60))),
+                        : _noImage(),
                     // 底部漸層（讓疊加的標籤更清楚）
                     Positioned(
                       left: 0, right: 0, bottom: 0,
@@ -212,6 +210,11 @@ class _CardGridItemState extends State<CardGridItem> {
       ),
     );
   }
+
+  Widget _noImage() => NoImagePlaceholder(
+        background: widget.card.type.bgColor,
+        icon: CardTypeIcon(type: widget.card.type, size: 48),
+      );
 
   Color _gradeColor(String grade) {
     final g = grade.toUpperCase();

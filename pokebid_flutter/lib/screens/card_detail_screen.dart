@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/card_model.dart';
 import '../widgets/card_type_icon.dart';
+import '../widgets/no_image_placeholder.dart';
 import '../services/offer_service.dart';
 import '../services/auth_service.dart';
 import '../services/review_service.dart';
@@ -1022,10 +1023,12 @@ class _ImageCarouselState extends State<_ImageCarousel> {
                   imageUrl: urls[_current],
                   width: double.infinity, height: 260,
                   fit: BoxFit.contain,
-                  placeholder: (_, __) =>
-                      Center(child: CardTypeIcon(type: widget.card.type, size: 100)),
-                  errorWidget: (_, __, ___) =>
-                      Center(child: CardTypeIcon(type: widget.card.type, size: 100)),
+                  placeholder: (_, __) => NoImagePlaceholder(
+                      background: widget.card.type.bgColor,
+                      icon: CardTypeIcon(type: widget.card.type, size: 80)),
+                  errorWidget: (_, __, ___) => NoImagePlaceholder(
+                      background: widget.card.type.bgColor,
+                      icon: CardTypeIcon(type: widget.card.type, size: 80)),
                 ),
               ),
               // Zoom hint
