@@ -498,6 +498,8 @@ class L {
   static String get loadFailedTitle => _t('無法載入資料', 'Failed to load data');
   static String get addToCollection => _t('加入收藏', 'add to collection');
   static String get addToCollectionBtn => _t('加入收藏', 'Add to collection');
+  static String get chooseGradeTitle => _t('選擇分級加入收藏', 'Choose a grade to add');
+  static String get latestSalePrice => _t('價格為 SNKRDUNK 最新成交價', 'Price: SNKRDUNK latest sale');
   // TCG series names
   static String seriesName(String key) {
     const zh = {

@@ -534,7 +534,8 @@ class SupabaseService {
       if (data == null) continue;
       final key = grade == 'PSA10' ? 'psa10' : grade == 'PSA9' ? 'psa9' : 'raw';
       final g = data[key] as Map<String, dynamic>?;
-      final mj = (g?['avg'] as num?)?.round();
+      // 收藏市值用「最新成交價」，沒有才退回均價
+      final mj = ((g?['latest'] as num?) ?? (g?['avg'] as num?))?.round();
       if (mj == null) continue;
       try {
         await _client

@@ -116,9 +116,71 @@ class _DexCardDetailScreenState extends State<DexCardDetailScreen> {
     await SupabaseService.addGradedToCollection(_cardMap(),
         grade: gradeCode, costHkd: cost, marketJpy: marketJpy);
     if (mounted) {
+      setState(() => _collected = true);
+      widget.onToggleCollect(true);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(L.collectedToast(label, widget.card.cleanName)), duration: const Duration(seconds: 2)));
     }
+  }
+
+  // 各分級的最新成交價（沒有 latest 用 avg）
+  num _latestFor(String gradeKey) {
+    final m = _snkr?[gradeKey] as Map<String, dynamic>?;
+    return ((m?['latest'] as num?) ?? (m?['avg'] as num?) ?? 0);
+  }
+
+  // 右上角「加入收藏」→ 先選分級（PSA10 / PSA9 / 生卡），再填入手價
+  Future<void> _showGradePicker() async {
+    if (!await requireLogin(context, action: L.addToCollection)) return;
+    if (!mounted) return;
+    final grades = <(String, String, String, Color)>[
+      ('PSA10', 'PSA 10', 'psa10', const Color(0xFFE8A52A)),
+      ('PSA9', 'PSA 9', 'psa9', const Color(0xFF2980B9)),
+      ('RAW', L.rawCard, 'raw', const Color(0xFF6B7280)),
+    ];
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => SafeArea(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 2),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(L.chooseGradeTitle,
+                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF111827))),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(L.latestSalePrice,
+                  style: const TextStyle(fontSize: 11.5, color: Color(0xFF9CA3AF))),
+            ),
+          ),
+          for (final g in grades)
+            Builder(builder: (_) {
+              final m = _snkr?[g.$3] as Map<String, dynamic>?;
+              final price = _latestFor(g.$3);
+              return ListTile(
+                leading: Container(width: 10, height: 10,
+                    decoration: BoxDecoration(color: g.$4, shape: BoxShape.circle)),
+                title: Text(g.$2, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                trailing: Text(m == null ? L.noSales : '¥${price.toStringAsFixed(0)}',
+                    style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: g.$4)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _addGradeToCollection(g.$1, g.$2, price);
+                },
+              );
+            }),
+          const SizedBox(height: 8),
+        ]),
+      ),
+    );
   }
 
   @override
@@ -228,10 +290,7 @@ class _DexCardDetailScreenState extends State<DexCardDetailScreen> {
         ),
         actions: [
           GestureDetector(
-            onTap: () {
-              setState(() => _collected = !_collected);
-              widget.onToggleCollect(_collected);
-            },
+            onTap: _showGradePicker,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               margin: const EdgeInsets.only(right: 16),
