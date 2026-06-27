@@ -219,6 +219,10 @@ class _DexScreenState extends State<DexScreen> {
   String _fmt(int p) => p.toString().replaceAllMapped(
       RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
 
+  // 內嵌精靈圖鑑的返回控制：選中精靈時，左上角 AppBar 顯示返回鍵
+  final GlobalKey<PokemonDexScreenState> _pokemonKey = GlobalKey();
+  String? _pokemonName;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -232,28 +236,36 @@ class _DexScreenState extends State<DexScreen> {
           child: Container(height: 0.5, color: const Color(0xFFE5E7EB)),
         ),
         automaticallyImplyLeading: false,
-        leading: (_branch != null || _selectedSeries != null)
+        leading: (_dexMode == 'pokemon' && _pokemonName != null)
             ? IconButton(
                 icon: const Icon(Icons.chevron_left, color: Color(0xFF374151), size: 28),
-                onPressed: () => setState(() {
-                  if (_selectedSeries != null) {
-                    _selectedSeries = null;       // 回系列清單
-                  } else {
-                    _branch = null;               // 回分支選擇
-                  }
-                }),
+                onPressed: () => _pokemonKey.currentState?.clearSelection(),
               )
-            : null,
-        title: RichText(
-          text: TextSpan(
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500, color: Color(0xFF111827)),
-            children: [
-              const TextSpan(text: 'Poke'),
-              const TextSpan(text: 'Bid', style: TextStyle(color: Color(0xFFE8A52A))),
-              TextSpan(text: L.dexTitleSuffix, style: const TextStyle(fontSize: 15, color: Color(0xFF6B7280))),
-            ],
-          ),
-        ),
+            : (_branch != null || _selectedSeries != null)
+                ? IconButton(
+                    icon: const Icon(Icons.chevron_left, color: Color(0xFF374151), size: 28),
+                    onPressed: () => setState(() {
+                      if (_selectedSeries != null) {
+                        _selectedSeries = null;       // 回系列清單
+                      } else {
+                        _branch = null;               // 回分支選擇
+                      }
+                    }),
+                  )
+                : null,
+        title: (_dexMode == 'pokemon' && _pokemonName != null)
+            ? Text(_pokemonName!,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Color(0xFF111827)))
+            : RichText(
+                text: TextSpan(
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500, color: Color(0xFF111827)),
+                  children: [
+                    const TextSpan(text: 'TCG'),
+                    const TextSpan(text: 'spot', style: TextStyle(color: Color(0xFFE8A52A))),
+                    TextSpan(text: L.dexTitleSuffix, style: const TextStyle(fontSize: 15, color: Color(0xFF6B7280))),
+                  ],
+                ),
+              ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh, color: Color(0xFF374151)),
@@ -304,7 +316,11 @@ class _DexScreenState extends State<DexScreen> {
           Container(height: 0.5, color: const Color(0xFFE5E7EB)),
           Expanded(
             child: _dexMode == 'pokemon'
-                ? const PokemonDexScreen(embedded: true)
+                ? PokemonDexScreen(
+                    key: _pokemonKey,
+                    embedded: true,
+                    onSelectionChanged: (name) => setState(() => _pokemonName = name),
+                  )
                 : (_searching ? _buildSearchResults() : _buildMainContent()),
           ),
         ],

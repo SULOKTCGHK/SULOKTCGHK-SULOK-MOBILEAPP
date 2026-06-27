@@ -23,13 +23,23 @@ const List<Map<String, dynamic>> _kGens = [
 
 class PokemonDexScreen extends StatefulWidget {
   final bool embedded;
-  const PokemonDexScreen({super.key, this.embedded = false});
+  // 內嵌時：選中/取消精靈會通知父層（傳精靈名，null=取消），讓父層左上角 AppBar 顯示返回鍵
+  final ValueChanged<String?>? onSelectionChanged;
+  // 選卡模式（刊登頁用）：點卡時回傳卡片而非進詳情頁
+  final ValueChanged<ApiCard>? onCardPicked;
+  const PokemonDexScreen({super.key, this.embedded = false, this.onSelectionChanged, this.onCardPicked});
 
   @override
-  State<PokemonDexScreen> createState() => _PokemonDexScreenState();
+  State<PokemonDexScreen> createState() => PokemonDexScreenState();
 }
 
-class _PokemonDexScreenState extends State<PokemonDexScreen> {
+class PokemonDexScreenState extends State<PokemonDexScreen> {
+  /// 供父層（dex_screen 左上角返回鍵）呼叫，清除精靈選擇
+  void clearSelection() {
+    setState(() { _selectedPokemon = null; _cards = []; });
+    widget.onSelectionChanged?.call(null);
+  }
+
   final _searchCtrl = TextEditingController();
   String _query = '';
   int _genIndex = 0; // 0 = 全部
@@ -81,6 +91,7 @@ class _PokemonDexScreenState extends State<PokemonDexScreen> {
 
   Future<void> _loadCards(String pokemonName) async {
     setState(() { _selectedPokemon = pokemonName; _cardLoading = true; _cards = []; });
+    widget.onSelectionChanged?.call(pokemonName);
     // 用開頭搜尋抓最齊全的結果（Charizard → Charizard V, Charizard ex...）
     final rows = await SupabaseService.searchCardsByPokemon(pokemonName);
     if (mounted) setState(() {
@@ -101,15 +112,18 @@ class _PokemonDexScreenState extends State<PokemonDexScreen> {
   @override
   Widget build(BuildContext context) {
     if (widget.embedded) {
-      // 內嵌模式：無 Scaffold，直接返回內容（含精靈選中後的返回列）
-      return Column(children: [
-        if (_selectedPokemon != null)
+      // 內嵌模式：無 Scaffold。
+      // 父層（dex_screen）用 onSelectionChanged 在左上角 AppBar 接管返回；
+      // 若父層未接管（如刊登頁選卡 sheet），則自己顯示返回列。
+      final parentHandlesBack = widget.onSelectionChanged != null;
+      if (_selectedPokemon != null && !parentHandlesBack) {
+        return Column(children: [
           Container(
             color: Colors.white,
             padding: const EdgeInsets.fromLTRB(8, 8, 16, 8),
             child: Row(children: [
               GestureDetector(
-                onTap: () => setState(() { _selectedPokemon = null; _cards = []; }),
+                onTap: clearSelection,
                 child: Row(mainAxisSize: MainAxisSize.min, children: [
                   const Icon(Icons.chevron_left, size: 20, color: Color(0xFFE8A52A)),
                   Text(L.pokemonBack, style: const TextStyle(fontSize: 13, color: Color(0xFFE8A52A))),
@@ -119,8 +133,10 @@ class _PokemonDexScreenState extends State<PokemonDexScreen> {
               Text(_selectedPokemon!, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
             ]),
           ),
-        Expanded(child: _selectedPokemon != null ? _buildCards() : _buildPokemonGrid()),
-      ]);
+          Expanded(child: _buildCards()),
+        ]);
+      }
+      return _selectedPokemon != null ? _buildCards() : _buildPokemonGrid();
     }
 
     return Scaffold(
@@ -281,13 +297,19 @@ class _PokemonDexScreenState extends State<PokemonDexScreen> {
       itemBuilder: (_, i) {
         final card = _cards[i];
         return GestureDetector(
-          onTap: () => Navigator.push(context, MaterialPageRoute(
-            builder: (_) => DexCardDetailScreen(
-              card: card, isCollected: false,
-              onToggleCollect: (_) {},
-              formatPrice: _fmt,
-            ),
-          )),
+          onTap: () {
+            if (widget.onCardPicked != null) {
+              widget.onCardPicked!(card);
+              return;
+            }
+            Navigator.push(context, MaterialPageRoute(
+              builder: (_) => DexCardDetailScreen(
+                card: card, isCollected: false,
+                onToggleCollect: (_) {},
+                formatPrice: _fmt,
+              ),
+            ));
+          },
           child: Container(
             decoration: BoxDecoration(
               color: Colors.white, borderRadius: BorderRadius.circular(10),

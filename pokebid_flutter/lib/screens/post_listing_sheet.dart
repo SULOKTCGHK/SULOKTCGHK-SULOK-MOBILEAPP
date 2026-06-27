@@ -8,6 +8,8 @@ import '../services/auth_service.dart';
 import '../services/supabase_service.dart';
 import '../data/set_name_zh.dart';
 import '../i18n/strings.dart';
+import '../services/api_service.dart';
+import 'pokemon_dex_screen.dart';
 
 class PostListingSheet extends StatefulWidget {
   final Function(PokemonCard) onSubmit;
@@ -992,11 +994,45 @@ class _DexCardPickerSheetState extends State<_DexCardPickerSheet> {
   final _searchCtrl = TextEditingController();
   List<Map<String, dynamic>> _results = [];
   bool _loading = false;
+  String _mode = 'search'; // 'search' | 'pokemon'
 
   @override
   void dispose() {
     _searchCtrl.dispose();
     super.dispose();
+  }
+
+  // 精靈圖鑑選到的卡（ApiCard）→ 刊登頁要的 Map
+  Map<String, dynamic> _cardToMap(ApiCard c) => {
+        'id': c.id,
+        'name': c.name,
+        'set_id': c.setId,
+        'set_name': c.setName,
+        'number': c.number,
+        'image_small': c.imageSmall,
+        'image_large': c.imageLarge,
+      };
+
+  Widget _modeBtn(String value, String label) {
+    final active = _mode == value;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _mode = value),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: active ? const Color(0xFFE8A52A) : const Color(0xFFF3F4F6),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(label,
+              style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: active ? Colors.white : const Color(0xFF6B7280))),
+        ),
+      ),
+    );
   }
 
   Future<void> _search(String q) async {
@@ -1035,57 +1071,76 @@ class _DexCardPickerSheetState extends State<_DexCardPickerSheet> {
           ]),
         ),
         const SizedBox(height: 12),
+        // 模式切換：搜尋 / 精靈圖鑑
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: TextField(
-            controller: _searchCtrl,
-            autofocus: true,
-            onChanged: _search,
-            decoration: InputDecoration(
-              hintText: L.dexSearchHint,
-              hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
-              prefixIcon: const Icon(Icons.search, size: 18, color: Color(0xFF9CA3AF)),
-              filled: true, fillColor: const Color(0xFFF9FAFB),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 0.5)),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 0.5)),
-              contentPadding: const EdgeInsets.symmetric(vertical: 10),
+          child: Row(children: [
+            _modeBtn('search', L.search),
+            const SizedBox(width: 8),
+            _modeBtn('pokemon', L.tabPokemonDex),
+          ]),
+        ),
+        const SizedBox(height: 12),
+        if (_mode == 'search') ...[
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: TextField(
+              controller: _searchCtrl,
+              autofocus: true,
+              onChanged: _search,
+              decoration: InputDecoration(
+                hintText: L.dexSearchHint,
+                hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
+                prefixIcon: const Icon(Icons.search, size: 18, color: Color(0xFF9CA3AF)),
+                filled: true, fillColor: const Color(0xFFF9FAFB),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 0.5)),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 0.5)),
+                contentPadding: const EdgeInsets.symmetric(vertical: 10),
+              ),
             ),
           ),
-        ),
-        const SizedBox(height: 8),
-        Expanded(child: _loading
-            ? const Center(child: CircularProgressIndicator(color: Color(0xFFE8A52A), strokeWidth: 2))
-            : _results.isEmpty
-                ? Center(child: Text(
-                    _searchCtrl.text.length < 2 ? L.dexSearchPrompt : L.dexNoCard,
-                    style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 13)))
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: _results.length,
-                    itemBuilder: (_, i) {
-                      final c = _results[i];
-                      final img = c['image_small'] as String?;
-                      final name = c['name'] as String? ?? '';
-                      final setId = c['set_id'] as String? ?? '';
-                      final number = c['number'] as String? ?? '';
-                      return ListTile(
-                        contentPadding: const EdgeInsets.symmetric(vertical: 4, horizontal: 0),
-                        leading: img != null && img.isNotEmpty
-                            ? ClipRRect(borderRadius: BorderRadius.circular(4),
-                                child: Image.network(img, width: 36, height: 50, fit: BoxFit.contain,
-                                    errorBuilder: (_, __, ___) => const Icon(Icons.image_not_supported_outlined,
-                                        size: 24, color: Color(0xFFD1D5DB))))
-                            : const Icon(Icons.style_outlined, size: 24, color: Color(0xFFD1D5DB)),
-                        title: Text(name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                            maxLines: 1, overflow: TextOverflow.ellipsis),
-                        subtitle: Text('$setId · $number',
-                            style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280))),
-                        onTap: () => Navigator.pop(context, c),
-                      );
-                    }),
-        ),
+          const SizedBox(height: 8),
+          Expanded(child: _loading
+              ? const Center(child: CircularProgressIndicator(color: Color(0xFFE8A52A), strokeWidth: 2))
+              : _results.isEmpty
+                  ? Center(child: Text(
+                      _searchCtrl.text.length < 2 ? L.dexSearchPrompt : L.dexNoCard,
+                      style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 13)))
+                  : ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: _results.length,
+                      itemBuilder: (_, i) {
+                        final c = _results[i];
+                        final img = c['image_small'] as String?;
+                        final name = c['name'] as String? ?? '';
+                        final setId = c['set_id'] as String? ?? '';
+                        final number = c['number'] as String? ?? '';
+                        return ListTile(
+                          contentPadding: const EdgeInsets.symmetric(vertical: 4, horizontal: 0),
+                          leading: img != null && img.isNotEmpty
+                              ? ClipRRect(borderRadius: BorderRadius.circular(4),
+                                  child: Image.network(img, width: 36, height: 50, fit: BoxFit.contain,
+                                      errorBuilder: (_, __, ___) => const Icon(Icons.image_not_supported_outlined,
+                                          size: 24, color: Color(0xFFD1D5DB))))
+                              : const Icon(Icons.style_outlined, size: 24, color: Color(0xFFD1D5DB)),
+                          title: Text(name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                              maxLines: 1, overflow: TextOverflow.ellipsis),
+                          subtitle: Text('$setId · $number',
+                              style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280))),
+                          onTap: () => Navigator.pop(context, c),
+                        );
+                      }),
+          ),
+        ] else
+          // 精靈圖鑑瀏覽選卡：選精靈 → 看牠的卡 → 點卡回傳
+          Expanded(
+            child: PokemonDexScreen(
+              embedded: true,
+              onCardPicked: (c) => Navigator.pop(context, _cardToMap(c)),
+            ),
+          ),
       ]),
     );
   }
