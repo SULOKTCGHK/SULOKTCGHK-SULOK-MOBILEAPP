@@ -36,24 +36,6 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
   bool get _hasActiveFilters =>
       _minPrice != null || _maxPrice != null || _gradeFilter.isNotEmpty || _setFilter != null;
 
-  // 從現有商品收集可選的評級與系列
-  List<String> get _availableGrades {
-    final s = widget.listings.map((c) => c.grade).where((g) => g.isNotEmpty).toSet().toList();
-    s.sort();
-    return s;
-  }
-
-  List<String> get _availableSets {
-    final s = widget.listings
-        .map((c) => c.setId)
-        .whereType<String>()
-        .where((g) => g.isNotEmpty)
-        .toSet()
-        .toList();
-    s.sort();
-    return s;
-  }
-
   @override
   void dispose() {
     _searchCtrl.dispose();
@@ -334,39 +316,25 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
               ]),
               const SizedBox(height: 16),
 
-              // 評級
-              if (_availableGrades.isNotEmpty) ...[
-                Text(L.grade,
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
-                        color: Color(0xFF374151))),
-                const SizedBox(height: 8),
-                Wrap(spacing: 8, runSpacing: 8, children: _availableGrades.map((g) {
-                  final on = localGrades.contains(g);
-                  return GestureDetector(
-                    onTap: () => setSheet(() {
-                      if (on) { localGrades.remove(g); } else { localGrades.add(g); }
-                    }),
-                    child: _filterChip(g, on),
-                  );
-                }).toList()),
-                const SizedBox(height: 16),
-              ],
-
-              // 系列
-              if (_availableSets.isNotEmpty) ...[
-                Text(L.setSeries,
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
-                        color: Color(0xFF374151))),
-                const SizedBox(height: 8),
-                Wrap(spacing: 8, runSpacing: 8, children: _availableSets.map((s) {
-                  final on = localSet == s;
-                  return GestureDetector(
-                    onTap: () => setSheet(() => localSet = on ? null : s),
-                    child: _filterChip(PokemonApiService.zhTwSetName(s), on),
-                  );
-                }).toList()),
-                const SizedBox(height: 20),
-              ],
+              // 評級（固定：PSA10 / PSA9 / CGC10）
+              Text(L.grade,
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
+                      color: Color(0xFF374151))),
+              const SizedBox(height: 8),
+              Wrap(spacing: 8, runSpacing: 8, children: const <(String, String)>[
+                ('PSA 10', 'PSA10'),
+                ('PSA 9', 'PSA9'),
+                ('CGC 10', 'CGC10'),
+              ].map((g) {
+                final on = localGrades.contains(g.$1);
+                return GestureDetector(
+                  onTap: () => setSheet(() {
+                    if (on) { localGrades.remove(g.$1); } else { localGrades.add(g.$1); }
+                  }),
+                  child: _filterChip(g.$2, on),
+                );
+              }).toList()),
+              const SizedBox(height: 20),
 
               // 加入願望清單
               GestureDetector(

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/card_model.dart';
-import '../services/api_service.dart';
 import 'card_type_icon.dart';
 import 'no_image_placeholder.dart';
 import '../i18n/strings.dart';
@@ -163,22 +162,12 @@ class _CardGridItemState extends State<CardGridItem> {
                           style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: gc)),
                     ),
                   ]),
-                  // Set / card number badges（固定單行，避免換行撐高）
-                  if (widget.card.setId != null || widget.card.cardNumber != null) ...[
+                  // 不展示系列標籤（仍保留卡號，方便辨識）
+                  if (widget.card.cardNumber != null) ...[
                     const SizedBox(height: 5),
                     Row(
                       children: [
-                        if (widget.card.setId != null)
-                          Flexible(
-                            child: _badge(
-                              PokemonApiService.zhTwSetName(widget.card.setId!),
-                              const Color(0xFF6366F1),
-                            ),
-                          ),
-                        if (widget.card.cardNumber != null) ...[
-                          const SizedBox(width: 4),
-                          _badge('#${widget.card.cardNumber!}', const Color(0xFF6B7280)),
-                        ],
+                        _badge('#${widget.card.cardNumber!}', const Color(0xFF6B7280)),
                       ],
                     ),
                   ],
