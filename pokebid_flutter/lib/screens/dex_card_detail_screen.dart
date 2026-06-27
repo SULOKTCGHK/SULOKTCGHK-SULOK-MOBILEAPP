@@ -949,11 +949,11 @@ class _SnkrChartState extends State<_SnkrChart> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
-              color: (chg >= 0 ? const Color(0xFF16A34A) : const Color(0xFFDC2626)).withOpacity(0.1),
+              color: const Color(0xFF374151).withOpacity(0.1),
               borderRadius: BorderRadius.circular(6)),
             child: Text('${chg >= 0 ? '▲' : '▼'} ${chg.abs()}%',
-                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700,
-                    color: chg >= 0 ? const Color(0xFF16A34A) : const Color(0xFFDC2626))),
+                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700,
+                    color: Color(0xFF374151))),
           ),
         const Spacer(),
         _rangeBtn(7), const SizedBox(width: 4), _rangeBtn(30),
@@ -971,7 +971,7 @@ class _SnkrChartState extends State<_SnkrChart> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
         decoration: BoxDecoration(
-          color: sel ? const Color(0xFFE8A52A) : const Color(0xFFF3F4F6),
+          color: sel ? const Color(0xFF111827) : const Color(0xFFF3F4F6),
           borderRadius: BorderRadius.circular(6)),
         child: Text(L.daysShort(d),
             style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700,
@@ -1017,11 +1017,11 @@ class _LinePainter extends CustomPainter {
 
     canvas.drawPath(fill, Paint()
       ..shader = const LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter,
-          colors: [Color(0x33E8A52A), Color(0x00E8A52A)]).createShader(Rect.fromLTWH(0, tPad, size.width, h)));
+          colors: [Color(0x22111827), Color(0x00111827)]).createShader(Rect.fromLTWH(0, tPad, size.width, h)));
     canvas.drawPath(line, Paint()
-      ..color = const Color(0xFFE8A52A)..strokeWidth = 2
+      ..color = const Color(0xFF111827)..strokeWidth = 2
       ..style = PaintingStyle.stroke..strokeJoin = StrokeJoin.round..strokeCap = StrokeCap.round);
-    canvas.drawCircle(Offset(px(values.length - 1), py(values.last)), 3, Paint()..color = const Color(0xFFE8A52A));
+    canvas.drawCircle(Offset(px(values.length - 1), py(values.last)), 3, Paint()..color = const Color(0xFF111827));
 
     // 高/低價標籤（左上角堆疊）
     _tp(_yen(maxV), const Color(0xFF9CA3AF)).paint(canvas, const Offset(lPad, 0));
