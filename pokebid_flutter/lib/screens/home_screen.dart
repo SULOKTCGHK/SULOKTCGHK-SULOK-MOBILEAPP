@@ -219,7 +219,7 @@ class _HomeScreenState extends State<HomeScreen> {
           // ── 卡鋪 + 心願清單入口（平排，像素風）──────────────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
-            child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            child: IntrinsicHeight(child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
               Expanded(child: GestureDetector(
                 onTap: () => Navigator.push(context,
                     MaterialPageRoute(builder: (_) => const NearbyShopsScreen())),
@@ -265,7 +265,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ]),
                 ),
               )),
-            ]),
+            ])),
           ),
 
           // ── 最近瀏覽 ────────────────────────────────────────────────────
