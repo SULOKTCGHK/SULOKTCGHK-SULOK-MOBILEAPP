@@ -64,6 +64,7 @@ const kPixelPalette = <String, Color>{
   'W': Color(0xFFF1F5F9), // 淺白（書名線）
   'S': Color(0xFFF2C99B), // 膚色（頭）
   'G': Color(0xFF22C55E), // 綠（衣服）
+  'D': Color(0xFF4B5563), // 深灰（卡帶）
 };
 
 // ── 底部導航的像素圖示（11x11，多色）──────────────────────────────────────────────
@@ -95,17 +96,18 @@ const kPixelMarket = [
   '.RRRRRRRRR.',
 ];
 
+// 復古紅白機（Famicom）：卡帶 + 白色上半 + 紅色下半
 const kPixelDex = [
-  '.BBBBBBBBB.',
-  '.BBBBBBBBB.',
-  '.BBWWWWWBB.',
-  '.BBBBBBBBB.',
-  '.BBWWWWWBB.',
-  '.BBBBBBBBB.',
-  '.BBWWWWWBB.',
-  '.BBBBBBBBB.',
-  '.BBBBBBBBB.',
-  '.BBBBBBBBB.',
+  '...DDDDD...',
+  '...DWWWD...',
+  '..WWWWWWW..',
+  '..WWWWWWW..',
+  '..WWWWWWW..',
+  '..RRRRRRR..',
+  '..RRRRRRR..',
+  '..R.W.W.R..',
+  '..RRRRRRR..',
+  '...........',
   '...........',
 ];
 
