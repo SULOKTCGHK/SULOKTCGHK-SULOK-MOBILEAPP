@@ -5,6 +5,8 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import '../../services/auth_service.dart';
 import '../main_shell.dart';
 import '../../i18n/strings.dart';
+import 'email_login_screen.dart';
+import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -143,6 +145,25 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
               const SizedBox(height: 14),
+
+              // 電郵登入 / 建立帳號
+              if (!_loading)
+                Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                  TextButton(
+                    onPressed: () => Navigator.push(context,
+                        MaterialPageRoute(builder: (_) => const EmailLoginScreen())),
+                    child: Text(L.loginEmailTitle,
+                        style: const TextStyle(fontSize: 13.5, color: Color(0xFF374151), fontWeight: FontWeight.w600)),
+                  ),
+                  const Text('·', style: TextStyle(color: Color(0xFFD1D5DB))),
+                  TextButton(
+                    onPressed: () => Navigator.push(context,
+                        MaterialPageRoute(builder: (_) => const RegisterScreen())),
+                    child: Text(L.registerTitle,
+                        style: const TextStyle(fontSize: 13.5, color: Color(0xFFE8A52A), fontWeight: FontWeight.w700)),
+                  ),
+                ]),
+              const SizedBox(height: 6),
 
               GestureDetector(
                 onTap: () => Navigator.of(context).pushReplacement(

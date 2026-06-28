@@ -636,6 +636,26 @@ class L {
       _t('已透過簡訊發送驗證碼至 $phone', 'Code sent via SMS to $phone');
   static String get enterOtpHint => _t('輸入 6 位數驗證碼', 'Enter the 6-digit code');
   static String get reenterNumber => _t('重新輸入號碼', 'Re-enter number');
+
+  // ── Email + phone registration ─────────────────────────────────────────
+  static String get registerTitle => _t('建立帳號', 'Create account');
+  static String get loginEmailTitle => _t('Email 登入', 'Email login');
+  static String get emailLabel => _t('電郵', 'Email');
+  static String get emailHint => _t('you@example.com', 'you@example.com');
+  static String get passwordLabel => _t('密碼', 'Password');
+  static String get passwordHint => _t('至少 6 位', 'At least 6 characters');
+  static String get sendSmsCode => _t('發送簡訊驗證碼', 'Send SMS code');
+  static String get completeRegister => _t('完成註冊', 'Complete registration');
+  static String get registerSmsNote =>
+      _t('註冊需通過電話簡訊認證才完成。電郵不需認證。',
+        'Registration requires SMS phone verification. Email does not need verification.');
+  static String get errEnterEmail => _t('請輸入有效電郵', 'Please enter a valid email');
+  static String get errEnterPassword => _t('密碼至少 6 位', 'Password must be at least 6 characters');
+  static String get registerSuccess => _t('註冊成功 🎉', 'Registered 🎉');
+  static String get haveAccountLogin => _t('已有帳號？登入', 'Have an account? Log in');
+  static String get noAccountRegister => _t('沒有帳號？建立帳號', 'No account? Create one');
+  static String get orDivider => _t('或', 'or');
+  static String get loginBtn => _t('登入', 'Log in');
   static String get confirmVerify => _t('確認驗證', 'Verify');
   static String get sendOtp => _t('發送驗證碼', 'Send code');
 

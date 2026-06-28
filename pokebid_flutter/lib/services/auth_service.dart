@@ -80,6 +80,52 @@ class AuthService {
         .join();
   }
 
+  // Email 註冊（不需 email 認證；呼叫前必須已通過 SMS 驗證）
+  // 回傳 null = 成功，否則為錯誤訊息
+  static Future<String?> signUpWithEmail({
+    required String email,
+    required String password,
+    required String phone,
+  }) async {
+    try {
+      final res = await _client.auth.signUp(email: email, password: password);
+      final user = res.user;
+      if (user == null) return '註冊失敗，請稍後再試';
+      // 建立/更新 profile（含已驗證電話）。upsert 確保不論 race 都正確。
+      final prefix = email.split('@').first.toLowerCase().replaceAll(RegExp(r'[^a-z0-9_]'), '');
+      await _client.from('profiles').upsert({
+        'id': user.id,
+        'username': '${prefix.isEmpty ? 'user' : prefix}_${user.id.substring(0, 4)}',
+        'display_name': email.split('@').first,
+        'avatar_emoji': '🎴',
+        'bio': '',
+        'ig_handle': '',
+        'phone': phone,
+        'phone_verified': true,
+      }, onConflict: 'id');
+      return null;
+    } on AuthException catch (e) {
+      return e.message;
+    } catch (e) {
+      return '註冊失敗：$e';
+    }
+  }
+
+  // Email 登入
+  static Future<String?> signInWithEmail({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      await _client.auth.signInWithPassword(email: email, password: password);
+      return null;
+    } on AuthException catch (e) {
+      return e.message;
+    } catch (e) {
+      return '登入失敗：$e';
+    }
+  }
+
   // 登出
   static Future<void> signOut() async {
     await _client.auth.signOut();

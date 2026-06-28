@@ -28,20 +28,25 @@ function json(o: unknown, s = 200) {
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   try {
-    // 驗證呼叫者
-    const authHeader = req.headers.get("Authorization") ?? "";
-    const userClient = createClient(SB, ANON, { global: { headers: { Authorization: authHeader } } });
-    const { data: { user } } = await userClient.auth.getUser();
-    if (!user) return json({ error: "未登入" }, 401);
-
     if (!TW_SID || !TW_TOKEN || !VERIFY_SID) {
       return json({ error: "驗證服務尚未設定完整（缺 Twilio / TWILIO_VERIFY_SID）" }, 503);
     }
 
     const body = await req.json().catch(() => ({}));
     const action = body.action as string;
+    const mode = body.mode as string | undefined; // "register" = 註冊時，免登入、不更新 profile
     const phone = (body.phone as string ?? "").trim();
     if (!phone.startsWith("+")) return json({ error: "電話格式需含國碼，如 +852" }, 400);
+
+    // 認證：註冊模式不需登入；其他（已登入改/驗電話）需登入
+    let userId: string | null = null;
+    if (mode !== "register") {
+      const authHeader = req.headers.get("Authorization") ?? "";
+      const userClient = createClient(SB, ANON, { global: { headers: { Authorization: authHeader } } });
+      const { data: { user } } = await userClient.auth.getUser();
+      if (!user) return json({ error: "未登入" }, 401);
+      userId = user.id;
+    }
 
     const twAuth = "Basic " + btoa(`${TW_SID}:${TW_TOKEN}`);
     const base = `https://verify.twilio.com/v2/Services/${VERIFY_SID}`;
@@ -68,10 +73,13 @@ Deno.serve(async (req: Request) => {
       });
       const data = await r.json().catch(() => ({}));
       if (r.ok && data?.status === "approved") {
-        const admin = createClient(SB, SVC);
-        await admin.from("profiles").update({
-          phone, phone_verified: true, updated_at: new Date().toISOString(),
-        }).eq("id", user.id);
+        // 已登入：更新自己的 profile；註冊模式：只回驗證通過（建帳號後再寫 phone）
+        if (userId) {
+          const admin = createClient(SB, SVC);
+          await admin.from("profiles").update({
+            phone, phone_verified: true, updated_at: new Date().toISOString(),
+          }).eq("id", userId);
+        }
         return json({ ok: true, verified: true });
       }
       return json({ ok: false, error: "驗證碼錯誤或已過期" });
