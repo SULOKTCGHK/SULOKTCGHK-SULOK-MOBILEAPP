@@ -620,20 +620,20 @@ class L {
   // ── Announcement ───────────────────────────────────────────────────────
   static String get announcementDetail => _t('公告詳情', 'Announcement');
 
-  // ── Phone (WhatsApp) verification ──────────────────────────────────────
+  // ── Phone (SMS) verification ──────────────────────────────────────
   static String get errInvalidPhone => _t('請輸入有效電話號碼', 'Please enter a valid phone number');
   static String get errEnterOtp => _t('請輸入驗證碼', 'Please enter the verification code');
-  static String get whatsappVerifySuccess => _t('WhatsApp 認證成功 ✓', 'WhatsApp verification successful ✓');
+  static String get whatsappVerifySuccess => _t('簡訊認證成功 ✓', 'SMS verification successful ✓');
   static String get otpWrongOrExpired => _t('驗證碼錯誤或已過期', 'Code is incorrect or expired');
-  static String get whatsappVerify => _t('WhatsApp 認證', 'WhatsApp Verification');
-  static String get verifyPhoneTitle => _t('用 WhatsApp 認證電話', 'Verify your phone via WhatsApp');
+  static String get whatsappVerify => _t('簡訊認證', 'SMS Verification');
+  static String get verifyPhoneTitle => _t('用簡訊認證電話', 'Verify your phone via SMS');
   static String get verifyPhoneDesc =>
-      _t('驗證碼會透過 WhatsApp 發送。認證後，你的用戶名旁會顯示「已認證」標誌，提升交易信任度。',
-        'The code is sent via WhatsApp. Once verified, a "Verified" badge appears next to your name to build trust.');
+      _t('驗證碼會透過簡訊發送。認證後，你的用戶名旁會顯示「已認證」標誌，提升交易信任度。',
+        'The code is sent via SMS. Once verified, a "Verified" badge appears next to your name to build trust.');
   static String get phoneNumber => _t('電話號碼', 'Phone number');
   static String get otherRegionNote => _t('其他地區請自行輸入 +國碼', 'For other regions, include your +country code');
   static String otpSentTo(String phone) =>
-      _t('已透過 WhatsApp 發送驗證碼至 $phone', 'Code sent via WhatsApp to $phone');
+      _t('已透過簡訊發送驗證碼至 $phone', 'Code sent via SMS to $phone');
   static String get enterOtpHint => _t('輸入 6 位數驗證碼', 'Enter the 6-digit code');
   static String get reenterNumber => _t('重新輸入號碼', 'Re-enter number');
   static String get confirmVerify => _t('確認驗證', 'Verify');

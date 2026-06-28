@@ -1,13 +1,12 @@
-// WhatsApp 電話認證（Twilio Messaging API + 預先批准範本，支援 Sandbox）
-// 自管 OTP：產生驗證碼 → 用 WhatsApp 範本發送 → 存 phone_otps → check 時比對。
+// 電話認證（Twilio SMS）
+// 自管 OTP：產生驗證碼 → 用 SMS 發送 → 存 phone_otps → check 時比對。
 // 需 JWT：只有登入者能認證自己。
 // POST { action:"send",  phone:"+852..." }
 // POST { action:"check", phone:"+852...", code:"123456" }
 //
 // 需設定 secrets：
 //   TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN
-//   WHATSAPP_FROM        例：whatsapp:+14155238886（Sandbox 號碼）
-//   TWILIO_TEMPLATE_SID  驗證碼範本 ContentSid，例：HX229f5a04fd0510ce1b071852155d3e75
+//   SMS_FROM   Twilio 可發 SMS 的號碼（例：+1415...）或英數 Sender ID（例：TCGspot）
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const CORS = {
@@ -20,8 +19,7 @@ const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
 const SVC = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const TW_SID = Deno.env.get("TWILIO_ACCOUNT_SID") ?? "";
 const TW_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN") ?? "";
-const WA_FROM = Deno.env.get("WHATSAPP_FROM") ?? "";
-const TEMPLATE = Deno.env.get("TWILIO_TEMPLATE_SID") ?? "";
+const SMS_FROM = Deno.env.get("SMS_FROM") ?? "";
 
 function json(o: unknown, s = 200) {
   return new Response(JSON.stringify(o), { status: s, headers: { ...CORS, "Content-Type": "application/json" } });
@@ -36,8 +34,8 @@ Deno.serve(async (req: Request) => {
     const { data: { user } } = await userClient.auth.getUser();
     if (!user) return json({ error: "未登入" }, 401);
 
-    if (!TW_SID || !WA_FROM || !TEMPLATE) {
-      return json({ error: "驗證服務尚未設定完整（缺 Twilio/WHATSAPP_FROM/TEMPLATE）" }, 503);
+    if (!TW_SID || !TW_TOKEN || !SMS_FROM) {
+      return json({ error: "驗證服務尚未設定完整（缺 Twilio / SMS_FROM）" }, 503);
     }
 
     const body = await req.json().catch(() => ({}));
@@ -59,10 +57,9 @@ Deno.serve(async (req: Request) => {
         method: "POST",
         headers: { "Authorization": twAuth, "Content-Type": "application/x-www-form-urlencoded" },
         body: new URLSearchParams({
-          To: `whatsapp:${phone}`,
-          From: WA_FROM,
-          ContentSid: TEMPLATE,
-          ContentVariables: JSON.stringify({ "1": code }),
+          To: phone,
+          From: SMS_FROM,
+          Body: `【TCGspot】驗證碼：${code}（10 分鐘內有效，請勿外洩）`,
         }),
       });
       if (!r.ok) {
