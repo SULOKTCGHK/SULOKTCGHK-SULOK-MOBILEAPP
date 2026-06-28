@@ -15,12 +15,28 @@ const QUERIES = [
   '遊戲王卡店 香港',
 ]
 
-// 由經緯度粗略判斷香港大區（admin 可事後微調）
-function regionOf(lat: number, lng: number): string {
-  if (lng < 114.05) return '離島'        // 大嶼山/長洲等（偏西）
-  if (lat < 22.29) return '香港島'        // 維港以南
-  if (lat < 22.34) return '九龍'          // 維港以北、界限街以南
-  return '新界'                           // 其餘
+// 用地址的地區名判斷香港大區（比經緯度準）；沒對到才用經緯度粗估
+const REGION_KEYWORDS: Record<string, string[]> = {
+  '離島': ['大嶼山', '東涌', '愉景灣', '長洲', '坪洲', '南丫', '梅窩', '大澳', '赤鱲角', '離島'],
+  '新界': ['元朗', '屯門', '天水圍', '荃灣', '葵涌', '葵芳', '青衣', '沙田', '火炭', '大圍',
+    '馬鞍山', '大埔', '粉嶺', '上水', '西貢', '將軍澳', '調景嶺', '錦上路', '流浮山', '新界'],
+  '九龍': ['旺角', '油麻地', '佐敦', '尖沙咀', '深水埗', '長沙灣', '荔枝角', '美孚', '紅磡',
+    '土瓜灣', '何文田', '九龍城', '九龍塘', '黃大仙', '鑽石山', '新蒲崗', '樂富', '觀塘',
+    '牛頭角', '藍田', '九龍灣', '油塘', '九龍'],
+  '香港島': ['中環', '金鐘', '灣仔', '銅鑼灣', '天后', '炮台山', '北角', '鰂魚涌', '太古',
+    '西灣河', '筲箕灣', '柴灣', '上環', '西環', '西營盤', '堅尼地城', '跑馬地', '薄扶林',
+    '香港仔', '鴨脷洲', '赤柱', '香港島'],
+}
+
+function regionOf(address: string | null, lat: number, lng: number): string {
+  const a = address ?? ''
+  for (const region of ['離島', '新界', '九龍', '香港島']) {
+    if (REGION_KEYWORDS[region].some((k) => a.includes(k))) return region
+  }
+  // 地址沒對到地區名 → 用經緯度粗估（不再用經度判離島，避免誤判西部新界）
+  if (lat < 22.29) return '香港島'
+  if (lat < 22.34) return '九龍'
+  return '新界'
 }
 
 interface Place {
@@ -91,7 +107,7 @@ Deno.serve(async (req) => {
           google_place_id: p.id,
           name: p.displayName?.text ?? '',
           address: p.formattedAddress ?? null,
-          region: regionOf(lat, lng),
+          region: regionOf(p.formattedAddress ?? null, lat, lng),
           lat,
           lng,
           phone: p.internationalPhoneNumber ?? null,
