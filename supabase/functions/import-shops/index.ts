@@ -5,15 +5,23 @@ const CORS = {
   'Access-Control-Allow-Headers': 'authorization, content-type',
 }
 
-// 要搜尋的關鍵字（盡量涵蓋不同叫法）
-const QUERIES = [
-  '寶可夢卡店 香港',
-  'Pokemon card shop Hong Kong',
-  'trading card shop Hong Kong',
-  '卡牌專門店 香港',
-  'TCG card shop Hong Kong',
-  '遊戲王卡店 香港',
+// 要搜尋的關鍵字 = 各卡類通用詞 + 各區地名「卡牌店」
+const GENERAL_QUERIES = [
+  '寶可夢卡店 香港', 'Pokemon card shop Hong Kong',
+  '遊戲王卡店 香港', 'Yu-Gi-Oh card shop Hong Kong',
+  'One Piece card game shop Hong Kong', '海賊王卡牌 香港',
+  'Magic the Gathering shop Hong Kong', '萬智牌 香港',
+  'Digimon card shop Hong Kong', 'Weiss Schwarz 香港',
+  '球星卡 香港', 'sports card shop Hong Kong', 'NBA card shop Hong Kong',
+  'trading card shop Hong Kong', 'TCG card shop Hong Kong',
+  '卡牌專門店 香港', '集換式卡牌店 香港', 'hobby shop trading card Hong Kong',
 ]
+const AREAS = [
+  '旺角', '太子', '油麻地', '佐敦', '深水埗', '長沙灣', '觀塘', '牛頭角', '九龍灣',
+  '荃灣', '葵芳', '葵涌', '元朗', '屯門', '天水圍', '沙田', '大埔', '上水', '粉嶺',
+  '銅鑼灣', '灣仔', '中環', '北角', '將軍澳', '東涌',
+]
+const QUERIES = [...GENERAL_QUERIES, ...AREAS.map((a) => `卡牌店 ${a}`)]
 
 // 用地址的地區名判斷香港大區（比經緯度準）；沒對到才用經緯度粗估
 const REGION_KEYWORDS: Record<string, string[]> = {
