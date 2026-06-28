@@ -1,12 +1,12 @@
-// 電話認證（Twilio SMS）
-// 自管 OTP：產生驗證碼 → 用 SMS 發送 → 存 phone_otps → check 時比對。
+// 電話認證（Twilio Verify API）
+// Twilio 自管驗證碼：send 觸發發送、check 由 Twilio 驗證；本端不存碼。
 // 需 JWT：只有登入者能認證自己。
 // POST { action:"send",  phone:"+852..." }
 // POST { action:"check", phone:"+852...", code:"123456" }
 //
 // 需設定 secrets：
 //   TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN
-//   SMS_FROM   Twilio 可發 SMS 的號碼（例：+1415...）或英數 Sender ID（例：TCGspot）
+//   TWILIO_VERIFY_SID  Verify Service SID，例：VA03b836876616f4291183b90b425934d9
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const CORS = {
@@ -19,7 +19,7 @@ const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
 const SVC = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const TW_SID = Deno.env.get("TWILIO_ACCOUNT_SID") ?? "";
 const TW_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN") ?? "";
-const SMS_FROM = Deno.env.get("SMS_FROM") ?? "";
+const VERIFY_SID = Deno.env.get("TWILIO_VERIFY_SID") ?? "";
 
 function json(o: unknown, s = 200) {
   return new Response(JSON.stringify(o), { status: s, headers: { ...CORS, "Content-Type": "application/json" } });
@@ -34,8 +34,8 @@ Deno.serve(async (req: Request) => {
     const { data: { user } } = await userClient.auth.getUser();
     if (!user) return json({ error: "未登入" }, 401);
 
-    if (!TW_SID || !TW_TOKEN || !SMS_FROM) {
-      return json({ error: "驗證服務尚未設定完整（缺 Twilio / SMS_FROM）" }, 503);
+    if (!TW_SID || !TW_TOKEN || !VERIFY_SID) {
+      return json({ error: "驗證服務尚未設定完整（缺 Twilio / TWILIO_VERIFY_SID）" }, 503);
     }
 
     const body = await req.json().catch(() => ({}));
@@ -43,44 +43,38 @@ Deno.serve(async (req: Request) => {
     const phone = (body.phone as string ?? "").trim();
     if (!phone.startsWith("+")) return json({ error: "電話格式需含國碼，如 +852" }, 400);
 
-    const admin = createClient(SB, SVC);
     const twAuth = "Basic " + btoa(`${TW_SID}:${TW_TOKEN}`);
+    const base = `https://verify.twilio.com/v2/Services/${VERIFY_SID}`;
 
     if (action === "send") {
-      const code = String(Math.floor(100000 + Math.random() * 900000));
-      const expires = new Date(Date.now() + 10 * 60 * 1000).toISOString();
-      await admin.from("phone_otps").upsert({
-        user_id: user.id, phone, code, expires_at: expires, created_at: new Date().toISOString(),
-      });
-
-      const r = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${TW_SID}/Messages.json`, {
+      const r = await fetch(`${base}/Verifications`, {
         method: "POST",
         headers: { "Authorization": twAuth, "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          To: phone,
-          From: SMS_FROM,
-          Body: `【TCGspot】驗證碼：${code}（10 分鐘內有效，請勿外洩）`,
-        }),
+        body: new URLSearchParams({ To: phone, Channel: "sms" }),
       });
+      const data = await r.json().catch(() => ({}));
       if (!r.ok) {
-        const t = await r.text();
-        return json({ error: `Twilio ${r.status}: ${t.slice(0, 300)}` }, 400);
+        return json({ error: `Twilio ${r.status}: ${data?.message ?? ""}` }, 400);
       }
       return json({ ok: true });
     }
 
     if (action === "check") {
       const code = (body.code as string ?? "").trim();
-      const { data: row } = await admin.from("phone_otps").select().eq("user_id", user.id).maybeSingle();
-      if (!row) return json({ ok: false, error: "請先發送驗證碼" });
-      if (new Date(row.expires_at).getTime() < Date.now()) return json({ ok: false, error: "驗證碼已過期" });
-      if (row.code !== code || row.phone !== phone) return json({ ok: false, error: "驗證碼錯誤" });
-
-      await admin.from("profiles").update({
-        phone, phone_verified: true, updated_at: new Date().toISOString(),
-      }).eq("id", user.id);
-      await admin.from("phone_otps").delete().eq("user_id", user.id);
-      return json({ ok: true, verified: true });
+      const r = await fetch(`${base}/VerificationCheck`, {
+        method: "POST",
+        headers: { "Authorization": twAuth, "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ To: phone, Code: code }),
+      });
+      const data = await r.json().catch(() => ({}));
+      if (r.ok && data?.status === "approved") {
+        const admin = createClient(SB, SVC);
+        await admin.from("profiles").update({
+          phone, phone_verified: true, updated_at: new Date().toISOString(),
+        }).eq("id", user.id);
+        return json({ ok: true, verified: true });
+      }
+      return json({ ok: false, error: "驗證碼錯誤或已過期" });
     }
 
     return json({ error: "unknown action" }, 400);
