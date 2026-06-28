@@ -64,7 +64,10 @@ const kPixelPalette = <String, Color>{
   'W': Color(0xFFF1F5F9), // 淺白（書名線）
   'S': Color(0xFFF2C99B), // 膚色（頭）
   'G': Color(0xFF22C55E), // 綠（衣服）
-  'D': Color(0xFF4B5563), // 深灰（卡帶）
+  'D': Color(0xFF4B5563), // 深灰（卡帶 / 十字鍵）
+  'L': Color(0xFFAEB4BB), // 淺灰（Game Boy 機身）
+  'N': Color(0xFF8BAC0F), // 墨綠（Game Boy 螢幕）
+  'M': Color(0xFF8E244D), // 暗紅（AB 鈕）
 };
 
 // ── 底部導航的像素圖示（11x11，多色）──────────────────────────────────────────────
@@ -96,19 +99,32 @@ const kPixelMarket = [
   '.RRRRRRRRR.',
 ];
 
-// 復古紅白機（Famicom）：卡帶 + 白色上半 + 紅色下半
+// 復古 Game Boy：灰機身 + 墨綠螢幕 + 十字鍵 / AB 鈕
 const kPixelDex = [
-  '...DDDDD...',
-  '...DWWWD...',
-  '..WWWWWWW..',
-  '..WWWWWWW..',
-  '..WWWWWWW..',
-  '..RRRRRRR..',
-  '..RRRRRRR..',
-  '..R.W.W.R..',
-  '..RRRRRRR..',
+  '..LLLLLLL..',
+  '..LNNNNNL..',
+  '..LNNNNNL..',
+  '..LNNNNNL..',
+  '..LLLLLLL..',
+  '..L.....L..',
+  '..LD...ML..',
+  '..LDD..ML..',
+  '..LD...ML..',
+  '..LLLLLLL..',
   '...........',
-  '...........',
+];
+
+// 發佈鍵：像素十字鍵（D-pad），白色（放在紅圈上）
+const kPixelDpad = [
+  '...WWW...',
+  '...WWW...',
+  '...WWW...',
+  'WWWWWWWWW',
+  'WWWWWWWWW',
+  'WWWWWWWWW',
+  '...WWW...',
+  '...WWW...',
+  '...WWW...',
 ];
 
 const kPixelMe = [

@@ -126,7 +126,9 @@ class _MainShellState extends State<MainShell> {
                               ),
                             ],
                           ),
-                          child: const Icon(Icons.add, color: Colors.white, size: 26),
+                          child: const Center(
+                            child: PixelIcon(grid: kPixelDpad, palette: kPixelPalette, size: 24),
+                          ),
                         ),
                         const SizedBox(height: 2),
                         Text(L.navPost,
