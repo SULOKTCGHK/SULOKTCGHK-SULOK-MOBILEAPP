@@ -114,6 +114,36 @@ const kPixelDex = [
   '...........',
 ];
 
+// 卡鋪：像素店面（紅遮陽棚 + 米色店身 + 白窗 + 棕門）
+const kPixelShop = [
+  '...........',
+  '.RRRRRRRRR.',
+  '.OOOOOOOOO.',
+  'OOOOOOOOOOO',
+  'O.WWW.KKK.O',
+  'O.WWW.KKK.O',
+  'O.....KKK.O',
+  'O.....KKK.O',
+  'OOOOOOOOOOO',
+  '...........',
+  '...........',
+];
+
+// 心願清單：像素愛心（紅）
+const kPixelHeart = [
+  '...........',
+  '..RR...RR..',
+  '.RRRR.RRRR.',
+  '.RRRRRRRRR.',
+  '.RRRRRRRRR.',
+  '..RRRRRRR..',
+  '...RRRRR...',
+  '....RRR....',
+  '.....R.....',
+  '...........',
+  '...........',
+];
+
 // 發佈鍵：像素十字鍵（D-pad），白色（放在紅圈上）
 const kPixelDpad = [
   '...WWW...',

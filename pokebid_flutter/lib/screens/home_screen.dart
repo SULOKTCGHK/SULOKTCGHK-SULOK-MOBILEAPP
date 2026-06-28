@@ -8,6 +8,7 @@ import 'card_detail_screen.dart';
 import 'announcement_detail_screen.dart';
 import 'nearby_shops_screen.dart';
 import 'wishlist_screen.dart';
+import '../widgets/pixel_icon.dart';
 import 'admin/post_announcement_sheet.dart';
 import 'conversations_list_screen.dart';
 import '../widgets/notification_bell.dart';
@@ -215,72 +216,56 @@ class _HomeScreenState extends State<HomeScreen> {
 
           const SizedBox(height: 8),
 
-          // ── 附近卡鋪入口 ────────────────────────────────────────────────
+          // ── 卡鋪 + 心願清單入口（平排，像素風）──────────────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
-            child: GestureDetector(
-              onTap: () => Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => const NearbyShopsScreen())),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFFE5E7EB), width: 0.5),
-                ),
-                child: Row(children: [
-                  Container(
-                    width: 38, height: 38,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE8A52A).withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(10)),
-                    child: const Icon(Icons.storefront, color: Color(0xFFE8A52A), size: 20),
+            child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              Expanded(child: GestureDetector(
+                onTap: () => Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const NearbyShopsScreen())),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFE5E7EB), width: 0.5),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  child: Column(children: [
+                    const PixelIcon(grid: kPixelShop, palette: kPixelPalette, size: 34),
+                    const SizedBox(height: 8),
                     Text(L.nearbyShops,
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF111827))),
+                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF111827))),
+                    const SizedBox(height: 2),
                     Text(L.nearbyShopsSubtitle,
-                        style: const TextStyle(fontSize: 11.5, color: Color(0xFF9CA3AF))),
-                  ])),
-                  const Icon(Icons.chevron_right, color: Color(0xFF9CA3AF), size: 20),
-                ]),
-              ),
-            ),
-          ),
-
-          // ── 心願清單入口 ────────────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
-            child: GestureDetector(
-              onTap: () => Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => const WishlistScreen())),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFFE5E7EB), width: 0.5),
+                        textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 10.5, color: Color(0xFF9CA3AF))),
+                  ]),
                 ),
-                child: Row(children: [
-                  Container(
-                    width: 38, height: 38,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE74C3C).withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(10)),
-                    child: const Icon(Icons.favorite, color: Color(0xFFE74C3C), size: 20),
+              )),
+              const SizedBox(width: 10),
+              Expanded(child: GestureDetector(
+                onTap: () => Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const WishlistScreen())),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFE5E7EB), width: 0.5),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  child: Column(children: [
+                    const PixelIcon(grid: kPixelHeart, palette: kPixelPalette, size: 34),
+                    const SizedBox(height: 8),
                     Text(L.wishlistEntryTitle,
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF111827))),
+                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF111827))),
+                    const SizedBox(height: 2),
                     Text(L.wishlistEntrySubtitle,
-                        style: const TextStyle(fontSize: 11.5, color: Color(0xFF9CA3AF))),
-                  ])),
-                  const Icon(Icons.chevron_right, color: Color(0xFF9CA3AF), size: 20),
-                ]),
-              ),
-            ),
+                        textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 10.5, color: Color(0xFF9CA3AF))),
+                  ]),
+                ),
+              )),
+            ]),
           ),
 
           // ── 最近瀏覽 ────────────────────────────────────────────────────
