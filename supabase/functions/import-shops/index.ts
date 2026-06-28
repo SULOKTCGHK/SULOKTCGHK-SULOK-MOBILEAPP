@@ -28,15 +28,21 @@ const REGION_KEYWORDS: Record<string, string[]> = {
     '香港仔', '鴨脷洲', '赤柱', '香港島'],
 }
 
-function regionOf(address: string | null, lat: number, lng: number): string {
+function classify(address: string | null, lat: number, lng: number): { region: string; district: string | null } {
   const a = address ?? ''
   for (const region of ['離島', '新界', '九龍', '香港島']) {
-    if (REGION_KEYWORDS[region].some((k) => a.includes(k))) return region
+    // 先找具體地區名（細區）
+    for (const k of REGION_KEYWORDS[region]) {
+      if (k !== region && a.includes(k)) return { region, district: k }
+    }
+    // 只對到大區名本身
+    if (a.includes(region)) return { region, district: null }
   }
-  // 地址沒對到地區名 → 用經緯度粗估（不再用經度判離島，避免誤判西部新界）
-  if (lat < 22.29) return '香港島'
-  if (lat < 22.34) return '九龍'
-  return '新界'
+  // 地址沒對到地區名 → 用緯度粗估大區（不用經度判離島，避免誤判西部新界）
+  let region = '新界'
+  if (lat < 22.29) region = '香港島'
+  else if (lat < 22.34) region = '九龍'
+  return { region, district: null }
 }
 
 interface Place {
@@ -103,11 +109,13 @@ Deno.serve(async (req) => {
       .map((p) => {
         const lat = p.location!.latitude as number
         const lng = p.location!.longitude as number
+        const { region, district } = classify(p.formattedAddress ?? null, lat, lng)
         return {
           google_place_id: p.id,
           name: p.displayName?.text ?? '',
           address: p.formattedAddress ?? null,
-          region: regionOf(p.formattedAddress ?? null, lat, lng),
+          region,
+          district,
           lat,
           lng,
           phone: p.internationalPhoneNumber ?? null,

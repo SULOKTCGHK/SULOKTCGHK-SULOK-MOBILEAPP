@@ -14,10 +14,42 @@ class _NearbyShopsScreenState extends State<NearbyShopsScreen> {
   List<CardShop> _shops = [];
   bool _loading = true;
   bool _hasLocation = false;
-  String _region = ''; // '' = 全部
+  String _region = '';   // '' = 全部
+  String _district = ''; // '' = 全部
+  final _searchCtrl = TextEditingController();
+  String _query = '';
 
-  List<CardShop> get _filtered =>
-      _region.isEmpty ? _shops : _shops.where((s) => s.region == _region).toList();
+  // 目前大區內有哪些細區（給子篩選用）
+  List<String> get _districts {
+    final base = _region.isEmpty ? _shops : _shops.where((s) => s.region == _region);
+    final set = base
+        .map((s) => s.district)
+        .whereType<String>()
+        .where((d) => d.isNotEmpty)
+        .toSet()
+        .toList();
+    set.sort();
+    return set;
+  }
+
+  List<CardShop> get _filtered {
+    final q = _query.trim().toLowerCase();
+    return _shops.where((s) {
+      if (_region.isNotEmpty && s.region != _region) return false;
+      if (_district.isNotEmpty && s.district != _district) return false;
+      if (q.isNotEmpty) {
+        final hay = '${s.name} ${s.district ?? ''} ${s.address ?? ''}'.toLowerCase();
+        if (!hay.contains(q)) return false;
+      }
+      return true;
+    }).toList();
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -74,7 +106,9 @@ class _NearbyShopsScreenState extends State<NearbyShopsScreen> {
                   Text(L.noShopData, style: const TextStyle(fontSize: 15, color: Color(0xFF9CA3AF))),
                 ]))
               : Column(children: [
+                  _searchBar(),
                   _regionBar(),
+                  if (_region.isNotEmpty && _districts.isNotEmpty) _districtBar(),
                   Expanded(
                     child: _filtered.isEmpty
                         ? Center(child: Text(L.noShopInRegion,
@@ -124,7 +158,7 @@ class _NearbyShopsScreenState extends State<NearbyShopsScreen> {
         child: Row(children: [
           for (final r in regions) ...[
             GestureDetector(
-              onTap: () => setState(() => _region = r.$1),
+              onTap: () => setState(() { _region = r.$1; _district = ''; }),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                 decoration: BoxDecoration(
@@ -138,6 +172,61 @@ class _NearbyShopsScreenState extends State<NearbyShopsScreen> {
               ),
             ),
             const SizedBox(width: 8),
+          ],
+        ]),
+      ),
+    );
+  }
+
+  Widget _searchBar() {
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+      child: TextField(
+        controller: _searchCtrl,
+        onChanged: (v) => setState(() => _query = v),
+        style: const TextStyle(fontSize: 14),
+        decoration: InputDecoration(
+          hintText: L.searchShopHint,
+          hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
+          prefixIcon: const Icon(Icons.search, color: Color(0xFF9CA3AF), size: 20),
+          suffixIcon: _query.isNotEmpty
+              ? IconButton(
+                  icon: const Icon(Icons.close, size: 18, color: Color(0xFF9CA3AF)),
+                  onPressed: () { _searchCtrl.clear(); setState(() => _query = ''); })
+              : null,
+          filled: true, fillColor: const Color(0xFFF3F4F6),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+          contentPadding: const EdgeInsets.symmetric(vertical: 10),
+        ),
+      ),
+    );
+  }
+
+  Widget _districtBar() {
+    final districts = ['', ..._districts]; // '' = 全部
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(12, 2, 12, 8),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(children: [
+          for (final d in districts) ...[
+            GestureDetector(
+              onTap: () => setState(() => _district = d),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                decoration: BoxDecoration(
+                  color: _district == d ? const Color(0xFF111827) : const Color(0xFFF3F4F6),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Text(d.isEmpty ? L.regionAll : d,
+                    style: TextStyle(
+                        fontSize: 12, fontWeight: FontWeight.w600,
+                        color: _district == d ? Colors.white : const Color(0xFF6B7280))),
+              ),
+            ),
+            const SizedBox(width: 6),
           ],
         ]),
       ),

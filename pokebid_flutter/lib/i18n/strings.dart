@@ -574,6 +574,7 @@ class L {
   // ── Nearby shops ───────────────────────────────────────────────────────
   static String get noShopData => _t('暫無卡鋪資料', 'No shop data yet');
   static String get regionAll => _t('全部', 'All');
+  static String get searchShopHint => _t('搜尋店名 / 地區 / 地址...', 'Search name / area / address...');
   static String get regionHkIsland => _t('香港島', 'HK Island');
   static String get regionKowloon => _t('九龍', 'Kowloon');
   static String get regionNt => _t('新界', 'New Territories');
