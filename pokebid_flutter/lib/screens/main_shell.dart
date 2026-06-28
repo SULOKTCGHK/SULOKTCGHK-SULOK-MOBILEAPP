@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/login_required.dart';
+import '../widgets/pixel_icon.dart';
 import 'splash_screen.dart';
 import 'home_screen.dart';
 import 'marketplace_screen.dart';
@@ -101,8 +102,8 @@ class _MainShellState extends State<MainShell> {
             height: 62,
             child: Row(
               children: [
-                _navItem(0, Icons.home_outlined, Icons.home, L.navHome),
-                _navItem(1, Icons.sell_outlined, Icons.sell, L.navMarket),
+                _navItem(0, kPixelHome, L.navHome),
+                _navItem(1, kPixelMarket, L.navMarket),
                 // Post button (centre)
                 Expanded(
                   child: GestureDetector(
@@ -134,8 +135,8 @@ class _MainShellState extends State<MainShell> {
                     ),
                   ),
                 ),
-                _navItem(3, Icons.menu_book_outlined, Icons.menu_book, L.navDex),
-                _navItem(4, Icons.person_outline, Icons.person, L.navMe, showUnread: true),
+                _navItem(3, kPixelDex, L.navDex),
+                _navItem(4, kPixelMe, L.navMe, showUnread: true),
               ],
             ),
           ),
@@ -144,9 +145,9 @@ class _MainShellState extends State<MainShell> {
     );
   }
 
-  Widget _navItem(int index, IconData icon, IconData activeIcon, String label, {bool showUnread = false, Key? key}) {
+  Widget _navItem(int index, List<String> grid, String label, {bool showUnread = false, Key? key}) {
     final active = _currentIndex == index;
-    final iconWidget = Icon(active ? activeIcon : icon, size: 22,
+    final iconWidget = PixelIcon(grid: grid, size: 22,
         color: active ? const Color(0xFFE8A52A) : const Color(0xFF9CA3AF));
     return Expanded(
       child: GestureDetector(
