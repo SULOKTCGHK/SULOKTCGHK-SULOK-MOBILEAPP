@@ -593,7 +593,11 @@ class L {
   static String get callShop => _t('致電', 'Call');
 
   // ── Wishlist ───────────────────────────────────────────────────────────
-  static String get wishlistTitle => _t('願望清單', 'Wishlist');
+  static String get wishlistTitle => _t('心願清單', 'Wishlist');
+  static String get wishlistEntryTitle => _t('心願清單', 'Wishlist');
+  static String get wishlistEntrySubtitle =>
+      _t('有人上架你想要的卡會通知你', 'Get notified when a wanted card is listed');
+  static String get wishlistMatchTitle => _t('心願清單有新上架 🎯', 'A wanted card was just listed 🎯');
   static String get addToWishlist => _t('加入願望清單', 'add to wishlist');
   static String get wishlistEmptyHint2 =>
       _t('在圖鑑卡片頁按愛心 ♥ 加入想要的卡', 'Tap the heart ♥ on a card to add it');

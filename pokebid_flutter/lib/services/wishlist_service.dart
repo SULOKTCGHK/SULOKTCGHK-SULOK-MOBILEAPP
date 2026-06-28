@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'auth_service.dart';
 import 'supabase_service.dart';
+import 'notification_service.dart';
 
 /// 願望清單項目 = 用戶想要的某一張具體卡片
 class WishlistItem {
@@ -104,6 +105,32 @@ class WishlistService {
     } catch (_) {
       return false;
     }
+  }
+
+  /// 新商品上架時呼叫：通知心願清單中有這張卡的用戶（賣家本人除外）
+  static Future<void> notifyMatchesForNewListing({
+    required String cardId,
+    required String cardName,
+    required String listingId,
+    required String sellerId,
+  }) async {
+    if (cardId.isEmpty) return;
+    try {
+      final res = await _client.from('wishlist').select('user_id').eq('card_id', cardId);
+      final notified = <String>{};
+      for (final r in (res as List)) {
+        final uid = r['user_id'] as String;
+        if (uid == sellerId) continue; // 不通知賣家自己
+        if (!notified.add(uid)) continue; // 同一人只通知一次
+        await NotificationService.create(
+          userId: uid,
+          type: 'wishlist_match',
+          title: '心願清單有新上架 🎯',
+          body: '「$cardName」剛剛有人上架，快來看看！',
+          listingId: listingId,
+        );
+      }
+    } catch (_) {}
   }
 
   static Future<List<WishlistItem>> getMine() async {
