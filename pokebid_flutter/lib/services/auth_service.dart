@@ -127,6 +127,33 @@ class AuthService {
     }
   }
 
+  // 忘記密碼：寄送重設連結到 email
+  static Future<String?> resetPassword(String email) async {
+    try {
+      await _client.auth.resetPasswordForEmail(
+        email,
+        redirectTo: kIsWeb ? null : 'io.supabase.pokebid://login-callback/',
+      );
+      return null;
+    } on AuthException catch (e) {
+      return e.message;
+    } catch (e) {
+      return '寄送失敗：$e';
+    }
+  }
+
+  // 設定新密碼（在收到重設連結、進入 recovery session 後呼叫）
+  static Future<String?> updatePassword(String newPassword) async {
+    try {
+      await _client.auth.updateUser(UserAttributes(password: newPassword));
+      return null;
+    } on AuthException catch (e) {
+      return e.message;
+    } catch (e) {
+      return '更新失敗：$e';
+    }
+  }
+
   // 登出
   static Future<void> signOut() async {
     await _client.auth.signOut();

@@ -656,6 +656,18 @@ class L {
   static String get noAccountRegister => _t('沒有帳號？建立帳號', 'No account? Create one');
   static String get orDivider => _t('或', 'or');
   static String get loginBtn => _t('登入', 'Log in');
+  static String get forgotPassword => _t('忘記密碼？', 'Forgot password?');
+  static String get resetPasswordTitle => _t('重設密碼', 'Reset password');
+  static String get resetPasswordDesc =>
+      _t('輸入你的電郵，我們會寄出重設密碼的連結。', 'Enter your email and we\'ll send a reset link.');
+  static String get sendResetLink => _t('寄送重設連結', 'Send reset link');
+  static String get resetEmailSent => _t('重設連結已寄出，請查收電郵 📧', 'Reset link sent — check your email 📧');
+  static String get setNewPasswordTitle => _t('設定新密碼', 'Set new password');
+  static String get newPasswordLabel => _t('新密碼', 'New password');
+  static String get confirmPasswordLabel => _t('確認新密碼', 'Confirm new password');
+  static String get errPasswordMismatch => _t('兩次密碼不一致', 'Passwords do not match');
+  static String get passwordUpdated => _t('密碼已更新 ✓', 'Password updated ✓');
+  static String get saveBtn => _t('儲存', 'Save');
   static String get confirmVerify => _t('確認驗證', 'Verify');
   static String get sendOtp => _t('發送驗證碼', 'Send code');
 

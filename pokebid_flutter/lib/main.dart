@@ -5,6 +5,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'screens/main_shell.dart';
 import 'screens/auth/login_screen.dart';
+import 'screens/auth/set_new_password_screen.dart';
 import 'services/api_service.dart';
 import 'services/profile_service.dart';
 import 'services/push_service.dart';
@@ -93,6 +94,12 @@ class _AuthGateState extends State<AuthGate> {
     super.initState();
     // Listen for auth state changes (login, logout, token refresh, deep link callback)
     Supabase.instance.client.auth.onAuthStateChange.listen((data) async {
+      // 點擊重設密碼連結 → 進入設定新密碼畫面
+      if (data.event == AuthChangeEvent.passwordRecovery) {
+        PushService.navigatorKey.currentState?.push(
+          MaterialPageRoute(builder: (_) => const SetNewPasswordScreen()));
+        return;
+      }
       if (data.session != null) {
         await ProfileService.getOrCreateMyProfile();
         // 登入後儲存 FCM token

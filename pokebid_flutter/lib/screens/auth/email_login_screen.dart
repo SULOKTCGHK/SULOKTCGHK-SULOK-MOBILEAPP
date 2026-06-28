@@ -24,6 +24,39 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
     super.dispose();
   }
 
+  Future<void> _forgotPassword() async {
+    final ctrl = TextEditingController(text: _emailCtrl.text.trim());
+    final send = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(L.resetPasswordTitle, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+        content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(L.resetPasswordDesc, style: const TextStyle(fontSize: 12.5, color: Color(0xFF6B7280))),
+          const SizedBox(height: 12),
+          TextField(controller: ctrl, autofocus: true, keyboardType: TextInputType.emailAddress,
+            decoration: InputDecoration(labelText: L.emailLabel, hintText: L.emailHint, isDense: true)),
+        ]),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(L.cancel)),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE8A52A)),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(L.sendResetLink, style: const TextStyle(color: Colors.white))),
+        ],
+      ),
+    );
+    if (send != true) return;
+    final email = ctrl.text.trim();
+    if (email.isEmpty) return;
+    final err = await AuthService.resetPassword(email);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(err ?? L.resetEmailSent),
+      backgroundColor: err == null ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
+    ));
+  }
+
   Future<void> _login() async {
     final email = _emailCtrl.text.trim();
     final pw = _pwCtrl.text;
@@ -81,7 +114,12 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
                   : Text(L.loginBtn, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 4),
+          Center(child: TextButton(
+            onPressed: _busy ? null : _forgotPassword,
+            child: Text(L.forgotPassword,
+                style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280))),
+          )),
           Center(child: TextButton(
             onPressed: () async {
               final ok = await Navigator.push<bool>(context,
