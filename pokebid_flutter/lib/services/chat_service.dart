@@ -183,8 +183,8 @@ class ChatService {
     int? cardPrice,
     bool forceNew = false,
   }) async {
-    // 每個 listing 一個獨立對話，必須有 cardId 才能查找
-    if (!forceNew && cardId != null && cardId.isNotEmpty) {
+    // 每組 buyer+seller+card 一個對話（DB 有唯一約束）；先查現有
+    if (cardId != null && cardId.isNotEmpty) {
       final existing = await _client
           .from('conversations')
           .select('id')
@@ -196,14 +196,28 @@ class ChatService {
       if (existing != null) return existing['id'] as String;
     }
 
-    final res = await _client.from('conversations').insert({
-      'buyer_id': buyerId,
-      'seller_id': sellerId,
-      'card_id': cardId ?? '',
-      'card_name': cardName ?? '',
-      'card_price': cardPrice ?? 0,
-    }).select('id').single();
-    return res['id'] as String;
+    // 沒有才新增；若撞唯一約束（已存在/競態）改抓現有，避免 duplicate key 錯誤
+    try {
+      final res = await _client.from('conversations').insert({
+        'buyer_id': buyerId,
+        'seller_id': sellerId,
+        'card_id': cardId ?? '',
+        'card_name': cardName ?? '',
+        'card_price': cardPrice ?? 0,
+      }).select('id').single();
+      return res['id'] as String;
+    } catch (_) {
+      final existing = await _client
+          .from('conversations')
+          .select('id')
+          .eq('buyer_id', buyerId)
+          .eq('seller_id', sellerId)
+          .eq('card_id', cardId ?? '')
+          .limit(1)
+          .maybeSingle();
+      if (existing != null) return existing['id'] as String;
+      rethrow;
+    }
   }
 
   // ── Load message history ──────────────────────────────────────────────────
