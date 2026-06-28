@@ -14,6 +14,10 @@ class _NearbyShopsScreenState extends State<NearbyShopsScreen> {
   List<CardShop> _shops = [];
   bool _loading = true;
   bool _hasLocation = false;
+  String _region = ''; // '' = 全部
+
+  List<CardShop> get _filtered =>
+      _region.isEmpty ? _shops : _shops.where((s) => s.region == _region).toList();
 
   @override
   void initState() {
@@ -69,30 +73,74 @@ class _NearbyShopsScreenState extends State<NearbyShopsScreen> {
                   const SizedBox(height: 12),
                   Text(L.noShopData, style: const TextStyle(fontSize: 15, color: Color(0xFF9CA3AF))),
                 ]))
-              : RefreshIndicator(
-                  onRefresh: _load,
-                  child: ListView(
-                    padding: const EdgeInsets.all(16),
-                    children: [
-                      if (!_hasLocation)
-                        Container(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFFFBEB), borderRadius: BorderRadius.circular(10)),
-                          child: Row(children: [
-                            const Icon(Icons.location_off, size: 16, color: Color(0xFFB8860B)),
-                            const SizedBox(width: 8),
-                            Expanded(child: Text(L.noLocationNote,
-                                style: const TextStyle(fontSize: 12, color: Color(0xFF92400E)))),
-                            GestureDetector(onTap: _load,
-                                child: Text(L.retry, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFFB8860B)))),
-                          ]),
-                        ),
-                      ..._shops.map(_shopCard),
-                    ],
+              : Column(children: [
+                  _regionBar(),
+                  Expanded(
+                    child: _filtered.isEmpty
+                        ? Center(child: Text(L.noShopInRegion,
+                            style: const TextStyle(fontSize: 14, color: Color(0xFF9CA3AF))))
+                        : RefreshIndicator(
+                            onRefresh: _load,
+                            child: ListView(
+                              padding: const EdgeInsets.all(16),
+                              children: [
+                                if (!_hasLocation)
+                                  Container(
+                                    margin: const EdgeInsets.only(bottom: 12),
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFFFFBEB), borderRadius: BorderRadius.circular(10)),
+                                    child: Row(children: [
+                                      const Icon(Icons.location_off, size: 16, color: Color(0xFFB8860B)),
+                                      const SizedBox(width: 8),
+                                      Expanded(child: Text(L.noLocationNote,
+                                          style: const TextStyle(fontSize: 12, color: Color(0xFF92400E)))),
+                                      GestureDetector(onTap: _load,
+                                          child: Text(L.retry, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFFB8860B)))),
+                                    ]),
+                                  ),
+                                ..._filtered.map(_shopCard),
+                              ],
+                            ),
+                          ),
                   ),
+                ]),
+    );
+  }
+
+  Widget _regionBar() {
+    final regions = <(String, String)>[
+      ('', L.regionAll),
+      ('香港島', L.regionHkIsland),
+      ('九龍', L.regionKowloon),
+      ('新界', L.regionNt),
+      ('離島', L.regionIslands),
+    ];
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(children: [
+          for (final r in regions) ...[
+            GestureDetector(
+              onTap: () => setState(() => _region = r.$1),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                decoration: BoxDecoration(
+                  color: _region == r.$1 ? const Color(0xFFE8A52A) : const Color(0xFFF3F4F6),
+                  borderRadius: BorderRadius.circular(20),
                 ),
+                child: Text(r.$2,
+                    style: TextStyle(
+                        fontSize: 13, fontWeight: FontWeight.w600,
+                        color: _region == r.$1 ? Colors.white : const Color(0xFF6B7280))),
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
+        ]),
+      ),
     );
   }
 

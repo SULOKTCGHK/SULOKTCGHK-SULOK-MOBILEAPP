@@ -19,6 +19,7 @@ class _ShopFormSheetState extends State<ShopFormSheet> {
   late final _phone = TextEditingController(text: widget.shop?.phone ?? '');
   late final _ig = TextEditingController(text: widget.shop?.igHandle ?? '');
   late final _hours = TextEditingController(text: widget.shop?.hours ?? '');
+  late String _region = widget.shop?.region ?? '';
   bool _busy = false;
   String? _error;
 
@@ -38,6 +39,7 @@ class _ShopFormSheetState extends State<ShopFormSheet> {
     final data = <String, dynamic>{
       'name': name,
       'district': _district.text.trim(),
+      'region': _region.isEmpty ? null : _region,
       'address': _address.text.trim(),
       'lat': lat, 'lng': lng,
       'phone': _phone.text.trim(),
@@ -69,6 +71,7 @@ class _ShopFormSheetState extends State<ShopFormSheet> {
           const SizedBox(height: 16),
           _field(_name, '店名 *'),
           _field(_district, '地區（如 旺角）'),
+          _regionPicker(),
           _field(_address, '地址'),
           Row(children: [
             Expanded(child: _field(_lat, '緯度 lat *', number: true)),
@@ -97,6 +100,34 @@ class _ShopFormSheetState extends State<ShopFormSheet> {
           ),
         ]),
       ),
+    );
+  }
+
+  Widget _regionPicker() {
+    const regions = ['香港島', '九龍', '新界', '離島'];
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const Text('大區', style: TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
+        const SizedBox(height: 6),
+        Wrap(spacing: 8, children: [
+          for (final r in regions)
+            GestureDetector(
+              onTap: () => setState(() => _region = _region == r ? '' : r),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: _region == r ? const Color(0xFFE8A52A) : const Color(0xFFF3F4F6),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Text(r,
+                    style: TextStyle(
+                        fontSize: 12.5, fontWeight: FontWeight.w600,
+                        color: _region == r ? Colors.white : const Color(0xFF6B7280))),
+              ),
+            ),
+        ]),
+      ]),
     );
   }
 

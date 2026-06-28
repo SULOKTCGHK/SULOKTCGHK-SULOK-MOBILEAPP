@@ -6,6 +6,7 @@ class CardShop {
   final String name;
   final String? address;
   final String? district;
+  final String? region; // 香港島 / 九龍 / 新界 / 離島
   final double lat;
   final double lng;
   final String? phone;
@@ -15,7 +16,7 @@ class CardShop {
   double? distanceKm; // 由位置計算後填入
 
   CardShop({
-    required this.id, required this.name, this.address, this.district,
+    required this.id, required this.name, this.address, this.district, this.region,
     required this.lat, required this.lng, this.phone, this.igHandle,
     this.hours, this.note, this.distanceKm,
   });
@@ -25,6 +26,7 @@ class CardShop {
         name: r['name'] as String? ?? '',
         address: r['address'] as String?,
         district: r['district'] as String?,
+        region: r['region'] as String?,
         lat: (r['lat'] as num).toDouble(),
         lng: (r['lng'] as num).toDouble(),
         phone: r['phone'] as String?,

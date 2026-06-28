@@ -573,6 +573,12 @@ class L {
 
   // ── Nearby shops ───────────────────────────────────────────────────────
   static String get noShopData => _t('暫無卡鋪資料', 'No shop data yet');
+  static String get regionAll => _t('全部', 'All');
+  static String get regionHkIsland => _t('香港島', 'HK Island');
+  static String get regionKowloon => _t('九龍', 'Kowloon');
+  static String get regionNt => _t('新界', 'New Territories');
+  static String get regionIslands => _t('離島', 'Islands');
+  static String get noShopInRegion => _t('此區暫無卡鋪', 'No shops in this region yet');
   static String get noLocationNote =>
       _t('未取得定位，以下依名稱排序。開啟定位權限可顯示距離。',
         'Location unavailable; sorted by name. Enable location to show distances.');
