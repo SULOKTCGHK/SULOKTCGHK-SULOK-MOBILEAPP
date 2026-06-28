@@ -86,17 +86,18 @@ class AuthService {
     required String email,
     required String password,
     required String phone,
+    required String displayName,
   }) async {
     try {
       final res = await _client.auth.signUp(email: email, password: password);
       final user = res.user;
       if (user == null) return '註冊失敗，請稍後再試';
-      // 建立/更新 profile（含已驗證電話）。upsert 確保不論 race 都正確。
-      final prefix = email.split('@').first.toLowerCase().replaceAll(RegExp(r'[^a-z0-9_]'), '');
+      // 建立/更新 profile（含名稱、已驗證電話）。upsert 確保不論 race 都正確。
+      final base = displayName.toLowerCase().replaceAll(RegExp(r'[^a-z0-9_]'), '');
       await _client.from('profiles').upsert({
         'id': user.id,
-        'username': '${prefix.isEmpty ? 'user' : prefix}_${user.id.substring(0, 4)}',
-        'display_name': email.split('@').first,
+        'username': '${base.isEmpty ? 'user' : base}_${user.id.substring(0, 4)}',
+        'display_name': displayName,
         'avatar_emoji': '🎴',
         'bio': '',
         'ig_handle': '',

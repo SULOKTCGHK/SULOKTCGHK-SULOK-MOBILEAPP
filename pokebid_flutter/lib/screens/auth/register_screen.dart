@@ -12,6 +12,7 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
+  final _nameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   final _pwCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
@@ -24,6 +25,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   void dispose() {
+    _nameCtrl.dispose();
     _emailCtrl.dispose();
     _pwCtrl.dispose();
     _phoneCtrl.dispose();
@@ -41,9 +43,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   // 第一步：驗證輸入 → 發送 SMS 驗證碼
   Future<void> _sendCode() async {
+    final name = _nameCtrl.text.trim();
     final email = _emailCtrl.text.trim();
     final pw = _pwCtrl.text;
     final phone = _normalizePhone(_phoneCtrl.text);
+    if (name.isEmpty) { setState(() => _error = L.errEnterDisplayName); return; }
     if (!_validEmail(email)) { setState(() => _error = L.errEnterEmail); return; }
     if (pw.length < 6) { setState(() => _error = L.errEnterPassword); return; }
     if (phone.length < 8) { setState(() => _error = L.errInvalidPhone); return; }
@@ -72,6 +76,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       email: _emailCtrl.text.trim(),
       password: _pwCtrl.text,
       phone: _fullPhone,
+      displayName: _nameCtrl.text.trim(),
     );
     if (!mounted) return;
     if (err == null) {
@@ -103,6 +108,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
           Text(L.registerSmsNote,
               style: const TextStyle(fontSize: 12.5, color: Color(0xFF6B7280), height: 1.5)),
           const SizedBox(height: 18),
+
+          _label(L.displayNameLabel),
+          _field(_nameCtrl, L.displayNameHint, enabled: !_sent),
+          const SizedBox(height: 14),
 
           _label(L.emailLabel),
           _field(_emailCtrl, L.emailHint, keyboard: TextInputType.emailAddress, enabled: !_sent),
