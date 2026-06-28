@@ -147,8 +147,8 @@ class _MainShellState extends State<MainShell> {
 
   Widget _navItem(int index, List<String> grid, String label, {bool showUnread = false, Key? key}) {
     final active = _currentIndex == index;
-    final iconWidget = PixelIcon(grid: grid, size: 22,
-        color: active ? const Color(0xFFE8A52A) : const Color(0xFF9CA3AF));
+    final iconWidget = PixelIcon(grid: grid, palette: kPixelPalette, size: 22,
+        opacity: active ? 1.0 : 0.4);
     return Expanded(
       child: GestureDetector(
         key: key,
