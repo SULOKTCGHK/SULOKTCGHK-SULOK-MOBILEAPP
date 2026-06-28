@@ -2,7 +2,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/card_model.dart';
 import '../services/auth_service.dart';
 import '../services/supabase_service.dart';
-import '../services/wishlist_service.dart';
 
 class ListingService {
   static final _client = Supabase.instance.client;
@@ -44,7 +43,7 @@ class ListingService {
           ? AuthService.displayName
           : '匿名賣家';
 
-      final inserted = await _client.from('listings').insert({
+      await _client.from('listings').insert({
         'name': name,
         'grade': grade,
         'card_type': 'normal',
@@ -64,11 +63,6 @@ class ListingService {
         if (cachedCardId != null && cachedCardId.isNotEmpty) 'cached_card_id': cachedCardId,
         if (meetupLocations.isNotEmpty) 'meetup_locations': meetupLocations,
       }).select().maybeSingle();
-
-      // 通知所有願望清單符合此新商品的用戶
-      if (inserted != null) {
-        await WishlistService.notifyMatchesForNewListing(_fromRow(inserted));
-      }
       return true;
     } catch (_) {
       return false;

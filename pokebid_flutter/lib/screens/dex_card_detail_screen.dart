@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../services/api_service.dart';
 import '../services/supabase_service.dart';
 import '../services/currency_service.dart';
+import '../services/wishlist_service.dart';
 import '../widgets/login_required.dart';
 import '../widgets/no_image_placeholder.dart';
 import '../i18n/strings.dart';
@@ -28,6 +29,7 @@ class DexCardDetailScreen extends StatefulWidget {
 
 class _DexCardDetailScreenState extends State<DexCardDetailScreen> {
   late bool _collected;
+  bool _wished = false;
   List<Map<String, dynamic>> _transactions = [];
   bool _showAddTx = false;
 
@@ -51,6 +53,31 @@ class _DexCardDetailScreenState extends State<DexCardDetailScreen> {
     _dateCtrl.text = _todayStr();
     _loadSnkr();
     _loadPsaPop();
+    _loadWished();
+  }
+
+  Future<void> _loadWished() async {
+    final w = await WishlistService.isWishlisted(widget.card.id);
+    if (mounted) setState(() => _wished = w);
+  }
+
+  // 願望清單：加入/移除這張卡
+  Future<void> _toggleWish() async {
+    if (!await requireLogin(context, action: L.addToWishlist)) return;
+    final next = !_wished;
+    setState(() => _wished = next);
+    if (next) {
+      await WishlistService.add(
+        cardId: widget.card.id,
+        cardName: widget.card.cleanName,
+        imageUrl: widget.card.imageSmall,
+        setId: widget.card.setId,
+        setName: widget.card.setName,
+        cardNumber: widget.card.number,
+      );
+    } else {
+      await WishlistService.removeCard(widget.card.id);
+    }
   }
 
   Future<void> _loadSnkr() async {
@@ -289,6 +316,11 @@ class _DexCardDetailScreenState extends State<DexCardDetailScreen> {
           overflow: TextOverflow.ellipsis,
         ),
         actions: [
+          IconButton(
+            icon: Icon(_wished ? Icons.favorite : Icons.favorite_border,
+                color: _wished ? const Color(0xFFE74C3C) : const Color(0xFF6B7280), size: 22),
+            onPressed: _toggleWish,
+          ),
           GestureDetector(
             onTap: _showGradePicker,
             child: AnimatedContainer(

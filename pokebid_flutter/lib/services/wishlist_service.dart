@@ -1,47 +1,42 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../models/card_model.dart';
 import 'auth_service.dart';
 import 'supabase_service.dart';
-import 'notification_service.dart';
 
+/// 願望清單項目 = 用戶想要的某一張具體卡片
 class WishlistItem {
   final String id;
   final String userId;
+  final String cardId;
+  final String cardName;
+  final String? imageUrl;
   final String? setId;
+  final String? setName;
   final String? cardNumber;
-  final String? keyword;
-  final int? maxPrice;
   final DateTime createdAt;
 
   const WishlistItem({
     required this.id,
     required this.userId,
+    required this.cardId,
+    required this.cardName,
+    this.imageUrl,
     this.setId,
+    this.setName,
     this.cardNumber,
-    this.keyword,
-    this.maxPrice,
     required this.createdAt,
   });
 
   factory WishlistItem.fromRow(Map<String, dynamic> r) => WishlistItem(
         id: r['id'] as String,
         userId: r['user_id'] as String,
+        cardId: r['card_id'] as String? ?? '',
+        cardName: r['card_name'] as String? ?? '',
+        imageUrl: r['image_url'] as String?,
         setId: r['set_id'] as String?,
+        setName: r['set_name'] as String?,
         cardNumber: r['card_number'] as String?,
-        keyword: r['keyword'] as String?,
-        maxPrice: r['max_price'] as int?,
         createdAt: DateTime.parse(r['created_at'] as String).toLocal(),
       );
-
-  String get label {
-    final parts = <String>[];
-    if (keyword != null && keyword!.isNotEmpty) parts.add(keyword!);
-    if (setId != null && setId!.isNotEmpty) parts.add(setId!.toUpperCase());
-    if (cardNumber != null && cardNumber!.isNotEmpty) parts.add('#$cardNumber');
-    var s = parts.isEmpty ? '任意卡片' : parts.join(' ');
-    if (maxPrice != null) s += '　≤ HK\$$maxPrice';
-    return s;
-  }
 }
 
 class WishlistService {
@@ -51,28 +46,64 @@ class WishlistService {
       ? AuthService.userId
       : await SupabaseService.getUserId();
 
+  /// 加入一張具體卡片到願望清單（同一張卡只會有一筆）
   static Future<void> add({
+    required String cardId,
+    required String cardName,
+    String? imageUrl,
     String? setId,
+    String? setName,
     String? cardNumber,
-    String? keyword,
-    int? maxPrice,
   }) async {
+    if (cardId.isEmpty) return;
     try {
       final myId = await _myId();
-      await _client.from('wishlist').insert({
+      await _client.from('wishlist').upsert({
         'user_id': myId,
+        'card_id': cardId,
+        'card_name': cardName,
+        'image_url': imageUrl,
         'set_id': setId,
+        'set_name': setName,
         'card_number': cardNumber,
-        'keyword': keyword,
-        'max_price': maxPrice,
-      });
+      }, onConflict: 'user_id,card_id');
     } catch (_) {}
   }
 
+  /// 依卡片 id 移除
+  static Future<void> removeCard(String cardId) async {
+    try {
+      final myId = await _myId();
+      await _client
+          .from('wishlist')
+          .delete()
+          .eq('user_id', myId)
+          .eq('card_id', cardId);
+    } catch (_) {}
+  }
+
+  /// 依列 id 移除（清單頁滑動刪除用）
   static Future<void> remove(String id) async {
     try {
       await _client.from('wishlist').delete().eq('id', id);
     } catch (_) {}
+  }
+
+  /// 該卡是否已在願望清單
+  static Future<bool> isWishlisted(String cardId) async {
+    if (cardId.isEmpty) return false;
+    try {
+      final myId = await _myId();
+      final res = await _client
+          .from('wishlist')
+          .select('id')
+          .eq('user_id', myId)
+          .eq('card_id', cardId)
+          .maybeSingle();
+      return res != null;
+    } catch (_) {
+      return false;
+    }
   }
 
   static Future<List<WishlistItem>> getMine() async {
@@ -82,53 +113,11 @@ class WishlistService {
           .from('wishlist')
           .select()
           .eq('user_id', myId)
+          .not('card_id', 'is', null)
           .order('created_at', ascending: false);
       return (res as List).map((r) => WishlistItem.fromRow(r)).toList();
     } catch (_) {
       return [];
     }
-  }
-
-  /// 判斷一張新上架商品是否符合某個願望項目
-  static bool _matches(WishlistItem w, PokemonCard card) {
-    if (w.setId != null && w.setId!.isNotEmpty) {
-      if (card.setId?.toLowerCase() != w.setId!.toLowerCase()) return false;
-    }
-    if (w.cardNumber != null && w.cardNumber!.isNotEmpty) {
-      if (card.cardNumber?.toLowerCase() != w.cardNumber!.toLowerCase()) return false;
-    }
-    if (w.keyword != null && w.keyword!.isNotEmpty) {
-      if (!card.name.toLowerCase().contains(w.keyword!.toLowerCase())) return false;
-    }
-    if (w.maxPrice != null && card.price > w.maxPrice!) return false;
-    // 至少要有一個有效條件，否則不算 match（避免空條件全中）
-    final hasCond = (w.setId?.isNotEmpty ?? false) ||
-        (w.cardNumber?.isNotEmpty ?? false) ||
-        (w.keyword?.isNotEmpty ?? false);
-    return hasCond;
-  }
-
-  /// 新商品上架後呼叫：找出所有符合的願望清單擁有者並發通知
-  /// （賣家本人不會收到自己商品的通知）
-  static Future<void> notifyMatchesForNewListing(PokemonCard card) async {
-    try {
-      final res = await _client.from('wishlist').select();
-      final items = (res as List).map((r) => WishlistItem.fromRow(r)).toList();
-      final notified = <String>{};
-      for (final w in items) {
-        if (w.userId == card.seller.id) continue; // 不通知賣家自己
-        if (notified.contains(w.userId)) continue; // 同一人只通知一次
-        if (_matches(w, card)) {
-          notified.add(w.userId);
-          await NotificationService.create(
-            userId: w.userId,
-            type: 'wishlist_match',
-            title: '你的願望清單有新上架 🎯',
-            body: '「${card.name}」HK\$${card.price} 符合你想要的卡片',
-            listingId: card.supabaseId,
-          );
-        }
-      }
-    } catch (_) {}
   }
 }

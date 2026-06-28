@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../models/card_model.dart';
 import '../widgets/card_grid_item.dart';
 import '../services/api_service.dart';
-import '../services/wishlist_service.dart';
 import '../widgets/notification_bell.dart';
 import 'card_detail_screen.dart';
 import 'chat_screen.dart';
@@ -335,43 +334,6 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                 );
               }).toList()),
               const SizedBox(height: 20),
-
-              // 加入願望清單
-              GestureDetector(
-                onTap: () async {
-                  await WishlistService.add(
-                    setId: localSet,
-                    keyword: _query.trim().isEmpty ? null : _query.trim(),
-                    maxPrice: int.tryParse(maxCtrl.text.trim()),
-                  );
-                  if (ctx.mounted) Navigator.pop(ctx);
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                      content: Text(L.wishlistAdded),
-                      backgroundColor: const Color(0xFF16A34A),
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ));
-                  }
-                },
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 11),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFEF2F2),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFE74C3C).withOpacity(0.3)),
-                  ),
-                  child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    const Icon(Icons.favorite_border, size: 16, color: Color(0xFFE74C3C)),
-                    const SizedBox(width: 6),
-                    Text(L.addToWishlistCondition,
-                        style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600,
-                            color: Color(0xFFE74C3C))),
-                  ]),
-                ),
-              ),
-              const SizedBox(height: 10),
 
               // 套用 / 重設
               Row(children: [

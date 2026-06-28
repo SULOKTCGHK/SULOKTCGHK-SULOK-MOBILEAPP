@@ -581,6 +581,9 @@ class L {
 
   // ── Wishlist ───────────────────────────────────────────────────────────
   static String get wishlistTitle => _t('願望清單', 'Wishlist');
+  static String get addToWishlist => _t('加入願望清單', 'add to wishlist');
+  static String get wishlistEmptyHint2 =>
+      _t('在圖鑑卡片頁按愛心 ♥ 加入想要的卡', 'Tap the heart ♥ on a card to add it');
   static String get addWish => _t('新增願望', 'Add wish');
   static String get addWishAction => _t('新增願望', 'add a wish');
   static String get addWishDesc =>
