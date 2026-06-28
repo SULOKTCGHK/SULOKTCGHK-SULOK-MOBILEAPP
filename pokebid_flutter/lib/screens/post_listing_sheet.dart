@@ -6,7 +6,6 @@ import '../models/card_model.dart';
 import '../services/listing_service.dart';
 import '../services/auth_service.dart';
 import '../services/supabase_service.dart';
-import '../data/set_name_zh.dart';
 import '../i18n/strings.dart';
 import '../services/api_service.dart';
 import 'pokemon_dex_screen.dart';
@@ -72,19 +71,7 @@ class _PostListingSheetState extends State<PostListingSheet> {
   final _descCtrl = TextEditingController();
   final _setIdCtrl = TextEditingController();
   final _cardNumberCtrl = TextEditingController();
-  final _setSearchCtrl = TextEditingController();
   final _certCtrl = TextEditingController();
-  bool _showSetPicker = false;
-  String _setSearchQuery = '';
-
-  // 從 kSetNameZh 生成可選清單
-  List<MapEntry<String, String>> get _filteredSets {
-    final q = _setSearchQuery.toLowerCase();
-    return kSetNameZh.entries.where((e) =>
-        q.isEmpty ||
-        e.key.toLowerCase().contains(q) ||
-        e.value.contains(q)).toList();
-  }
 
   final List<String> _gradingCompanies = ['PSA', 'BGS', 'CGC', 'SGC', 'ACE'];
 
@@ -103,7 +90,6 @@ class _PostListingSheetState extends State<PostListingSheet> {
     _descCtrl.dispose();
     _setIdCtrl.dispose();
     _cardNumberCtrl.dispose();
-    _setSearchCtrl.dispose();
     _certCtrl.dispose();
     super.dispose();
   }
@@ -577,7 +563,21 @@ class _PostListingSheetState extends State<PostListingSheet> {
                       const SizedBox(height: 14),
 
                       // ── 系列 + 卡號（選填）─────────────────────────────
-                      _label(L.setAndNumber),
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Row(children: [
+                          Text(L.setAndNumber,
+                              style: const TextStyle(
+                                  fontSize: 13, fontWeight: FontWeight.w500,
+                                  color: Color(0xFF374151))),
+                          const SizedBox(width: 6),
+                          GestureDetector(
+                            onTap: _showSetNumberHelp,
+                            child: const Icon(Icons.help_outline,
+                                size: 15, color: Color(0xFF9CA3AF)),
+                          ),
+                        ]),
+                      ),
                       _setAndNumberRow(),
                       const SizedBox(height: 14),
 
@@ -710,49 +710,52 @@ class _PostListingSheetState extends State<PostListingSheet> {
     );
   }
 
-  Widget _setAndNumberRow() {
-    final selectedName = _setIdCtrl.text.isNotEmpty
-        ? kSetNameZh[_setIdCtrl.text.toLowerCase()] ?? _setIdCtrl.text.toUpperCase()
-        : null;
+  void _showSetNumberHelp() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(children: [
+          const Icon(Icons.help_outline, size: 20, color: Color(0xFFE8A52A)),
+          const SizedBox(width: 8),
+          Expanded(child: Text(L.setNumberHelpTitle,
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700))),
+        ]),
+        content: Text(L.setNumberHelpBody,
+            style: const TextStyle(fontSize: 13, height: 1.5, color: Color(0xFF374151))),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(L.ok)),
+        ],
+      ),
+    );
+  }
 
+  Widget _setAndNumberRow() {
     return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      // 系列 selector
+      // 系列：用戶自行填寫
       Expanded(
         flex: 3,
-        child: GestureDetector(
-          onTap: _openSetPicker,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF9FAFB),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: _setIdCtrl.text.isNotEmpty
-                    ? const Color(0xFFE8A52A)
-                    : const Color(0xFFD1D5DB),
-                width: _setIdCtrl.text.isNotEmpty ? 1 : 0.5,
-              ),
-            ),
-            child: Row(children: [
-              Expanded(child: selectedName != null
-                  ? Column(crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min, children: [
-                      Text(selectedName,
-                          style: const TextStyle(fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                              color: Color(0xFF111827))),
-                      Text(_setIdCtrl.text.toUpperCase(),
-                          style: const TextStyle(fontSize: 10,
-                              color: Color(0xFFE8A52A))),
-                    ])
-                  : Text(L.selectSet,
-                      style: const TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)))),
-              Icon(Icons.expand_more,
-                  size: 18,
-                  color: _setIdCtrl.text.isNotEmpty
-                      ? const Color(0xFFE8A52A)
-                      : const Color(0xFF9CA3AF)),
-            ]),
+        child: TextField(
+          controller: _setIdCtrl,
+          keyboardType: TextInputType.text,
+          onChanged: (_) => setState(() {}),
+          style: const TextStyle(fontSize: 14, color: Color(0xFF111827)),
+          decoration: InputDecoration(
+            hintText: L.setIdHint,
+            hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 13),
+            filled: true,
+            fillColor: const Color(0xFFF9FAFB),
+            border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: Color(0xFFD1D5DB), width: 0.5)),
+            enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: Color(0xFFD1D5DB), width: 0.5)),
+            focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: Color(0xFFE8A52A), width: 1)),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           ),
         ),
       ),
@@ -786,119 +789,6 @@ class _PostListingSheetState extends State<PostListingSheet> {
     ]);
   }
 
-  void _openSetPicker() {
-    _setSearchCtrl.clear();
-    setState(() => _setSearchQuery = '');
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => StatefulBuilder(
-        builder: (ctx, setModalState) => Container(
-          height: MediaQuery.of(context).size.height * 0.75,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Column(children: [
-            // Handle
-            Container(margin: const EdgeInsets.symmetric(vertical: 12),
-                width: 36, height: 4,
-                decoration: BoxDecoration(color: const Color(0xFFD1D5DB),
-                    borderRadius: BorderRadius.circular(2))),
-            // Header
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-              child: Row(children: [
-                Text(L.selectSet,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600,
-                        color: Color(0xFF111827))),
-                const Spacer(),
-                if (_setIdCtrl.text.isNotEmpty)
-                  GestureDetector(
-                    onTap: () {
-                      setState(() => _setIdCtrl.clear());
-                      Navigator.pop(ctx);
-                    },
-                    child: Text(L.clear,
-                        style: const TextStyle(fontSize: 13, color: Color(0xFFE74C3C))),
-                  ),
-              ]),
-            ),
-            // Search
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: TextField(
-                controller: _setSearchCtrl,
-                autofocus: true,
-                onChanged: (v) => setModalState(() => _setSearchQuery = v),
-                style: const TextStyle(fontSize: 14),
-                decoration: InputDecoration(
-                  hintText: L.setSearchHint,
-                  hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 13),
-                  prefixIcon: const Icon(Icons.search, size: 18, color: Color(0xFF9CA3AF)),
-                  filled: true,
-                  fillColor: const Color(0xFFF3F4F6),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide.none),
-                  contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                ),
-              ),
-            ),
-            // List
-            Expanded(
-              child: ListView.separated(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                itemCount: _filteredSets.length,
-                separatorBuilder: (_, __) => const Divider(
-                    height: 0.5, color: Color(0xFFF3F4F6)),
-                itemBuilder: (_, i) {
-                  final entry = _filteredSets[i];
-                  final selected = _setIdCtrl.text == entry.key;
-                  return InkWell(
-                    onTap: () {
-                      setState(() => _setIdCtrl.text = entry.key);
-                      Navigator.pop(ctx);
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      child: Row(children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 7, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: selected
-                                ? const Color(0xFFE8A52A)
-                                : const Color(0xFFF3F4F6),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(entry.key.toUpperCase(),
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: selected
-                                    ? Colors.white
-                                    : const Color(0xFF6B7280),
-                              )),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(child: Text(entry.value,
-                            style: const TextStyle(fontSize: 14,
-                                color: Color(0xFF111827)))),
-                        if (selected)
-                          const Icon(Icons.check_circle,
-                              size: 18, color: Color(0xFFE8A52A)),
-                      ]),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ]),
-        ),
-      ),
-    );
-  }
 
   Widget _label(String text) => Padding(
     padding: const EdgeInsets.only(bottom: 8),

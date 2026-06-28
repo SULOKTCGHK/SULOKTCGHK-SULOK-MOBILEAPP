@@ -210,6 +210,12 @@ class L {
   static String get setSearchHint =>
       _t('搜尋系列名稱或 ID，如 sv8a', 'Search set name or ID, e.g. sv8a');
   static String get cardNumberHint => _t('卡號，如 217', 'Card no., e.g. 217');
+  static String get setIdHint => _t('系列代號，如 sv8a / 151', 'Set code, e.g. sv8a / 151');
+  static String get setNumberHelpTitle =>
+      _t('系列代號 & 卡號怎麼找？', 'Where to find set code & number?');
+  static String get setNumberHelpBody => _t(
+      '卡片正面「右下角」通常印有：\n\n• 卡號（例如 025/165）\n• 系列符號 / 代號（例如 SV2a、151、PAL）\n\n找不到代號時，填卡號 + 系列名稱也可以，方便其他人搜尋到你的卡。',
+      'On the front of the card (usually bottom-right) you can find:\n\n• Card number (e.g. 025/165)\n• Set symbol / code (e.g. SV2a, 151, PAL)\n\nIf you can\'t find the code, the card number + set name also works so others can search your card.');
   static String get pickFromDexTitle => _t('從圖鑑選卡', 'Pick from Dex');
   static String get dexSearchHint =>
       _t('搜尋卡片名稱（輸入 2 字以上）', 'Search card name (2+ characters)');
