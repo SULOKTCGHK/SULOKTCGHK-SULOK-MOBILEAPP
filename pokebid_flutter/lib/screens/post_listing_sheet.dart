@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/card_model.dart';
@@ -739,6 +740,9 @@ class _PostListingSheetState extends State<PostListingSheet> {
           controller: _setIdCtrl,
           keyboardType: TextInputType.text,
           onChanged: (_) => setState(() {}),
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
+          ],
           style: const TextStyle(fontSize: 14, color: Color(0xFF111827)),
           decoration: InputDecoration(
             hintText: L.setIdHint,
