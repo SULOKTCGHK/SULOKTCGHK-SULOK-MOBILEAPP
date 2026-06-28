@@ -136,7 +136,10 @@ class OfferService {
         .eq('status', 'pending');
 
     // Mark listing as sold via security definer function (bypasses RLS)
-    await _client.rpc('mark_listing_sold', params: {'p_listing_id': offer.listingId});
+    // 包 try/catch：即使函式缺失/失敗，也不擋通知與開聊天室
+    try {
+      await _client.rpc('mark_listing_sold', params: {'p_listing_id': offer.listingId});
+    } catch (_) {}
 
     // 通知買家：出價被接受
     await NotificationService.create(
