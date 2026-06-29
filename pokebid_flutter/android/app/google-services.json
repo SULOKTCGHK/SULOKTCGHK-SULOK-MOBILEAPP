@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "728802234868",
-    "project_id": "tcgspot",
-    "storage_bucket": "tcgspot.firebasestorage.app"
+    "project_number": "669585194614",
+    "project_id": "tcgspot-dc906",
+    "storage_bucket": "tcgspot-dc906.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:728802234868:android:d1e1d3a9bfce9782fde9a1",
+        "mobilesdk_app_id": "1:669585194614:android:aaaac13284eaa4a341e957",
         "android_client_info": {
           "package_name": "co.tcgspot.app"
         }
@@ -15,26 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBurica74D1piQF1neYl3eY1izoaBGXo4Y"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:728802234868:android:b27ef6aca55980dcfde9a1",
-        "android_client_info": {
-          "package_name": "com.example.pokebid"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyBurica74D1piQF1neYl3eY1izoaBGXo4Y"
+          "current_key": "AIzaSyAwx5t7tY1-OFOGEPn5cPwke1EQtEx_61k"
         }
       ],
       "services": {

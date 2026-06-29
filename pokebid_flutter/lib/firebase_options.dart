@@ -22,11 +22,11 @@ class DefaultFirebaseOptions {
   // ⚠️  以下為佔位值，執行 flutterfire configure 後會自動填入真實數值
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyBurica74D1piQF1neYl3eY1izoaBGXo4Y',
-    appId: '1:728802234868:android:b27ef6aca55980dcfde9a1',
-    messagingSenderId: '728802234868',
-    projectId: 'tcgspot',
-    storageBucket: 'tcgspot.firebasestorage.app',
+    apiKey: 'AIzaSyAwx5t7tY1-OFOGEPn5cPwke1EQtEx_61k',
+    appId: '1:669585194614:android:aaaac13284eaa4a341e957',
+    messagingSenderId: '669585194614',
+    projectId: 'tcgspot-dc906',
+    storageBucket: 'tcgspot-dc906.firebasestorage.app',
   );
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyAuNbwCm80gmIwAwkCiu8En70ikcK8M4HQ',
