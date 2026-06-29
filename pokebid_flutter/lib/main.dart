@@ -20,28 +20,85 @@ void main() async {
   // 載入已儲存的語言設定
   await LocaleController.instance.load();
 
-  // Firebase（Web 略過，避免未設定時 crash）
-  if (!kIsWeb) {
-    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  // Firebase / Push 只在行動平台（iOS / Android）初始化。
+  // Web 與桌面（macOS 等）沒有對應的 Firebase 設定，會 throw → 白畫面，故略過。
+  final isMobile = !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.iOS ||
+          defaultTargetPlatform == TargetPlatform.android);
+
+  // Firebase 初始化失敗不致命（推播屬選用功能）：記錄後繼續，避免白畫面。
+  if (isMobile) {
+    try {
+      await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    } catch (e, st) {
+      debugPrint('Firebase 初始化失敗（略過推播）：$e\n$st');
+    }
   }
 
-  await Supabase.initialize(
-    url: Env.supabaseUrl,
-    anonKey: Env.supabaseAnonKey,
-    authOptions: const FlutterAuthClientOptions(
-      authFlowType: AuthFlowType.pkce,
-    ),
-  );
-
-  // Push notification 初始化（非 Web）
-  if (!kIsWeb) {
-    await PushService.init();
+  // Supabase 是核心（登入/資料），失敗則顯示錯誤畫面而非白畫面。
+  String? fatalError;
+  try {
+    await Supabase.initialize(
+      url: Env.supabaseUrl,
+      anonKey: Env.supabaseAnonKey,
+      authOptions: const FlutterAuthClientOptions(
+        authFlowType: AuthFlowType.pkce,
+      ),
+    );
+  } catch (e, st) {
+    fatalError = 'Supabase 初始化失敗：$e';
+    debugPrint('$fatalError\n$st');
   }
 
   // Pre-fetch Traditional Chinese set names in background (non-blocking)
   PokemonApiService.fetchZhTwSetNames();
 
+  if (fatalError != null) {
+    runApp(_StartupErrorApp(message: fatalError));
+    return;
+  }
+
   runApp(const PokeBidApp());
+
+  // 推播初始化「不」阻塞啟動：放在 runApp 之後 fire-and-forget。
+  // 若在 runApp 前 await，iOS 上一旦卡住（如等待權限/APNs）就會永遠白畫面。
+  if (isMobile) {
+    PushService.init().catchError((Object e, StackTrace st) {
+      debugPrint('Push 初始化失敗（略過）：$e\n$st');
+    });
+  }
+}
+
+// 啟動失敗時顯示的畫面（取代白畫面，方便看到原因）。
+class _StartupErrorApp extends StatelessWidget {
+  const _StartupErrorApp({required this.message});
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: Scaffold(
+        backgroundColor: Colors.white,
+        body: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                const SizedBox(height: 16),
+                const Text('App 啟動失敗',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 12),
+                Text(message, textAlign: TextAlign.center),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class PokeBidApp extends StatelessWidget {
@@ -100,12 +157,23 @@ class _AuthGateState extends State<AuthGate> {
           MaterialPageRoute(builder: (_) => const SetNewPasswordScreen()));
         return;
       }
-      if (data.session != null) {
-        await ProfileService.getOrCreateMyProfile();
-        // 登入後儲存 FCM token
-        if (!kIsWeb) await PushService.init();
-      }
+      // 先依 session 狀態切換畫面，不被後續工作阻塞（否則登入後卡在登入頁）。
       if (mounted) setState(() {});
+      if (data.session != null) {
+        // 建立/取得個人檔案；失敗不阻塞導航。
+        try {
+          await ProfileService.getOrCreateMyProfile();
+        } catch (e, st) {
+          debugPrint('getOrCreateMyProfile 失敗：$e\n$st');
+        }
+        // 登入後儲存 FCM token：fire-and-forget，避免卡住導航。
+        if (!kIsWeb) {
+          PushService.init().catchError((Object e, StackTrace st) {
+            debugPrint('Push 初始化失敗（略過）：$e\n$st');
+          });
+        }
+        if (mounted) setState(() {});
+      }
     });
     if (Supabase.instance.client.auth.currentSession != null) {
       ProfileService.getOrCreateMyProfile();

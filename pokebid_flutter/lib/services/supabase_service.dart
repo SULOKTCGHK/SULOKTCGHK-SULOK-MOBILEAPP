@@ -306,7 +306,7 @@ class SupabaseService {
       final res = await _client
           .from('cached_cards')
           .select()
-          .ilike('name', '$pokemonName%')
+          .ilike('name', '%$pokemonName%')
           .order('name')
           .limit(500);
       return List<Map<String, dynamic>>.from(res);

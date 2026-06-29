@@ -45,7 +45,8 @@ class AuthService {
 
   // Apple 登入（iOS 原生流程；App Store 規定:有第三方登入就必須提供）
   // 用 nonce 防重放:原始 nonce 傳給 Supabase，sha256 後傳給 Apple。
-  static Future<bool> signInWithApple() async {
+  // 回傳 null = 成功（或使用者自行取消）；否則為要顯示的錯誤訊息。
+  static Future<String?> signInWithApple() async {
     try {
       final rawNonce = _generateNonce();
       final hashedNonce = sha256.convert(utf8.encode(rawNonce)).toString();
@@ -59,16 +60,20 @@ class AuthService {
       );
 
       final idToken = credential.identityToken;
-      if (idToken == null) return false;
+      if (idToken == null) return '無法取得 Apple 身分權杖（identityToken 為空）';
 
       await _client.auth.signInWithIdToken(
         provider: OAuthProvider.apple,
         idToken: idToken,
         nonce: rawNonce,
       );
-      return true;
+      return null;
+    } on SignInWithAppleAuthorizationException catch (e) {
+      // 使用者自行取消，不視為錯誤
+      if (e.code == AuthorizationErrorCode.canceled) return null;
+      return 'Apple 登入失敗：${e.code.name}（${e.message}）';
     } catch (e) {
-      return false;
+      return 'Apple 登入失敗：$e';
     }
   }
 

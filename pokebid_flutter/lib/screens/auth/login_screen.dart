@@ -32,8 +32,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _appleSignIn() async {
     setState(() => _loading = true);
-    await AuthService.signInWithApple();
+    final error = await AuthService.signInWithApple();
     if (mounted) setState(() => _loading = false);
+    if (error != null && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error)),
+      );
+    }
   }
 
   @override

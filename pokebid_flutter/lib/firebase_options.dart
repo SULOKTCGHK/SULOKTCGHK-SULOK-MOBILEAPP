@@ -29,11 +29,11 @@ class DefaultFirebaseOptions {
     storageBucket: 'tcgspot.firebasestorage.app',
   );
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyDmx64HHugIiTLQ5hMTWjxxUgC2zfLm0Mg',
-    appId: '1:728802234868:ios:1fe6f26da22305c1fde9a1',
-    messagingSenderId: '728802234868',
-    projectId: 'tcgspot',
-    storageBucket: 'tcgspot.firebasestorage.app',
-    iosBundleId: 'com.example.pokebid',
+    apiKey: 'AIzaSyAuNbwCm80gmIwAwkCiu8En70ikcK8M4HQ',
+    appId: '1:669585194614:ios:408cb4346e705aec41e957',
+    messagingSenderId: '669585194614',
+    projectId: 'tcgspot-dc906',
+    storageBucket: 'tcgspot-dc906.firebasestorage.app',
+    iosBundleId: 'co.tcgspot.app',
   );
 }
