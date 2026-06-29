@@ -7,6 +7,25 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:728802234868:android:d1e1d3a9bfce9782fde9a1",
+        "android_client_info": {
+          "package_name": "co.tcgspot.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBurica74D1piQF1neYl3eY1izoaBGXo4Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:728802234868:android:b27ef6aca55980dcfde9a1",
         "android_client_info": {
           "package_name": "com.example.pokebid"
