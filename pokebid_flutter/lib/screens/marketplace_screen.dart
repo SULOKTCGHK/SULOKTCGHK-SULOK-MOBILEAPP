@@ -13,8 +13,9 @@ enum SortFilter { latest, priceLow, priceHigh }
 class MarketplaceScreen extends StatefulWidget {
   final List<PokemonCard> listings;
   final bool loading;
+  final Future<void> Function()? onRefresh;
 
-  const MarketplaceScreen({super.key, required this.listings, this.loading = false});
+  const MarketplaceScreen({super.key, required this.listings, this.loading = false, this.onRefresh});
 
   @override
   State<MarketplaceScreen> createState() => _MarketplaceScreenState();
@@ -226,7 +227,11 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                     const infoH = 92.0;
                     final cellW = (c.maxWidth - 32 - 10) / 2; // 扣左右padding(16+16)與間距(10)
                     final ar = cellW / (cellW + infoH);
-                    return GridView.builder(
+                    return RefreshIndicator(
+                    onRefresh: widget.onRefresh ?? () async {},
+                    color: const Color(0xFFE8A52A),
+                    child: GridView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
@@ -270,7 +275,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                         )),
                       );
                     },
-                  );
+                  ));
                   }),
           ),
         ],

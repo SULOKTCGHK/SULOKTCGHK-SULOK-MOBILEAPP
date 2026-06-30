@@ -22,8 +22,9 @@ import '../i18n/strings.dart';
 class HomeScreen extends StatefulWidget {
   final List<PokemonCard> listings;
   final bool loading;
+  final Future<void> Function()? onRefresh;
 
-  const HomeScreen({super.key, required this.listings, this.loading = false});
+  const HomeScreen({super.key, required this.listings, this.loading = false, this.onRefresh});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -161,7 +162,11 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(width: 4),
         ],
       ),
-      body: ListView(
+      body: RefreshIndicator(
+        onRefresh: widget.onRefresh ?? () async {},
+        color: const Color(0xFFE8A52A),
+        child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
         children: [
           const SizedBox(height: 14),
 
@@ -375,6 +380,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
           const SizedBox(height: 20),
         ],
+      ),
       ),
     );
   }

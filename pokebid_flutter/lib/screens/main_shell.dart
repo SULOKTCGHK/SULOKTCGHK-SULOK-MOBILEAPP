@@ -81,8 +81,8 @@ class _MainShellState extends State<MainShell> {
     }
 
     final pages = [
-      HomeScreen(listings: _listings, loading: false),
-      MarketplaceScreen(listings: _listings, loading: false),
+      HomeScreen(listings: _listings, loading: false, onRefresh: _loadListings),
+      MarketplaceScreen(listings: _listings, loading: false, onRefresh: _loadListings),
       const SizedBox.shrink(), // placeholder for post
       const DexScreen(),
       const ProfileScreen(),
