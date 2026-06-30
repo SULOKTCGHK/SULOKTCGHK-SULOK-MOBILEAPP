@@ -3,7 +3,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'state/notification_model.dart';
 import 'screens/main_shell.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/set_new_password_screen.dart';
@@ -124,12 +126,15 @@ class PokeBidApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<Locale>(
-      valueListenable: LocaleController.instance,
-      builder: (context, locale, _) {
-        // 確保當前語言的系列名稱已抓取（各語言只抓一次，抓完會自動刷新）
-        PokemonApiService.fetchSetNames();
-        return MaterialApp(
+    // 通知的全域單一來源：建立一次，放在最上層讓所有畫面共用同一條 realtime 訂閱。
+    return ChangeNotifierProvider(
+      create: (_) => NotificationModel(),
+      child: ValueListenableBuilder<Locale>(
+        valueListenable: LocaleController.instance,
+        builder: (context, locale, _) {
+          // 確保當前語言的系列名稱已抓取（各語言只抓一次，抓完會自動刷新）
+          PokemonApiService.fetchSetNames();
+          return MaterialApp(
           title: 'TCGspot',
           debugShowCheckedModeBanner: false,
           navigatorKey: PushService.navigatorKey,
@@ -149,8 +154,9 @@ class PokeBidApp extends StatelessWidget {
             useMaterial3: true,
           ),
           home: const AuthGate(),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }
@@ -164,6 +170,8 @@ class AuthGate extends StatefulWidget {
 }
 
 class _AuthGateState extends State<AuthGate> {
+  late final NotificationModel _notif = context.read<NotificationModel>();
+
   @override
   void initState() {
     super.initState();
@@ -178,6 +186,8 @@ class _AuthGateState extends State<AuthGate> {
       // 先依 session 狀態切換畫面，不被後續工作阻塞（否則登入後卡在登入頁）。
       if (mounted) setState(() {});
       if (data.session != null) {
+        // 登入 → 開始通知的全域單一訂閱（所有紅點共用這一條）。
+        _notif.start();
         // 建立/取得個人檔案；失敗不阻塞導航。
         try {
           await ProfileService.getOrCreateMyProfile();
@@ -191,9 +201,13 @@ class _AuthGateState extends State<AuthGate> {
           });
         }
         if (mounted) setState(() {});
+      } else {
+        // 登出 → 停止訂閱並清空紅點。
+        _notif.stop();
       }
     });
     if (Supabase.instance.client.auth.currentSession != null) {
+      _notif.start();
       ProfileService.getOrCreateMyProfile();
     }
   }
