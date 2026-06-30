@@ -171,6 +171,8 @@ class _DexCardDetailScreenState extends State<DexCardDetailScreen> {
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) => SafeArea(
+        child: Material(
+        type: MaterialType.transparency,
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 18, 20, 2),
@@ -206,6 +208,7 @@ class _DexCardDetailScreenState extends State<DexCardDetailScreen> {
             }),
           const SizedBox(height: 8),
         ]),
+        ),
       ),
     );
   }

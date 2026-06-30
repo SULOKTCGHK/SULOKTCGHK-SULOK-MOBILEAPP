@@ -55,11 +55,13 @@ class _FollowedSellersScreenState extends State<FollowedSellersScreen> {
                       final s = _sellers[i];
                       return Container(
                         margin: const EdgeInsets.only(bottom: 10),
+                        clipBehavior: Clip.antiAlias,
                         decoration: BoxDecoration(
-                          color: Colors.white,
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(color: const Color(0xFFE5E7EB), width: 0.5),
                         ),
+                        child: Material(
+                        color: Colors.white,
                         child: ListTile(
                           leading: Container(
                             width: 44, height: 44,
@@ -78,6 +80,7 @@ class _FollowedSellersScreenState extends State<FollowedSellersScreen> {
                             ));
                             _load(); // 回來重新整理（可能已取消追蹤）
                           },
+                        ),
                         ),
                       );
                     },
