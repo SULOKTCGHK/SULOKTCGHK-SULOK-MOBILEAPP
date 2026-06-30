@@ -301,7 +301,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       final id = item['id'] as String?;
                       if (id == null) return;
                       final card = await ListingService.getListingById(id);
-                      if (!mounted || card == null) return;
+                      if (!context.mounted || card == null) return;
                       await Navigator.push(context, MaterialPageRoute(
                         builder: (_) => CardDetailScreen(
                             card: card, isFavorited: false, onFavChanged: (_) {})));
@@ -411,14 +411,14 @@ class _BannerCard extends StatelessWidget {
           CachedNetworkImage(
             imageUrl: announcement.imageUrl!,
             fit: BoxFit.cover,
-            placeholder: (_, __) => Container(color: color.withOpacity(0.1)),
-            errorWidget: (_, __, ___) => Container(color: color.withOpacity(0.1)),
+            placeholder: (_, __) => Container(color: color.withValues(alpha: 0.1)),
+            errorWidget: (_, __, ___) => Container(color: color.withValues(alpha: 0.1)),
           ),
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.bottomCenter, end: Alignment.topCenter,
-                colors: [Colors.black.withOpacity(0.75), Colors.black.withOpacity(0.1), Colors.transparent],
+                colors: [Colors.black.withValues(alpha: 0.75), Colors.black.withValues(alpha: 0.1), Colors.transparent],
               ),
             ),
           ),
@@ -449,15 +449,15 @@ class _BannerCard extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 6),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.25), width: 1),
+        border: Border.all(color: color.withValues(alpha: 0.25), width: 1),
       ),
       child: Row(children: [
         Container(
           width: 56, height: 56,
           decoration: BoxDecoration(
-            color: color.withOpacity(0.15),
+            color: color.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(14),
           ),
           child: Center(child: Text(announcement.icon,
@@ -479,7 +479,7 @@ class _BannerCard extends StatelessWidget {
             ],
           ),
         ),
-        Icon(Icons.chevron_right, color: color.withOpacity(0.5), size: 20),
+        Icon(Icons.chevron_right, color: color.withValues(alpha: 0.5), size: 20),
       ]),
     );
   }
@@ -497,15 +497,15 @@ class _FallbackBannerCard extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 6),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.25), width: 1),
+        border: Border.all(color: color.withValues(alpha: 0.25), width: 1),
       ),
       child: Row(children: [
         Container(
           width: 56, height: 56,
           decoration: BoxDecoration(
-            color: color.withOpacity(0.15),
+            color: color.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(14),
           ),
           child: Center(child: Text(data['icon'] as String,
@@ -555,7 +555,7 @@ class _GridListingCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: const Color(0xFFE5E7EB), width: 0.5),
           boxShadow: [BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 4, offset: const Offset(0, 2))],
         ),
         child: Column(
@@ -616,7 +616,7 @@ class _GridListingCard extends StatelessWidget {
         : (g.contains('9') ? const Color(0xFF2980B9) : const Color(0xFF6B7280));
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-      decoration: BoxDecoration(color: c.withOpacity(0.12), borderRadius: BorderRadius.circular(4)),
+      decoration: BoxDecoration(color: c.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(4)),
       child: Text(grade, style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w700, color: c)),
     );
   }
@@ -653,7 +653,7 @@ class _RecentCard extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: const Color(0xFFE5E7EB), width: 0.5),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 4, offset: const Offset(0, 2))],
         ),
         child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [

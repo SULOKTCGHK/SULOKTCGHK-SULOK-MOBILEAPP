@@ -43,7 +43,7 @@ class _CardGridItemState extends State<CardGridItem> {
           border: Border.all(color: const Color(0xFFEDEFF2), width: 1),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF111827).withOpacity(0.06),
+              color: const Color(0xFF111827).withValues(alpha: 0.06),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -76,7 +76,7 @@ class _CardGridItemState extends State<CardGridItem> {
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             begin: Alignment.bottomCenter, end: Alignment.topCenter,
-                            colors: [Colors.black.withOpacity(0.45), Colors.transparent],
+                            colors: [Colors.black.withValues(alpha: 0.45), Colors.transparent],
                           ),
                         ),
                       ),
@@ -87,7 +87,7 @@ class _CardGridItemState extends State<CardGridItem> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.92),
+                          color: Colors.white.withValues(alpha: 0.92),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(mainAxisSize: MainAxisSize.min, children: [
@@ -105,7 +105,7 @@ class _CardGridItemState extends State<CardGridItem> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.92),
+                          color: Colors.white.withValues(alpha: 0.92),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(widget.card.type.label,
@@ -120,9 +120,9 @@ class _CardGridItemState extends State<CardGridItem> {
                         child: Container(
                           width: 28, height: 28,
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.92),
+                            color: Colors.white.withValues(alpha: 0.92),
                             shape: BoxShape.circle,
-                            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4)],
+                            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 4)],
                           ),
                           child: Icon(
                             widget.isFavorited ? Icons.favorite : Icons.favorite_border,
@@ -157,7 +157,7 @@ class _CardGridItemState extends State<CardGridItem> {
                     const SizedBox(width: 5),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(color: gc.withOpacity(0.12), borderRadius: BorderRadius.circular(5)),
+                      decoration: BoxDecoration(color: gc.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(5)),
                       child: Text(widget.card.grade,
                           style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: gc)),
                     ),
@@ -176,7 +176,7 @@ class _CardGridItemState extends State<CardGridItem> {
                   Row(crossAxisAlignment: CrossAxisAlignment.baseline,
                       textBaseline: TextBaseline.alphabetic, children: [
                     Text('HK\$',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: priceColor.withOpacity(0.8))),
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: priceColor.withValues(alpha: 0.8))),
                     const SizedBox(width: 2),
                     Text(_formatPrice(widget.card.price),
                         style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: priceColor, height: 1)),
@@ -216,9 +216,9 @@ class _CardGridItemState extends State<CardGridItem> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: color.withOpacity(0.25), width: 0.5),
+        border: Border.all(color: color.withValues(alpha: 0.25), width: 0.5),
       ),
       child: Text(
         text,

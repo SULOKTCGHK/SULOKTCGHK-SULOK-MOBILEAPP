@@ -91,8 +91,10 @@ class _ReceivedOffersScreenState extends State<ReceivedOffersScreen> {
   Future<void> _reject(Offer offer) async {
     await OfferService.rejectOffer(offer.id);
     await _load();
-    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(L.offerRejected)));
+    }
   }
 
   String _fmt(int p) => p.toString().replaceAllMapped(
@@ -176,7 +178,7 @@ class _OfferCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFE5E7EB), width: 0.5),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 6, offset: const Offset(0, 2))],
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -184,8 +186,8 @@ class _OfferCard extends StatelessWidget {
         Row(children: [
           Container(
             width: 36, height: 36,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF3F4F6), shape: BoxShape.circle),
+            decoration: const BoxDecoration(
+              color: Color(0xFFF3F4F6), shape: BoxShape.circle),
             child: Center(child: Text(
               offer.buyerName.substring(0, 1).toUpperCase(),
               style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700,
@@ -238,7 +240,7 @@ class _OfferCard extends StatelessWidget {
               decoration: BoxDecoration(
                 color: const Color(0xFFE8F4FD),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFF2980B9).withOpacity(0.3)),
+                border: Border.all(color: const Color(0xFF2980B9).withValues(alpha: 0.3)),
               ),
               child: const Icon(Icons.chat_bubble_outline,
                   color: Color(0xFF2980B9), size: 18),
@@ -255,7 +257,7 @@ class _OfferCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFE74C3C).withOpacity(0.4)),
+                  border: Border.all(color: const Color(0xFFE74C3C).withValues(alpha: 0.4)),
                 ),
                 child: Center(child: Text(L.rejectOffer,
                     style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600,

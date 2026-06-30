@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/card_model.dart';
-import '../services/auth_service.dart';
 import '../services/chat_service.dart';
 import '../services/listing_service.dart';
 import '../services/review_service.dart';
@@ -453,7 +452,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   width: 38, height: 38,
                   decoration: BoxDecoration(
                     color: _sending
-                        ? const Color(0xFFE8A52A).withOpacity(0.5)
+                        ? const Color(0xFFE8A52A).withValues(alpha: 0.5)
                         : const Color(0xFFE8A52A),
                     shape: BoxShape.circle,
                   ),
@@ -563,7 +562,7 @@ class _MessageBubble extends StatelessWidget {
                     bottomRight: Radius.circular(isMine ? 4 : 16),
                   ),
                   boxShadow: [BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 4, offset: const Offset(0, 2),
                   )],
                 ),

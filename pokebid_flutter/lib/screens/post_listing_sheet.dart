@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -480,7 +479,7 @@ class _PostListingSheetState extends State<PostListingSheet> {
                                           style: TextStyle(
                                               fontSize: 9,
                                               color: const Color(0xFFE8A52A)
-                                                  .withOpacity(0.7))),
+                                                  .withValues(alpha: 0.7))),
                                     ],
                                   ],
                                 ),
@@ -1090,9 +1089,9 @@ class _MeetupLocationPicker extends StatelessWidget {
           children: selected.map((loc) => Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
-              color: const Color(0xFFE8A52A).withOpacity(0.12),
+              color: const Color(0xFFE8A52A).withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFFE8A52A).withOpacity(0.4)),
+              border: Border.all(color: const Color(0xFFE8A52A).withValues(alpha: 0.4)),
             ),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
               Text(loc, style: const TextStyle(fontSize: 12, color: Color(0xFFB45309), fontWeight: FontWeight.w600)),
@@ -1183,8 +1182,11 @@ class _LocationPickerSheetState extends State<_LocationPickerSheet> {
                 final sel = _selected.contains(loc);
                 return GestureDetector(
                   onTap: () => setState(() {
-                    if (sel) _selected.remove(loc);
-                    else _selected.add(loc);
+                    if (sel) {
+                      _selected.remove(loc);
+                    } else {
+                      _selected.add(loc);
+                    }
                   }),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 150),

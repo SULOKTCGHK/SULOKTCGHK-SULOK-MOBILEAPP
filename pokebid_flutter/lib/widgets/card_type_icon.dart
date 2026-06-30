@@ -15,7 +15,7 @@ class CardTypeIcon extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: type.bgColor,
-        border: Border.all(color: type.color.withOpacity(0.3), width: 1.5),
+        border: Border.all(color: type.color.withValues(alpha: 0.3), width: 1.5),
       ),
       child: Center(
         child: Text(

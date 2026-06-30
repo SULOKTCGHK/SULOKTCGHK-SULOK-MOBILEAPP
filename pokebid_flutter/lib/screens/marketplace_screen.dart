@@ -245,14 +245,20 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                             card: card,
                             isFavorited: _favorites.contains(card.id),
                             onFavChanged: (v) => setState(() {
-                              if (v) _favorites.add(card.id);
-                              else _favorites.remove(card.id);
+                              if (v) {
+                                _favorites.add(card.id);
+                              } else {
+                                _favorites.remove(card.id);
+                              }
                             }),
                           ),
                         )),
                         onFavToggle: () => setState(() {
-                          if (_favorites.contains(card.id)) _favorites.remove(card.id);
-                          else _favorites.add(card.id);
+                          if (_favorites.contains(card.id)) {
+                            _favorites.remove(card.id);
+                          } else {
+                            _favorites.add(card.id);
+                          }
                         }),
                         onChat: () => Navigator.push(context, MaterialPageRoute(
                           builder: (_) => ChatScreen(

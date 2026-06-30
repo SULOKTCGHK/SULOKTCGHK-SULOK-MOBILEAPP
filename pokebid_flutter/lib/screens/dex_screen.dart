@@ -77,7 +77,7 @@ class _DexScreenState extends State<DexScreen> {
   static final RegExp _deckPattern = RegExp(
       r'deck|starter|build.box|gift.box|trainer.box|special.set|special.deck|half.deck|kit|battle master|premium|construction|start decks|\bvs\b');
   bool _isDeckSet(ApiSet s) =>
-      _deckPattern.hasMatch((s.id + ' ' + s.name).toLowerCase());
+      _deckPattern.hasMatch(('${s.id} ${s.name}').toLowerCase());
 
   // 分類：promo / deck / box
   String _category(ApiSet s) {
@@ -170,19 +170,22 @@ class _DexScreenState extends State<DexScreen> {
     final ids = await SupabaseService.getCollectedCardIds();
     final summary = await SupabaseService.getCollectionSummary();
     final series = await SupabaseService.getCollectionValueSeries();
-    if (mounted) setState(() {
+    if (mounted) {
+      setState(() {
       _collected = ids;
       _totalValue = ((summary['value'] as num?) ?? 0).round();
       _collectedCount = (summary['count'] as int?) ?? ids.length;
       _valueSeries = series;
     });
+    }
   }
 
   Future<void> _loadSets() async {
     setState(() { _loadingSets = true; _error = null; });
     try {
       final cached = await SupabaseService.getCachedSets();
-      if (mounted) setState(() {
+      if (mounted) {
+        setState(() {
         _sets = cached.map((r) {
           final rd = r['release_date'] as String?;
           return ApiSet(
@@ -198,6 +201,7 @@ class _DexScreenState extends State<DexScreen> {
         }).toList();
         _loadingSets = false;
       });
+      }
     } catch (e) {
       if (mounted) setState(() { _error = L.dexLoadFailed('$e'); _loadingSets = false; });
     }
@@ -210,10 +214,12 @@ class _DexScreenState extends State<DexScreen> {
     }
     setState(() { _searching = true; _searchLoading = true; });
     final rows = await SupabaseService.searchCachedCards(q.trim());
-    if (mounted) setState(() {
+    if (mounted) {
+      setState(() {
       _searchResults = rows.map(_rowToCard).toList();
       _searchLoading = false;
     });
+    }
   }
 
   String _fmt(int p) => p.toString().replaceAllMapped(
@@ -496,8 +502,8 @@ class _DexScreenState extends State<DexScreen> {
               width: active ? 0 : 0.5,
             ),
             boxShadow: active
-                ? [BoxShadow(color: accent.withOpacity(0.35), blurRadius: 10, offset: const Offset(0, 4))]
-                : [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 4, offset: const Offset(0, 2))],
+                ? [BoxShadow(color: accent.withValues(alpha: 0.35), blurRadius: 10, offset: const Offset(0, 4))]
+                : [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 4, offset: const Offset(0, 2))],
           ),
           child: Column(children: [
             Text(icon, style: const TextStyle(fontSize: 22)),
@@ -508,7 +514,7 @@ class _DexScreenState extends State<DexScreen> {
             const SizedBox(height: 2),
             Text(desc,
                 style: TextStyle(fontSize: 9.5,
-                    color: active ? Colors.white.withOpacity(0.75) : const Color(0xFF9CA3AF)),
+                    color: active ? Colors.white.withValues(alpha: 0.75) : const Color(0xFF9CA3AF)),
                 maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center),
           ]),
         ),
@@ -637,7 +643,7 @@ class _CollectionBanner extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [BoxShadow(
-          color: const Color(0xFF2D2082).withOpacity(0.45),
+          color: const Color(0xFF2D2082).withValues(alpha: 0.45),
           blurRadius: 18, offset: const Offset(0, 6),
         )],
       ),
@@ -649,7 +655,7 @@ class _CollectionBanner extends StatelessWidget {
             width: 120, height: 120,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.white.withOpacity(0.06),
+              color: Colors.white.withValues(alpha: 0.06),
             ),
           ),
         ),
@@ -659,7 +665,7 @@ class _CollectionBanner extends StatelessWidget {
             width: 80, height: 80,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.white.withOpacity(0.04),
+              color: Colors.white.withValues(alpha: 0.04),
             ),
           ),
         ),
@@ -671,7 +677,7 @@ class _CollectionBanner extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.15),
+                  color: Colors.white.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(Icons.collections_bookmark_outlined, color: Colors.white, size: 15),
@@ -683,9 +689,9 @@ class _CollectionBanner extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.15),
+                  color: Colors.white.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.white.withOpacity(0.2), width: 0.5),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 0.5),
                 ),
                 child: Text(L.collectedCount(collected),
                     style: const TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.w600)),
@@ -695,7 +701,7 @@ class _CollectionBanner extends StatelessWidget {
             // 金額 + 漲跌
             Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('HK\$', style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 13, fontWeight: FontWeight.w500)),
+                Text('HK\$', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 13, fontWeight: FontWeight.w500)),
                 const SizedBox(height: 2),
                 Text(formatPrice(totalValue),
                     style: const TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.w800, height: 1)),
@@ -705,10 +711,10 @@ class _CollectionBanner extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
                   decoration: BoxDecoration(
-                    color: (isUp ? const Color(0xFF22C55E) : const Color(0xFFEF4444)).withOpacity(0.2),
+                    color: (isUp ? const Color(0xFF22C55E) : const Color(0xFFEF4444)).withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                      color: (isUp ? const Color(0xFF22C55E) : const Color(0xFFEF4444)).withOpacity(0.4),
+                      color: (isUp ? const Color(0xFF22C55E) : const Color(0xFFEF4444)).withValues(alpha: 0.4),
                       width: 0.5),
                   ),
                   child: Row(mainAxisSize: MainAxisSize.min, children: [
@@ -730,7 +736,7 @@ class _CollectionBanner extends StatelessWidget {
             ],
             const SizedBox(height: 10),
             Text(points.length >= 2 ? L.trendDays(points.length) : L.marketRefPriceNote,
-                style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 11)),
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 11)),
           ]),
         ),
       ]),
@@ -759,7 +765,7 @@ class _SparklinePainter extends CustomPainter {
     fill..lineTo(size.width, size.height)..close();
     canvas.drawPath(fill, Paint()
       ..shader = LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter,
-          colors: [Colors.white.withOpacity(0.35), Colors.white.withOpacity(0.0)]).createShader(Offset.zero & size));
+          colors: [Colors.white.withValues(alpha: 0.35), Colors.white.withValues(alpha: 0.0)]).createShader(Offset.zero & size));
     canvas.drawPath(line, Paint()
       ..color = Colors.white..strokeWidth = 2
       ..style = PaintingStyle.stroke..strokeJoin = StrokeJoin.round..strokeCap = StrokeCap.round);
@@ -811,7 +817,7 @@ class _SetCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white, borderRadius: BorderRadius.circular(14),
           border: Border.all(color: const Color(0xFFEDEFF2), width: 1),
-          boxShadow: [BoxShadow(color: const Color(0xFF111827).withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 3))],
+          boxShadow: [BoxShadow(color: const Color(0xFF111827).withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 3))],
         ),
         child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           // 卡盒圖（正方形）
@@ -881,7 +887,7 @@ class _SeriesTile extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white, borderRadius: BorderRadius.circular(16),
           border: Border.all(color: const Color(0xFFE5E7EB), width: 0.5),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 4, offset: const Offset(0, 1))],
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 4, offset: const Offset(0, 1))],
         ),
         child: Row(children: [
           Container(
@@ -993,7 +999,7 @@ class _SetBadge extends StatelessWidget {
       width: 44, height: 44,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [color, color.withOpacity(0.7)],
+          colors: [color, color.withValues(alpha: 0.7)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),

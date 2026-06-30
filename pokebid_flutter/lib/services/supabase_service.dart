@@ -169,8 +169,8 @@ class SupabaseService {
             .not('psa_cert', 'is', null)
             .order('created_at', ascending: false)
             .limit(1);
-        if (rows is List && rows.isNotEmpty) {
-          final listing = rows[0] as Map<String, dynamic>;
+        if (rows.isNotEmpty) {
+          final listing = rows[0];
           final specId = listing['psa_spec_id'] as String?;
           final cert = listing['psa_cert'] as String?;
           return getPsaPopForListing(psaSpecId: specId, psaCert: cert);
@@ -504,7 +504,11 @@ class SupabaseService {
       for (final entries in itemSeries) {
         num? carry;
         for (final e in entries) {
-          if (e.key.compareTo(date) <= 0) carry = e.value; else break;
+          if (e.key.compareTo(date) <= 0) {
+            carry = e.value;
+          } else {
+            break;
+          }
         }
         if (carry != null) sumJpy += carry.toDouble();
       }
@@ -602,7 +606,9 @@ class SupabaseService {
       final row = res.first;
       final fetchedAt = DateTime.tryParse(row['fetched_at'] ?? '');
       if (fetchedAt == null ||
-          DateTime.now().difference(fetchedAt).inHours >= 24) return null;
+          DateTime.now().difference(fetchedAt).inHours >= 24) {
+        return null;
+      }
       final p = row['payload'];
       if (p is Map) return Map<String, dynamic>.from(p);
       if (p is String) return jsonDecode(p) as Map<String, dynamic>;

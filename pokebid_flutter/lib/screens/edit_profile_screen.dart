@@ -184,7 +184,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   duration: const Duration(milliseconds: 150),
                   decoration: BoxDecoration(
                     color: e == _selectedEmoji
-                        ? const Color(0xFFE8A52A).withOpacity(0.15)
+                        ? const Color(0xFFE8A52A).withValues(alpha: 0.15)
                         : const Color(0xFFF9FAFB),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(

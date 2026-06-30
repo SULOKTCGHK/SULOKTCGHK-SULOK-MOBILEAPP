@@ -34,10 +34,7 @@ enum _SortMode { numAsc, numDesc, rarity }
 class _DexSetGridScreenState extends State<DexSetGridScreen> {
   List<ApiCard> _cards = [];
   bool _loading = true;
-  bool _loadingMore = false;
-  bool _hasMore = true;
-  int _page = 1;
-  static const int _pageSize = 30;
+  final bool _loadingMore = false;
 
   late Set<String> _collected;
 
@@ -100,7 +97,6 @@ class _DexSetGridScreenState extends State<DexSetGridScreen> {
     // 全部從 Supabase 讀（資料由 JustTCG 抓取批次灌入）
     final cached = await SupabaseService.getCachedCardsForSet(widget.set.id);
     final cards = cached.map(_rowToCard).toList();
-    _hasMore = false;
     if (mounted) setState(() { _cards = cards; _loading = false; });
   }
 
@@ -263,7 +259,7 @@ class _DexSetGridScreenState extends State<DexSetGridScreen> {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: active ? const Color(0xFF8E44AD).withOpacity(0.15) : const Color(0xFFF3F4F6),
+          color: active ? const Color(0xFF8E44AD).withValues(alpha: 0.15) : const Color(0xFFF3F4F6),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: active ? const Color(0xFF8E44AD) : Colors.transparent,
@@ -295,7 +291,7 @@ class _DexSetGridScreenState extends State<DexSetGridScreen> {
               decoration: BoxDecoration(
                 color: const Color(0xFFFEF9EC),
                 shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFFE8A52A).withOpacity(0.3), width: 1.5),
+                border: Border.all(color: const Color(0xFFE8A52A).withValues(alpha: 0.3), width: 1.5),
               ),
               child: const Center(child: Text('🃏', style: TextStyle(fontSize: 36))),
             ),
@@ -350,7 +346,7 @@ class _CardGridItem extends StatelessWidget {
             width: isCollected ? 1.5 : 0.5,
           ),
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.04),
+            BoxShadow(color: Colors.black.withValues(alpha: 0.04),
                 blurRadius: 4, offset: const Offset(0, 1)),
           ],
         ),
@@ -432,7 +428,7 @@ class _VariantBadge extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
     decoration: BoxDecoration(
-      color: _color.withOpacity(0.12),
+      color: _color.withValues(alpha: 0.12),
       borderRadius: BorderRadius.circular(4),
     ),
     child: Text('● $label',

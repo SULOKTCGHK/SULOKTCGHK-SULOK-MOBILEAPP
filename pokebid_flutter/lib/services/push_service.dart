@@ -6,6 +6,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'auth_service.dart';
+import 'crash_reporter.dart';
 import 'listing_service.dart';
 import '../screens/card_detail_screen.dart';
 import '../screens/conversations_list_screen.dart';
@@ -123,7 +124,9 @@ class PushService {
         'fcm_token': token,
         'fcm_updated_at': DateTime.now().toIso8601String(),
       }).eq('id', AuthService.userId);
-    } catch (_) {}
+    } catch (e, st) {
+      CrashReporter.log(e, st, reason: 'FCM token 儲存失敗（推播將收不到）');
+    }
   }
 
   static Future<void> clearToken() async {

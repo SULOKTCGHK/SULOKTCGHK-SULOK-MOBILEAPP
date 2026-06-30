@@ -154,9 +154,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       }
       await NotificationService.markRead(n.id);
       _load();
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(L.offerRejected), backgroundColor: const Color(0xFF6B7280)),
       );
+      }
     } catch (e) {
       _showErr(L.actionFailed('$e'));
     }
@@ -225,7 +227,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           color: n.isRead ? Colors.white : const Color(0xFFFFFBEB),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: n.isRead ? const Color(0xFFE5E7EB) : const Color(0xFFE8A52A).withOpacity(0.3),
+            color: n.isRead ? const Color(0xFFE5E7EB) : const Color(0xFFE8A52A).withValues(alpha: 0.3),
             width: 0.5,
           ),
         ),
@@ -233,7 +235,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Container(
               width: 38, height: 38,
-              decoration: BoxDecoration(color: color.withOpacity(0.12), borderRadius: BorderRadius.circular(10)),
+              decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(10)),
               child: Icon(icon, size: 19, color: color),
             ),
             const SizedBox(width: 12),

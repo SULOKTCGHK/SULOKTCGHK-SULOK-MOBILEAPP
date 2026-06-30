@@ -53,9 +53,9 @@ class AnnouncementDetailScreen extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: color.withOpacity(0.25), width: 1),
+                border: Border.all(color: color.withValues(alpha: 0.25), width: 1),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -72,10 +72,10 @@ class AnnouncementDetailScreen extends StatelessWidget {
                   ],
                   const SizedBox(height: 12),
                   Row(children: [
-                    Icon(Icons.access_time, size: 13, color: color.withOpacity(0.6)),
+                    Icon(Icons.access_time, size: 13, color: color.withValues(alpha: 0.6)),
                     const SizedBox(width: 4),
                     Text(_formatDate(announcement.createdAt),
-                        style: TextStyle(fontSize: 12, color: color.withOpacity(0.7))),
+                        style: TextStyle(fontSize: 12, color: color.withValues(alpha: 0.7))),
                   ]),
                 ],
               ),

@@ -59,7 +59,6 @@ class _ProfileScreenState extends State<ProfileScreen>
 
   // My reviews
   List<Review> _reviews = [];
-  bool _loadingReviews = false;
 
   // Transaction history
   List<PokemonCard> _soldListings = [];
@@ -110,13 +109,8 @@ class _ProfileScreenState extends State<ProfileScreen>
 
   Future<void> _loadReviews() async {
     if (!AuthService.isLoggedIn) return;
-    setState(() => _loadingReviews = true);
-    try {
-      final res = await ReviewService.getForSeller(AuthService.userId);
-      if (mounted) setState(() => _reviews = res);
-    } finally {
-      if (mounted) setState(() => _loadingReviews = false);
-    }
+    final res = await ReviewService.getForSeller(AuthService.userId);
+    if (mounted) setState(() => _reviews = res);
   }
 
   Future<void> _loadTxHistory() async {
@@ -209,8 +203,9 @@ class _ProfileScreenState extends State<ProfileScreen>
               onPressed: () async {
                 final price = int.tryParse(priceCtrl.text.trim());
                 if (price == null || price <= 0) return;
+                final nav = Navigator.of(context);
                 await ListingService.updateListingPrice(card.supabaseId!, price);
-                if (context.mounted) Navigator.pop(context);
+                nav.pop();
                 _loadMyListings();
               },
               style: ElevatedButton.styleFrom(
@@ -255,12 +250,14 @@ class _ProfileScreenState extends State<ProfileScreen>
     setState(() => _loadingCollection = true);
     final items = await SupabaseService.getCollection();
     final summary = await SupabaseService.getCollectionSummary();
-    if (mounted) setState(() {
+    if (mounted) {
+      setState(() {
       _collection = items;
       _summary = summary;
       _collectionValue = ((summary['value'] as num?) ?? 0).round();
       _loadingCollection = false;
     });
+    }
   }
 
   Future<void> _refreshMarket() async {
@@ -627,7 +624,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                     decoration: BoxDecoration(
                       color: const Color(0xFFFEF9EC),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFFE8A52A).withOpacity(0.4)),
+                      border: Border.all(color: const Color(0xFFE8A52A).withValues(alpha: 0.4)),
                     ),
                     child: Text(L.edit, style: const TextStyle(fontSize: 11,
                         fontWeight: FontWeight.w500, color: Color(0xFFE8A52A))),
@@ -641,7 +638,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                     decoration: BoxDecoration(
                       color: const Color(0xFFFEF2F2),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFFE74C3C).withOpacity(0.4)),
+                      border: Border.all(color: const Color(0xFFE74C3C).withValues(alpha: 0.4)),
                     ),
                     child: Text(L.delist, style: const TextStyle(fontSize: 11,
                         fontWeight: FontWeight.w500, color: Color(0xFFE74C3C))),
@@ -887,7 +884,7 @@ class _ProfileScreenState extends State<ProfileScreen>
             const SizedBox(width: 6),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-              decoration: BoxDecoration(color: gradeColor.withOpacity(0.12), borderRadius: BorderRadius.circular(4)),
+              decoration: BoxDecoration(color: gradeColor.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(4)),
               child: Text(grade == 'RAW' ? L.rawCard : grade,
                   style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: gradeColor)),
             ),
@@ -1057,7 +1054,7 @@ class _ProfileScreenState extends State<ProfileScreen>
         Row(children: [
           CircleAvatar(
             radius: 16,
-            backgroundColor: const Color(0xFFE8A52A).withOpacity(0.15),
+            backgroundColor: const Color(0xFFE8A52A).withValues(alpha: 0.15),
             child: Text(r.reviewerName.substring(0, 1).toUpperCase(),
               style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFFB45309))),
           ),
@@ -1520,7 +1517,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           Container(
             width: 32, height: 32,
             decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.1),
+              color: iconColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, color: iconColor, size: 17),
@@ -1534,7 +1531,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                 color: Color(0xFF9CA3AF))),
           ])),
           Switch(value: value, onChanged: onChanged,
-              activeColor: const Color(0xFFE8A52A)),
+              activeThumbColor: const Color(0xFFE8A52A)),
         ]),
       );
 
@@ -1556,7 +1553,7 @@ class _ProfileScreenState extends State<ProfileScreen>
               final box = Container(
                 width: 32, height: 32,
                 decoration: BoxDecoration(
-                  color: iconColor.withOpacity(0.1),
+                  color: iconColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(icon, color: iconColor, size: 17),

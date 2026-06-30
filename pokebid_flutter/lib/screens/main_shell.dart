@@ -23,7 +23,6 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _currentIndex = 0;
   List<PokemonCard> _listings = [];
-  bool _loadingListings = true;
   bool _splashDone = false;
 
   final _postBtnKey = GlobalKey();
@@ -43,7 +42,7 @@ class _MainShellState extends State<MainShell> {
     final filtered = blocked.isEmpty
         ? data
         : data.where((c) => c.seller.id == null || !blocked.contains(c.seller.id)).toList();
-    if (mounted) setState(() { _listings = filtered; _loadingListings = false; });
+    if (mounted) setState(() { _listings = filtered; });
   }
 
 
@@ -72,12 +71,14 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
-    if (_showSplash) return SplashScreen(
+    if (_showSplash) {
+      return SplashScreen(
       onComplete: () {
         if (!mounted) return;
         setState(() => _splashDone = true);
       },
     );
+    }
 
     final pages = [
       HomeScreen(listings: _listings, loading: false),

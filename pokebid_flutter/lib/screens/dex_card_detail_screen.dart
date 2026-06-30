@@ -119,7 +119,7 @@ class _DexCardDetailScreenState extends State<DexCardDetailScreen> {
         content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(color: const Color(0xFFE8A52A).withOpacity(0.12), borderRadius: BorderRadius.circular(6)),
+            decoration: BoxDecoration(color: const Color(0xFFE8A52A).withValues(alpha: 0.12), borderRadius: BorderRadius.circular(6)),
             child: Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFFB8860B))),
           ),
           const SizedBox(height: 10),
@@ -696,9 +696,9 @@ class _DexCardDetailScreenState extends State<DexCardDetailScreen> {
   Widget _chip(String label, Color color) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
     decoration: BoxDecoration(
-      color: color.withOpacity(0.1),
+      color: color.withValues(alpha: 0.1),
       borderRadius: BorderRadius.circular(8),
-      border: Border.all(color: color.withOpacity(0.3), width: 0.5),
+      border: Border.all(color: color.withValues(alpha: 0.3), width: 0.5),
     ),
     child: Text(label,
         style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: color)),
@@ -707,7 +707,7 @@ class _DexCardDetailScreenState extends State<DexCardDetailScreen> {
   Widget _statBox(String label, int price, Color color) => Container(
     padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
     decoration: BoxDecoration(
-      color: color.withOpacity(0.08),
+      color: color.withValues(alpha: 0.08),
       borderRadius: BorderRadius.circular(10),
     ),
     child: Column(
@@ -840,7 +840,7 @@ class _SnkrPriceCard extends StatelessWidget {
           colors: [Color(0xFFFFFBEB), Colors.white],
           begin: Alignment.topLeft, end: Alignment.bottomRight),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE8A52A).withOpacity(0.35), width: 0.8),
+        border: Border.all(color: const Color(0xFFE8A52A).withValues(alpha: 0.35), width: 0.8),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         // header
@@ -891,7 +891,7 @@ class _SnkrPriceCard extends StatelessWidget {
     final m = g as Map<String, dynamic>?;
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-      decoration: BoxDecoration(color: color.withOpacity(0.08), borderRadius: BorderRadius.circular(10)),
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(10)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: color)),
         const SizedBox(height: 2),
@@ -981,7 +981,7 @@ class _SnkrChartState extends State<_SnkrChart> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
-              color: const Color(0xFF374151).withOpacity(0.1),
+              color: const Color(0xFF374151).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(6)),
             child: Text('${chg >= 0 ? '▲' : '▼'} ${chg.abs()}%',
                 style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700,

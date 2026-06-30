@@ -1,14 +1,9 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'auth_service.dart';
-import 'supabase_service.dart';
 
 /// 封鎖服務。封鎖後對方的掛售與對話會被隱藏。
 class BlockService {
   static final _client = Supabase.instance.client;
-
-  static Future<String> _myId() async => AuthService.isLoggedIn
-      ? AuthService.userId
-      : await SupabaseService.getUserId();
 
   // 記憶體快取被封鎖的 id（過濾列表用，避免每次查 DB）
   static Set<String> _cache = {};

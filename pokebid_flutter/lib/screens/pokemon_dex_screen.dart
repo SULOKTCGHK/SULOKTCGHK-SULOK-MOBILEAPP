@@ -94,10 +94,12 @@ class PokemonDexScreenState extends State<PokemonDexScreen> {
     widget.onSelectionChanged?.call(pokemonName);
     // 用開頭搜尋抓最齊全的結果（Charizard → Charizard V, Charizard ex...）
     final rows = await SupabaseService.searchCardsByPokemon(pokemonName);
-    if (mounted) setState(() {
+    if (mounted) {
+      setState(() {
       _cards = rows.map(_rowToCard).toList();
       _cardLoading = false;
     });
+    }
   }
 
   String _spriteUrl(int id) =>

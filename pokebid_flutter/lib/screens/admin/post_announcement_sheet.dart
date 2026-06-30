@@ -232,9 +232,9 @@ class _PostAnnouncementSheetState extends State<PostAnnouncementSheet> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: _accentColor.withOpacity(0.1),
+                  color: _accentColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: _accentColor.withOpacity(0.3)),
+                  border: Border.all(color: _accentColor.withValues(alpha: 0.3)),
                 ),
                 child: Row(mainAxisSize: MainAxisSize.min, children: [
                   Icon(Icons.add_photo_alternate, size: 15, color: _accentColor),
@@ -331,7 +331,7 @@ class _PostAnnouncementSheetState extends State<PostAnnouncementSheet> {
                 child: Container(
                   width: 44, height: 44,
                   decoration: BoxDecoration(
-                    color: selected ? _accentColor.withOpacity(0.15) : const Color(0xFFF3F4F6),
+                    color: selected ? _accentColor.withValues(alpha: 0.15) : const Color(0xFFF3F4F6),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
                       color: selected ? _accentColor : Colors.transparent,
@@ -366,7 +366,7 @@ class _PostAnnouncementSheetState extends State<PostAnnouncementSheet> {
                       width: 2.5,
                     ),
                     boxShadow: selected
-                        ? [BoxShadow(color: color.withOpacity(0.4),
+                        ? [BoxShadow(color: color.withValues(alpha: 0.4),
                               blurRadius: 6, offset: const Offset(0, 2))]
                         : null,
                   ),

@@ -43,7 +43,7 @@ class _PixelPainter extends CustomPainter {
       for (int x = 0; x < cols && x < line.length; x++) {
         final c = palette[line[x]];
         if (c == null) continue;
-        paint.color = opacity >= 1 ? c : c.withOpacity(c.opacity * opacity);
+        paint.color = opacity >= 1 ? c : c.withValues(alpha: c.a * opacity);
         // 稍微 overdraw 避免方塊之間出現縫隙
         canvas.drawRect(Rect.fromLTWH(x * cw, y * ch, cw + 0.6, ch + 0.6), paint);
       }

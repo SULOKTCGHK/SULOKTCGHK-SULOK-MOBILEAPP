@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'screens/main_shell.dart';
 import 'screens/auth/login_screen.dart';
@@ -27,12 +28,25 @@ void main() async {
           defaultTargetPlatform == TargetPlatform.android);
 
   // Firebase 初始化失敗不致命（推播屬選用功能）：記錄後繼續，避免白畫面。
+  bool firebaseReady = false;
   if (isMobile) {
     try {
       await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+      firebaseReady = true;
     } catch (e, st) {
       debugPrint('Firebase 初始化失敗（略過推播）：$e\n$st');
     }
+  }
+
+  // Crashlytics：Firebase 初始化成功時，自動收集未捕捉的錯誤與閃退。
+  // - FlutterError.onError：捕捉 widget/framework 同步錯誤
+  // - PlatformDispatcher.onError：捕捉未被 catch 的非同步錯誤
+  if (firebaseReady) {
+    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+    PlatformDispatcher.instance.onError = (error, stack) {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      return true;
+    };
   }
 
   // Supabase 是核心（登入/資料），失敗則顯示錯誤畫面而非白畫面。
@@ -48,6 +62,10 @@ void main() async {
   } catch (e, st) {
     fatalError = 'Supabase 初始化失敗：$e';
     debugPrint('$fatalError\n$st');
+    if (firebaseReady) {
+      FirebaseCrashlytics.instance
+          .recordError(e, st, reason: 'Supabase init failed', fatal: true);
+    }
   }
 
   // Pre-fetch Traditional Chinese set names in background (non-blocking)

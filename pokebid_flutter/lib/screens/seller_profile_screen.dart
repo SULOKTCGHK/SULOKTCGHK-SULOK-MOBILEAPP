@@ -16,7 +16,6 @@ import 'chat_screen.dart';
 import '../i18n/strings.dart';
 import '../services/block_service.dart';
 import '../widgets/report_sheet.dart';
-import '../widgets/login_required.dart';
 
 class SellerProfileScreen extends StatefulWidget {
   final String sellerId;
@@ -83,6 +82,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
 
   Future<void> _toggleBlock() async {
     if (!await requireLogin(context, action: L.blockNeedLogin)) return;
+    if (!mounted) return;
     if (_isBlocked) {
       await BlockService.unblock(widget.sellerId);
       if (mounted) {
@@ -324,7 +324,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
                               color: const Color(0xFFE8F4FD),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                  color: const Color(0xFF2980B9).withOpacity(0.3)),
+                                  color: const Color(0xFF2980B9).withValues(alpha: 0.3)),
                             ),
                             child: const Icon(Icons.chat_bubble_outline,
                                 color: Color(0xFF2980B9), size: 20),
@@ -476,7 +476,7 @@ class _ListingGridItem extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFE5E7EB), width: 0.5),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 4, offset: const Offset(0, 2))],
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -530,7 +530,7 @@ class _ListingGridItem extends StatelessWidget {
         : (g.contains('9') ? const Color(0xFF2980B9) : const Color(0xFF6B7280));
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-      decoration: BoxDecoration(color: c.withOpacity(0.12), borderRadius: BorderRadius.circular(4)),
+      decoration: BoxDecoration(color: c.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(4)),
       child: Text(grade,
           style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w700, color: c)),
     );

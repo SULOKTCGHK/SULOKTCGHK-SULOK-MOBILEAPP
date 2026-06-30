@@ -155,7 +155,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
   Widget _tag(String text, Color color) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
     decoration: BoxDecoration(
-      color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
+      color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
     child: Text(text,
         style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: color),
         maxLines: 1, overflow: TextOverflow.ellipsis),

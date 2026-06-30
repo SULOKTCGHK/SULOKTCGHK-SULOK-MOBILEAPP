@@ -109,7 +109,7 @@ class _SplashScreenState extends State<SplashScreen>
           decoration: BoxDecoration(
             color: const Color(0xFF2A2A2A),
             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 4))],
+            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4))],
           ),
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
           child: Row(children: [
@@ -120,7 +120,7 @@ class _SplashScreenState extends State<SplashScreen>
                 shape: BoxShape.circle,
                 color: const Color(0xFF333333),
                 border: Border.all(color: Colors.white, width: 2.5),
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.4), blurRadius: 6, offset: const Offset(0, 3))],
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.4), blurRadius: 6, offset: const Offset(0, 3))],
               ),
               child: Center(
                 child: Container(
@@ -163,7 +163,7 @@ class _SplashScreenState extends State<SplashScreen>
           decoration: BoxDecoration(
             color: const Color(0xFF2A2A2A),
             borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 4))],
+            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4))],
           ),
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
           child: Column(children: [
@@ -183,9 +183,9 @@ class _SplashScreenState extends State<SplashScreen>
     width: 11, height: 11,
     decoration: BoxDecoration(
       shape: BoxShape.circle,
-      color: (_phase >= 2) ? c : c.withOpacity(0.3),
+      color: (_phase >= 2) ? c : c.withValues(alpha: 0.3),
       boxShadow: (_phase >= 2)
-          ? [BoxShadow(color: c.withOpacity(0.6), blurRadius: 4)]
+          ? [BoxShadow(color: c.withValues(alpha: 0.6), blurRadius: 4)]
           : null,
     ),
   );
@@ -198,9 +198,9 @@ class _SplashScreenState extends State<SplashScreen>
         borderRadius: BorderRadius.circular(6),
         border: Border.all(color: const Color(0xFF1a1a1a), width: 3),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 8, offset: const Offset(0, 3)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.5), blurRadius: 8, offset: const Offset(0, 3)),
           if (_screenOn && _phase >= 2)
-            BoxShadow(color: const Color(0xFF00FF41).withOpacity(0.08), blurRadius: 12, spreadRadius: 1),
+            BoxShadow(color: const Color(0xFF00FF41).withValues(alpha: 0.08), blurRadius: 12, spreadRadius: 1),
         ],
       ),
       child: ClipRRect(
@@ -287,7 +287,7 @@ class _SplashScreenState extends State<SplashScreen>
                       width: 20, height: 20,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: const Color(0xFF00FF41).withOpacity(0.15),
+                        color: const Color(0xFF00FF41).withValues(alpha: 0.15),
                         border: Border.all(color: const Color(0xFF00FF41), width: 1.5),
                       ),
                     ),
@@ -386,7 +386,7 @@ class _SplashScreenState extends State<SplashScreen>
     width: 28, height: 28,
     decoration: BoxDecoration(
       shape: BoxShape.circle, color: color,
-      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.4), blurRadius: 3, offset: const Offset(0, 2))],
+      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.4), blurRadius: 3, offset: const Offset(0, 2))],
     ),
     child: Center(
       child: Text(label, style: const TextStyle(

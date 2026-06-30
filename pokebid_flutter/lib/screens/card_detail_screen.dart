@@ -267,9 +267,9 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: card.type.color.withOpacity(0.1),
+                        color: card.type.color.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: card.type.color.withOpacity(0.3), width: 0.5),
+                        border: Border.all(color: card.type.color.withValues(alpha: 0.3), width: 0.5),
                       ),
                       child: Text(card.type.label,
                           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500,
@@ -453,7 +453,7 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
                             decoration: BoxDecoration(
                               color: const Color(0xFFE8F4FD),
                               borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: const Color(0xFF2980B9).withOpacity(0.3), width: 0.5),
+                              border: Border.all(color: const Color(0xFF2980B9).withValues(alpha: 0.3), width: 0.5),
                             ),
                             child: const Icon(Icons.chat_bubble_outline,
                                 color: Color(0xFF2980B9), size: 18),
@@ -492,7 +492,7 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
                       decoration: BoxDecoration(
                         color: const Color(0xFFFEF9EC),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFE8A52A).withOpacity(0.3)),
+                        border: Border.all(color: const Color(0xFFE8A52A).withValues(alpha: 0.3)),
                       ),
                       child: Row(children: [
                         const Icon(Icons.storefront_outlined, size: 18, color: Color(0xFFE8A52A)),
@@ -519,10 +519,10 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: _myOffer!.status == 'accepted'
-                              ? const Color(0xFF16A34A).withOpacity(0.3)
+                              ? const Color(0xFF16A34A).withValues(alpha: 0.3)
                               : _myOffer!.status == 'rejected'
-                              ? const Color(0xFFE74C3C).withOpacity(0.3)
-                              : const Color(0xFFE8A52A).withOpacity(0.3),
+                              ? const Color(0xFFE74C3C).withValues(alpha: 0.3)
+                              : const Color(0xFFE8A52A).withValues(alpha: 0.3),
                         ),
                       ),
                       child: Row(children: [
@@ -704,12 +704,12 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
             decoration: BoxDecoration(
               color: _myOffer?.status == 'pending'
                   ? const Color(0xFFF3F4F6)
-                  : const Color(0xFF8E44AD).withOpacity(0.1),
+                  : const Color(0xFF8E44AD).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: _myOffer?.status == 'pending'
                     ? const Color(0xFFE5E7EB)
-                    : const Color(0xFF8E44AD).withOpacity(0.4),
+                    : const Color(0xFF8E44AD).withValues(alpha: 0.4),
               ),
             ),
             child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
@@ -786,7 +786,7 @@ class _SnkrPriceCard extends StatelessWidget {
           colors: [Color(0xFFFFFBEB), Colors.white],
           begin: Alignment.topLeft, end: Alignment.bottomRight),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE8A52A).withOpacity(0.35), width: 0.8),
+        border: Border.all(color: const Color(0xFFE8A52A).withValues(alpha: 0.35), width: 0.8),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         // header
@@ -838,7 +838,7 @@ class _SnkrPriceCard extends StatelessWidget {
     final m = g as Map<String, dynamic>?;
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-      decoration: BoxDecoration(color: color.withOpacity(0.08), borderRadius: BorderRadius.circular(10)),
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(10)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: color)),
         const SizedBox(height: 2),
@@ -1037,7 +1037,7 @@ class _ImageCarouselState extends State<_ImageCarousel> {
                 child: Container(
                   padding: const EdgeInsets.all(5),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.35),
+                    color: Colors.black.withValues(alpha: 0.35),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: const Icon(Icons.zoom_in, color: Colors.white, size: 16),

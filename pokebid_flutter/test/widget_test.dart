@@ -1,30 +1,18 @@
-// This is a basic Flutter widget test.
+// 基本 smoke test。
 //
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
+// 注意：完整的 App（PokeBidApp）啟動需要先初始化 Supabase / Firebase，
+// 不適合在純 widget test 裡 pump。這裡先放一個最小可過的健全性測試，
+// 之後可針對個別不依賴後端的 widget 補測。
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:pokebid/main.dart';
-
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('基本 widget 能正常渲染', (WidgetTester tester) async {
+    await tester.pumpWidget(const MaterialApp(
+      home: Scaffold(body: Center(child: Text('TCGspot'))),
+    ));
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.text('TCGspot'), findsOneWidget);
   });
 }

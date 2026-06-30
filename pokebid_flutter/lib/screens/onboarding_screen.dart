@@ -171,7 +171,7 @@ class _PageContent extends StatelessWidget {
             width: 110, height: 110,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.white.withOpacity(0.1),
+              color: Colors.white.withValues(alpha: 0.1),
               border: Border.all(color: Colors.white24, width: 1.5),
             ),
             child: Center(
@@ -187,20 +187,20 @@ class _PageContent extends StatelessWidget {
           Text(data.subtitle,
               textAlign: TextAlign.center,
               style: TextStyle(
-                  color: Colors.white.withOpacity(0.75),
+                  color: Colors.white.withValues(alpha: 0.75),
                   fontSize: 15, fontWeight: FontWeight.w500)),
           const SizedBox(height: 20),
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.08),
+              color: Colors.white.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: Colors.white12),
             ),
             child: Text(data.body,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
+                    color: Colors.white.withValues(alpha: 0.8),
                     fontSize: 14, height: 1.6)),
           ),
         ],

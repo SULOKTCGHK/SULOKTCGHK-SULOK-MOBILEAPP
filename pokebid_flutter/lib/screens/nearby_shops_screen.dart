@@ -248,7 +248,7 @@ class _NearbyShopsScreenState extends State<NearbyShopsScreen> {
           if (s.distanceKm != null)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(color: const Color(0xFFE8A52A).withOpacity(0.12), borderRadius: BorderRadius.circular(8)),
+              decoration: BoxDecoration(color: const Color(0xFFE8A52A).withValues(alpha: 0.12), borderRadius: BorderRadius.circular(8)),
               child: Row(mainAxisSize: MainAxisSize.min, children: [
                 const Icon(Icons.near_me, size: 11, color: Color(0xFFB8860B)),
                 const SizedBox(width: 3),
@@ -283,7 +283,7 @@ class _NearbyShopsScreenState extends State<NearbyShopsScreen> {
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 8),
-        decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+        decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
         child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
           Icon(icon, size: 15, color: color),
           const SizedBox(width: 5),

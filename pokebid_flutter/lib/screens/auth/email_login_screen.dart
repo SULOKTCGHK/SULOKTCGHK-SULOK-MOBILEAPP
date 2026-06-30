@@ -124,7 +124,7 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
             onPressed: () async {
               final ok = await Navigator.push<bool>(context,
                   MaterialPageRoute(builder: (_) => const RegisterScreen()));
-              if (ok == true && mounted) Navigator.pop(context, true);
+              if (ok == true && context.mounted) Navigator.pop(context, true);
             },
             child: Text(L.noAccountRegister,
                 style: const TextStyle(fontSize: 13, color: Color(0xFFE8A52A), fontWeight: FontWeight.w600)),

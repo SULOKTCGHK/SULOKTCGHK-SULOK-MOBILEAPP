@@ -63,7 +63,7 @@ class _FollowedSellersScreenState extends State<FollowedSellersScreen> {
                         child: ListTile(
                           leading: Container(
                             width: 44, height: 44,
-                            decoration: BoxDecoration(color: const Color(0xFFFEF9EC), shape: BoxShape.circle),
+                            decoration: const BoxDecoration(color: Color(0xFFFEF9EC), shape: BoxShape.circle),
                             child: Center(child: Text(s['avatar'] as String? ?? '🎴', style: const TextStyle(fontSize: 22))),
                           ),
                           title: Text(s['name'] as String? ?? L.sellerFallback,

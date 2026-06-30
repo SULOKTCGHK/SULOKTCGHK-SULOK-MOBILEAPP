@@ -99,7 +99,7 @@ class _AnnouncementsTabState extends State<_AnnouncementsTab> {
                       ])),
                       Switch(
                         value: a.isActive,
-                        activeColor: const Color(0xFF16A34A),
+                        activeThumbColor: const Color(0xFF16A34A),
                         onChanged: (v) async { await AnnouncementService.setActive(a.id, v); _load(); },
                       ),
                       GestureDetector(

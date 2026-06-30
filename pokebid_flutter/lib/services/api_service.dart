@@ -13,7 +13,7 @@ const String _baseUrl = 'https://api.tcgdex.net/v2/ja';
 // JustTCG API — 日版 Promo 卡資料來源
 const String _justTcgBase = 'https://api.justtcg.com/v1';
 // 密鑰由 --dart-define-from-file=env.json 注入（見 lib/config/env.dart）
-final String _justTcgKey = Env.justTcgKey;
+const String _justTcgKey = Env.justTcgKey;
 
 // JustTCG set ID mapping: our promo set_id → JustTCG set id + number filter
 const Map<String, Map<String, String>> kPromoSetConfig = {

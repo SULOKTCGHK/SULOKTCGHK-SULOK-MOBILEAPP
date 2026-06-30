@@ -167,7 +167,7 @@ class _SpotlightPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = Colors.black.withOpacity(0.72);
+    final paint = Paint()..color = Colors.black.withValues(alpha: 0.72);
     final full = Offset.zero & size;
 
     final path = Path()..addRect(full);
@@ -196,7 +196,7 @@ class _SpotlightPainter extends CustomPainter {
     } else {
       holePath.addRRect(RRect.fromRectAndRadius(highlight, const Radius.circular(12)));
     }
-    canvas.drawPath(holePath, Paint()..color = Colors.black.withOpacity(0.72));
+    canvas.drawPath(holePath, Paint()..color = Colors.black.withValues(alpha: 0.72));
   }
 
   @override
@@ -224,7 +224,7 @@ class _TooltipCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 16, offset: const Offset(0, 4))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 16, offset: const Offset(0, 4))],
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
         // 步驟指示 + 跳過
@@ -232,7 +232,7 @@ class _TooltipCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
-              color: const Color(0xFFE8A52A).withOpacity(0.15),
+              color: const Color(0xFFE8A52A).withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(6),
             ),
             child: Text(L.coachStep(stepIndex + 1, totalSteps),

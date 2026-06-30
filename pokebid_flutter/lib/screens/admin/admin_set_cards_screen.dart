@@ -100,8 +100,10 @@ class _AdminSetCardsScreenState extends State<AdminSetCardsScreen> {
     setState(() => _busyId = c['id'] as String);
     final okSpec = await SupabaseService.setCardSpecId(c['id'] as String, specId);
     if (!okSpec) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('設定失敗')));
+      }
       setState(() => _busyId = null);
       return;
     }
