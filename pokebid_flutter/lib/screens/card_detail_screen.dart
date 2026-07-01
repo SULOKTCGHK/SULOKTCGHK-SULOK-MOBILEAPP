@@ -170,6 +170,14 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
     }
   }
 
+  // 開啟 PSA 官網該 cert 的驗證頁
+  Future<void> _openPsaCert(String cert) async {
+    final url = Uri.parse('https://www.psacard.com/cert/$cert');
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    }
+  }
+
   // 是否可顯示 SNKRDUNK 參考（賣家有正確填寫系列＋編號）
   bool get _canShowSnkrdunk =>
       widget.card.setId != null &&
@@ -342,6 +350,36 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
                     ],
                   ),
                   const SizedBox(height: 12),
+
+                  // PSA 認證編號（點擊連到 PSA 官網驗證頁）
+                  if (card.psaCert != null && card.psaCert!.trim().isNotEmpty) ...[
+                    GestureDetector(
+                      onTap: () => _openPsaCert(card.psaCert!.trim()),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF9FAFB),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFFE5E7EB), width: 0.8),
+                        ),
+                        child: Row(children: [
+                          const Icon(Icons.verified_user, size: 16, color: Color(0xFFE8A52A)),
+                          const SizedBox(width: 8),
+                          const Text('PSA 認證編號',
+                              style: TextStyle(fontSize: 12.5, color: Color(0xFF6B7280))),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text('#${card.psaCert!.trim()}',
+                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700,
+                                    color: Color(0xFF111827)),
+                                maxLines: 1, overflow: TextOverflow.ellipsis),
+                          ),
+                          const Icon(Icons.open_in_new, size: 15, color: Color(0xFFE8A52A)),
+                        ]),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
 
                   // PSA Pop（鑑定卡才顯示）
                   if (_psaPop != null) _PsaPopCard(pop: _psaPop!),

@@ -22,6 +22,28 @@ class ListingService {
     }
   }
 
+  // ── 查詢同款卡片正在掛售的商品（依 set_id + card_number）──────────────────
+  static Future<List<PokemonCard>> getListingsForCard({
+    String? setId,
+    String? cardNumber,
+  }) async {
+    if (setId == null || setId.isEmpty || cardNumber == null || cardNumber.isEmpty) {
+      return [];
+    }
+    try {
+      final res = await _client
+          .from('listings')
+          .select()
+          .eq('is_active', true)
+          .ilike('set_id', setId)
+          .eq('card_number', cardNumber)
+          .order('price', ascending: true);
+      return (res as List).map((row) => _fromRow(row)).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
   // ── Insert a new listing ──────────────────────────────────────────────────
   static Future<bool> insertListing({
     required String name,

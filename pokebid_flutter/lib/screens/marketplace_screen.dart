@@ -33,6 +33,17 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
   final Set<String> _gradeFilter = {};
   String? _setFilter;
 
+  // 篩選：鑑定公司 → 級別（Raw 的級別為品相 A/B/C/流通品）
+  static const _filterCompanies = ['PSA', 'BGS', 'CGC', 'SGC', 'ACE', 'Raw'];
+  static const _filterLevels = <String, List<String>>{
+    'PSA': ['10', '9', '8', '7', '6', '5'],
+    'BGS': ['10', '9.5', '9', '8.5', '8'],
+    'CGC': ['10', '9.5', '9', '8.5', '8'],
+    'SGC': ['10', '9.5', '9', '8.5', '8'],
+    'ACE': ['10', '9', '8', '7'],
+    'Raw': ['A', 'B', 'C', '流通品'],
+  };
+
   bool get _hasActiveFilters =>
       _minPrice != null || _maxPrice != null || _gradeFilter.isNotEmpty || _setFilter != null;
 
@@ -44,19 +55,20 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
 
   List<PokemonCard> get _sorted {
     var cards = List<PokemonCard>.from(widget.listings);
-    if (_query.isNotEmpty) {
-      final q = _query.toLowerCase().trim();
+    if (_query.trim().isNotEmpty) {
+      // 拆 token（空格 / 斜線），每個 token 都要命中任一欄位 → 順序無關、可多關鍵字
+      final tokens = _query.toLowerCase().trim()
+          .split(RegExp(r'[\s/]+')).where((t) => t.isNotEmpty).toList();
       cards = cards.where((c) {
-        if (c.name.toLowerCase().contains(q)) return true;
-        if (c.seller.name.toLowerCase().contains(q)) return true;
-        if (c.setId != null && c.setId!.toLowerCase().contains(q)) return true;
-        if (c.cardNumber != null && c.cardNumber!.toLowerCase().contains(q)) return true;
-        // 搜尋中文系列名稱（優先 API cache → 靜態 map）
-        if (c.setId != null) {
-          final zhName = PokemonApiService.zhTwSetName(c.setId!);
-          if (zhName.contains(q)) return true;
-        }
-        return false;
+        final name = c.name.toLowerCase();
+        final seller = c.seller.name.toLowerCase();
+        final sid = c.setId?.toLowerCase() ?? '';
+        final num = c.cardNumber?.toLowerCase() ?? '';
+        final zh = c.setId != null
+            ? PokemonApiService.zhTwSetName(c.setId!).toLowerCase() : '';
+        return tokens.every((t) =>
+            name.contains(t) || seller.contains(t) ||
+            sid.contains(t) || num.contains(t) || zh.contains(t));
       }).toList();
     }
     // 進階篩選
@@ -288,6 +300,11 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     final maxCtrl = TextEditingController(text: _maxPrice?.toString() ?? '');
     final localGrades = Set<String>.from(_gradeFilter);
     String? localSet = _setFilter;
+    String selCompany = 'PSA'; // 目前展開級別的鑑定公司
+
+    // 依公司算出某級別對應的 grade 字串（存進 listing 的值）
+    String gradeValue(String company, String level) =>
+        company == 'Raw' ? level : '$company $level';
 
     showModalBottomSheet(
       context: context,
@@ -326,22 +343,44 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
               ]),
               const SizedBox(height: 16),
 
-              // 評級（固定：PSA10 / PSA9 / CGC10）
+              // 評級：先選鑑定公司，再選級別
               Text(L.grade,
                   style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
                       color: Color(0xFF374151))),
               const SizedBox(height: 8),
-              Wrap(spacing: 8, runSpacing: 8, children: const <(String, String)>[
-                ('PSA 10', 'PSA10'),
-                ('PSA 9', 'PSA9'),
-                ('CGC 10', 'CGC10'),
-              ].map((g) {
-                final on = localGrades.contains(g.$1);
+              // 第一層：鑑定公司（含 Raw）
+              Wrap(spacing: 8, runSpacing: 8, children: _filterCompanies.map((company) {
+                final active = selCompany == company;
+                // 該公司有沒有已選的級別（顯示小圓點）
+                final hasSel = (_filterLevels[company] ?? [])
+                    .any((lv) => localGrades.contains(gradeValue(company, lv)));
+                return GestureDetector(
+                  onTap: () => setSheet(() => selCompany = company),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: active ? const Color(0xFFE8A52A) : const Color(0xFFF3F4F6),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: hasSel && !active ? const Color(0xFFE8A52A) : Colors.transparent,
+                        width: 1),
+                    ),
+                    child: Text(company,
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700,
+                            color: active ? Colors.white : const Color(0xFF6B7280))),
+                  ),
+                );
+              }).toList()),
+              const SizedBox(height: 10),
+              // 第二層：該公司的級別
+              Wrap(spacing: 8, runSpacing: 8, children: (_filterLevels[selCompany] ?? []).map((lv) {
+                final val = gradeValue(selCompany, lv);
+                final on = localGrades.contains(val);
                 return GestureDetector(
                   onTap: () => setSheet(() {
-                    if (on) { localGrades.remove(g.$1); } else { localGrades.add(g.$1); }
+                    if (on) { localGrades.remove(val); } else { localGrades.add(val); }
                   }),
-                  child: _filterChip(g.$2, on),
+                  child: _filterChip(selCompany == 'Raw' ? lv : '$selCompany $lv', on),
                 );
               }).toList()),
               const SizedBox(height: 20),

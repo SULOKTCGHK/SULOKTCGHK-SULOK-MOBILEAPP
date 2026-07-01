@@ -41,6 +41,40 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  // 忘記密碼：輸入 email → 寄送重設連結
+  Future<void> _forgotPassword() async {
+    final ctrl = TextEditingController();
+    final send = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(L.resetPasswordTitle, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+        content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(L.resetPasswordDesc, style: const TextStyle(fontSize: 12.5, color: Color(0xFF6B7280))),
+          const SizedBox(height: 12),
+          TextField(controller: ctrl, autofocus: true, keyboardType: TextInputType.emailAddress,
+            decoration: InputDecoration(labelText: L.emailLabel, hintText: L.emailHint, isDense: true)),
+        ]),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(L.cancel)),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE8A52A)),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(L.sendResetLink, style: const TextStyle(color: Colors.white))),
+        ],
+      ),
+    );
+    if (send != true) return;
+    final email = ctrl.text.trim();
+    if (email.isEmpty) return;
+    final err = await AuthService.resetPassword(email);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(err ?? L.resetEmailSent),
+      backgroundColor: err == null ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -168,6 +202,13 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: const TextStyle(fontSize: 13.5, color: Color(0xFFE8A52A), fontWeight: FontWeight.w700)),
                   ),
                 ]),
+              // 忘記密碼（主登入畫面直接入口）
+              if (!_loading)
+                TextButton(
+                  onPressed: _forgotPassword,
+                  child: Text(L.forgotPassword,
+                      style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280))),
+                ),
               const SizedBox(height: 6),
 
               GestureDetector(

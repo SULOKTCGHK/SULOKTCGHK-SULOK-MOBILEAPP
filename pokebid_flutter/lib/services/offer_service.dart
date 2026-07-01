@@ -141,6 +141,24 @@ class OfferService {
       await _client.rpc('mark_listing_sold', params: {'p_listing_id': offer.listingId});
     } catch (_) {}
 
+    // 記錄成交紀錄（賣家台帳，供圖鑑該卡「近期成交」自動顯示）
+    try {
+      final lr = await _client.from('listings')
+          .select('cached_card_id, name, grade')
+          .eq('id', offer.listingId).maybeSingle();
+      final cid = lr?['cached_card_id'] as String?;
+      if (cid != null && cid.isNotEmpty) {
+        await SupabaseService.insertTransaction({
+          'card_id': cid,
+          'card_name': lr?['name'] ?? '',
+          'grade': lr?['grade'] ?? '',
+          'price_ntd': offer.amount,
+          'buyer': offer.buyerName,
+          'date': DateTime.now().toIso8601String().substring(0, 10),
+        });
+      }
+    } catch (_) {}
+
     // 通知買家：出價被接受
     await NotificationService.create(
       userId: offer.buyerId,

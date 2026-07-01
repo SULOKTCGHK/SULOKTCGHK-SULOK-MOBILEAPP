@@ -206,30 +206,26 @@ class SupabaseService {
   // 支援任意順序 token：如 "DP-P 126" / "126 DP-P" / "126/DP-P" 都能找到
   static Future<List<Map<String, dynamic>>> searchCachedCards(String query) async {
     if (query.trim().isEmpty) return [];
-    // 拆 token（空格、斜線分隔）
-    final tokens = query.trim().split(RegExp(r'[\s/]+')).where((t) => t.isNotEmpty).toList();
+    // 拆 token（空格、斜線分隔），逗號會破壞 or() 語法故移除
+    final tokens = query
+        .trim()
+        .split(RegExp(r'[\s/]+'))
+        .map((t) => t.replaceAll(',', '').trim())
+        .where((t) => t.isNotEmpty)
+        .toList();
     if (tokens.isEmpty) return [];
     try {
-      // 用第一個 token 做初步過濾（name / set_id / number 任一符合）
-      final first = tokens[0];
-      final res = await _client.from('cached_cards')
-          .select('id, name, number, set_id, image_small')
-          .or('name.ilike.%$first%,set_id.ilike.%$first%,number.ilike.%$first%')
-          .order('set_id')
-          .limit(200);
-      final all = (res as List).cast<Map<String, dynamic>>();
-
-      // 剩餘 token 在 client 端過濾（所有 token 都要匹配 name/set_id/number 其中一個）
-      if (tokens.length == 1) return all.take(40).toList();
-      return all.where((c) {
-        final name = (c['name'] as String? ?? '').toLowerCase();
-        final sid  = (c['set_id'] as String? ?? '').toLowerCase();
-        final num  = (c['number'] as String? ?? '').toLowerCase();
-        return tokens.every((t) {
-          final tl = t.toLowerCase();
-          return name.contains(tl) || sid.contains(tl) || num.contains(tl);
-        });
-      }).take(40).toList();
+      // 每個 token 都必須命中 name / set_id / number 其中之一。
+      // 連續 .or() 會在伺服器端 AND 起來 → token 順序不影響（"m2 110" = "110 m2"），
+      // 也不會被單一 token 的數量上限截斷。
+      var q = _client
+          .from('cached_cards')
+          .select('id, name, number, set_id, image_small');
+      for (final t in tokens) {
+        q = q.or('name.ilike.%$t%,set_id.ilike.%$t%,number.ilike.%$t%');
+      }
+      final res = await q.order('set_id').limit(500);
+      return (res as List).cast<Map<String, dynamic>>();
     } catch (_) {
       return [];
     }

@@ -5,9 +5,12 @@ import '../services/api_service.dart';
 import '../services/supabase_service.dart';
 import '../services/currency_service.dart';
 import '../services/wishlist_service.dart';
+import '../services/listing_service.dart';
+import '../models/card_model.dart';
 import '../widgets/login_required.dart';
 import '../widgets/no_image_placeholder.dart';
 import '../i18n/strings.dart';
+import 'card_detail_screen.dart';
 
 class DexCardDetailScreen extends StatefulWidget {
   final ApiCard card;
@@ -40,6 +43,11 @@ class _DexCardDetailScreenState extends State<DexCardDetailScreen> {
   // PSA Pop
   Map<String, dynamic>? _psaPop;
 
+  // 同款卡片正在掛售
+  List<PokemonCard> _listings = [];
+  bool _listingsLoading = true;
+  bool _showAllListings = false;
+
   final _gradeCtrl = TextEditingController();
   final _priceCtrl = TextEditingController();
   final _buyerCtrl = TextEditingController();
@@ -54,6 +62,13 @@ class _DexCardDetailScreenState extends State<DexCardDetailScreen> {
     _loadSnkr();
     _loadPsaPop();
     _loadWished();
+    _loadListings();
+  }
+
+  Future<void> _loadListings() async {
+    final l = await ListingService.getListingsForCard(
+      setId: widget.card.setId, cardNumber: widget.card.number);
+    if (mounted) setState(() { _listings = l; _listingsLoading = false; });
   }
 
   Future<void> _loadWished() async {
@@ -265,6 +280,109 @@ class _DexCardDetailScreenState extends State<DexCardDetailScreen> {
   }
 
   String _fmt(int p) => widget.formatPrice(p);
+
+  // 同款卡片掛售中區塊
+  Widget _listingsSection() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 0.8),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          const Icon(Icons.local_offer_outlined, size: 16, color: Color(0xFF16A34A)),
+          const SizedBox(width: 6),
+          Text('同款卡片掛售中（${_listings.length}）',
+              style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: Color(0xFF111827))),
+        ]),
+        if (_listings.isEmpty) ...[
+          const SizedBox(height: 10),
+          const Text('目前沒有同款卡片正在掛售',
+              style: TextStyle(fontSize: 12.5, color: Color(0xFF9CA3AF))),
+        ],
+        const SizedBox(height: 8),
+        ...(_showAllListings ? _listings : _listings.take(3)).map((c) {
+          final hasCert = c.psaCert != null && c.psaCert!.trim().isNotEmpty;
+          return GestureDetector(
+            onTap: () => Navigator.push(context, MaterialPageRoute(
+              builder: (_) => CardDetailScreen(
+                card: c, isFavorited: false, onFavChanged: (_) {}))),
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF9FAFB),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFEDEFF2), width: 0.8),
+              ),
+              child: Row(children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: (c.imageUrls.isNotEmpty)
+                      ? Image.network(c.imageUrls.first, width: 56, height: 78, fit: BoxFit.contain,
+                          errorBuilder: (_, __, ___) =>
+                              const Icon(Icons.style_outlined, size: 30, color: Color(0xFFD1D5DB)))
+                      : const Icon(Icons.style_outlined, size: 30, color: Color(0xFFD1D5DB)),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Row(children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                        decoration: BoxDecoration(
+                            color: const Color(0xFFE8A52A).withValues(alpha: 0.14),
+                            borderRadius: BorderRadius.circular(6)),
+                        child: Text(c.grade,
+                            style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800,
+                                color: Color(0xFFB8860B))),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(c.seller.name,
+                            style: const TextStyle(fontSize: 12.5, color: Color(0xFF6B7280)),
+                            maxLines: 1, overflow: TextOverflow.ellipsis),
+                      ),
+                    ]),
+                    if (hasCert) ...[
+                      const SizedBox(height: 5),
+                      Row(children: [
+                        const Icon(Icons.verified_user, size: 13, color: Color(0xFFE8A52A)),
+                        const SizedBox(width: 4),
+                        Text('PSA #${c.psaCert!.trim()}',
+                            style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600,
+                                color: Color(0xFF374151))),
+                      ]),
+                    ],
+                    const SizedBox(height: 6),
+                    Text('HK\$${_fmt(c.price)}',
+                        style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800,
+                            color: Color(0xFF16A34A))),
+                  ]),
+                ),
+                const Icon(Icons.chevron_right, size: 18, color: Color(0xFFD1D5DB)),
+              ]),
+            ),
+          );
+        }),
+        if (_listings.length > 3)
+          GestureDetector(
+            onTap: () => setState(() => _showAllListings = !_showAllListings),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              alignment: Alignment.center,
+              child: Text(
+                _showAllListings ? '收起' : '查看全部 ${_listings.length} 項',
+                style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFFE8A52A)),
+              ),
+            ),
+          ),
+      ]),
+    );
+  }
 
   int get _avgPrice {
     if (_transactions.isEmpty) return 0;
@@ -499,6 +617,12 @@ class _DexCardDetailScreenState extends State<DexCardDetailScreen> {
                 ),
                 const SizedBox(height: 12),
 
+                // 同款卡片正在掛售（載入完成後一律顯示，無商品也說明）
+                if (!_listingsLoading) ...[
+                  _listingsSection(),
+                  const SizedBox(height: 12),
+                ],
+
                 // PSA Pop 數量
                 if (_psaPop != null) _PsaPopCard(pop: _psaPop!),
                 const SizedBox(height: 20),
@@ -523,49 +647,11 @@ class _DexCardDetailScreenState extends State<DexCardDetailScreen> {
                         style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
                       ),
                     ),
-                    const Spacer(),
-                    GestureDetector(
-                      onTap: () => setState(() => _showAddTx = !_showAddTx),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFE8A52A),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              _showAddTx ? Icons.close : Icons.add,
-                              size: 14,
-                              color: Colors.white,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              _showAddTx ? L.cancel : L.add,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
                   ],
                 ),
-
-                if (_showAddTx) ...[
-                  const SizedBox(height: 12),
-                  _AddTxForm(
-                    gradeCtrl: _gradeCtrl,
-                    priceCtrl: _priceCtrl,
-                    buyerCtrl: _buyerCtrl,
-                    dateCtrl: _dateCtrl,
-                    onSave: _saveTransaction,
-                  ),
-                ],
+                const SizedBox(height: 4),
+                const Text('於 App 內完成該卡交易後會自動顯示',
+                    style: TextStyle(fontSize: 11, color: Color(0xFF9CA3AF))),
                 const SizedBox(height: 10),
 
                 // 成交紀錄列表

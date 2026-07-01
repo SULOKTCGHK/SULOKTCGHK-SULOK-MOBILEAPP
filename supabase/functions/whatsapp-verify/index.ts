@@ -50,6 +50,21 @@ Deno.serve(async (req: Request) => {
 
     const twAuth = "Basic " + btoa(`${TW_SID}:${TW_TOKEN}`);
     const base = `https://verify.twilio.com/v2/Services/${VERIFY_SID}`;
+    const admin = createClient(SB, SVC);
+
+    // 一個電話號碼只能被一個帳號認證：若已被「其他帳號」驗證過，擋下
+    {
+      const { data: taken } = await admin
+        .from("profiles")
+        .select("id")
+        .eq("phone", phone)
+        .eq("phone_verified", true)
+        .limit(1)
+        .maybeSingle();
+      if (taken && taken.id !== userId) {
+        return json({ error: "此電話號碼已被其他帳號認證，請使用其他號碼" }, 409);
+      }
+    }
 
     if (action === "send") {
       const r = await fetch(`${base}/Verifications`, {
@@ -75,7 +90,6 @@ Deno.serve(async (req: Request) => {
       if (r.ok && data?.status === "approved") {
         // 已登入：更新自己的 profile；註冊模式：只回驗證通過（建帳號後再寫 phone）
         if (userId) {
-          const admin = createClient(SB, SVC);
           await admin.from("profiles").update({
             phone, phone_verified: true, updated_at: new Date().toISOString(),
           }).eq("id", userId);

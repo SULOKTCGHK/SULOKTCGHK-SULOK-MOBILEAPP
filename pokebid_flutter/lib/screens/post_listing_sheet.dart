@@ -23,6 +23,10 @@ class _PostListingSheetState extends State<PostListingSheet> {
   // 商品類型
   String _cardCondition = 'raw'; // 'raw' or 'graded'
 
+  // 未鑑定(raw)品相分級
+  String _rawGrade = 'A';
+  final List<String> _rawGrades = ['A', 'B', 'C', '流通品'];
+
   // 鑑定資訊
   String _gradingCompany = 'PSA';
   String _gradeScore = '10';
@@ -73,6 +77,11 @@ class _PostListingSheetState extends State<PostListingSheet> {
   final _cardNumberCtrl = TextEditingController();
   final _certCtrl = TextEditingController();
 
+  // PSA Pop 即時預覽（輸入 cert 後抓取顯示）
+  Map<String, dynamic>? _psaPop;
+  bool _psaPopLoading = false;
+  String? _lastPsaCert;
+
   final List<String> _gradingCompanies = ['PSA', 'BGS', 'CGC', 'SGC', 'ACE'];
 
   final Map<String, List<String>> _gradeScores = {
@@ -120,6 +129,65 @@ class _PostListingSheetState extends State<PostListingSheet> {
     });
   }
 
+  // 輸入 cert 後即時抓取 PSA Pop 顯示在表單
+  Future<void> _loadPsaPopPreview(String cert) async {
+    cert = cert.trim();
+    if (cert.length < 7) {
+      if (_psaPop != null || _psaPopLoading) {
+        setState(() { _psaPop = null; _psaPopLoading = false; });
+      }
+      _lastPsaCert = null;
+      return;
+    }
+    if (cert == _lastPsaCert) return;
+    _lastPsaCert = cert;
+    setState(() => _psaPopLoading = true);
+    final pop = await SupabaseService.getPsaPopForListing(psaCert: cert);
+    if (mounted && cert == _lastPsaCert) {
+      setState(() { _psaPop = pop; _psaPopLoading = false; });
+    }
+  }
+
+  // PSA Pop 即時預覽卡
+  Widget _psaPopPreview(Map<String, dynamic> pop) {
+    int v(String k) => (pop[k] as num?)?.toInt() ?? 0;
+    final name = pop['card_name'] as String?;
+    final cells = [
+      ('PSA 10', v('pop_10'), const Color(0xFFE8A52A)),
+      ('PSA 9', v('pop_9'), const Color(0xFF2980B9)),
+      ('PSA 8', v('pop_8'), const Color(0xFF6B7280)),
+    ];
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFE8A52A).withValues(alpha: 0.35), width: 0.8),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          const Text('PSA Pop', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFFB8860B))),
+          const Spacer(),
+          Text('總計 ${v('total')} 張', style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280))),
+        ]),
+        if (name != null && name.isNotEmpty) ...[
+          const SizedBox(height: 2),
+          Text(name, style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
+              maxLines: 1, overflow: TextOverflow.ellipsis),
+        ],
+        const SizedBox(height: 8),
+        Row(children: [
+          for (final c in cells)
+            Expanded(child: Column(children: [
+              Text(c.$1, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: c.$3)),
+              const SizedBox(height: 2),
+              Text('${c.$2}', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: c.$3)),
+            ])),
+        ]),
+      ]),
+    );
+  }
+
   // 背景抓取 PSA Pop（不阻塞 UI）
   void _fetchPsaPopByCert(String cert) {
     SupabaseService.fetchPsaPopByCert(
@@ -131,7 +199,7 @@ class _PostListingSheetState extends State<PostListingSheet> {
   }
 
   String get _gradeLabel {
-    if (_cardCondition == 'raw') return 'Raw';
+    if (_cardCondition == 'raw') return _rawGrade;
     return '$_gradingCompany $_gradeScore';
   }
 
@@ -140,6 +208,7 @@ class _PostListingSheetState extends State<PostListingSheet> {
     final price = int.tryParse(_priceCtrl.text);
     if (name.isEmpty) { _showError(L.errEnterName); return; }
     if (price == null || price < 1) { _showError(L.errEnterPrice); return; }
+    if (_images.isEmpty) { _showError('請至少上傳 1 張圖片'); return; }
 
     setState(() => _submitting = true);
 
@@ -350,7 +419,7 @@ class _PostListingSheetState extends State<PostListingSheet> {
 
                       // Card name
                       _label(L.cardName),
-                      _textField(_nameCtrl, L.cardNameHint),
+                      _textField(_nameCtrl, ''),
                       const SizedBox(height: 16),
 
                       // ── 商品類型 ──────────────────────────────────────
@@ -375,6 +444,34 @@ class _PostListingSheetState extends State<PostListingSheet> {
                         ),
                       ]),
                       const SizedBox(height: 16),
+
+                      // ── 未鑑定品相分級（只在 raw 時顯示）──────────────
+                      if (_cardCondition == 'raw') ...[
+                        _label('品相分級'),
+                        Wrap(spacing: 8, runSpacing: 8, children: _rawGrades.map((g) {
+                          final active = _rawGrade == g;
+                          return GestureDetector(
+                            onTap: () => setState(() => _rawGrade = g),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: active ? const Color(0xFFE8A52A) : const Color(0xFFF3F4F6),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: active ? const Color(0xFFE8A52A) : const Color(0xFFE5E7EB),
+                                  width: active ? 1 : 0.5),
+                              ),
+                              child: Text(g,
+                                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
+                                      color: active ? Colors.white : const Color(0xFF6B7280))),
+                            ),
+                          );
+                        }).toList()),
+                        const SizedBox(height: 6),
+                        const Text('分級僅供參考用途，實際品相以圖片為準',
+                            style: TextStyle(fontSize: 11, color: Color(0xFF9CA3AF))),
+                        const SizedBox(height: 16),
+                      ],
 
                       // ── 鑑定資訊（只在鑑定卡時顯示）────────────────
                       if (_cardCondition == 'graded') ...[
@@ -536,6 +633,7 @@ class _PostListingSheetState extends State<PostListingSheet> {
                             controller: _certCtrl,
                             keyboardType: TextInputType.number,
                             style: const TextStyle(fontSize: 14),
+                            onChanged: _loadPsaPopPreview,
                             decoration: InputDecoration(
                               hintText: L.certHint,
                               hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 13),
@@ -553,6 +651,19 @@ class _PostListingSheetState extends State<PostListingSheet> {
                           const SizedBox(height: 4),
                           Text(L.certHelper,
                               style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF))),
+                          if (_psaPopLoading) ...[
+                            const SizedBox(height: 8),
+                            const Row(children: [
+                              SizedBox(width: 14, height: 14,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFE8A52A))),
+                              SizedBox(width: 8),
+                              Text('查詢 PSA Pop 中...',
+                                  style: TextStyle(fontSize: 11.5, color: Color(0xFF9CA3AF))),
+                            ]),
+                          ] else if (_psaPop != null) ...[
+                            const SizedBox(height: 8),
+                            _psaPopPreview(_psaPop!),
+                          ],
                           const SizedBox(height: 12),
                         ],
                       ],
@@ -589,7 +700,7 @@ class _PostListingSheetState extends State<PostListingSheet> {
                         style: const TextStyle(
                             fontSize: 14, color: Color(0xFF111827)),
                         decoration: InputDecoration(
-                          hintText: L.descriptionHint,
+                          hintText: '',
                           hintStyle: const TextStyle(
                               color: Color(0xFF9CA3AF), fontSize: 13),
                           filled: true,
@@ -887,12 +998,44 @@ class _DexCardPickerSheetState extends State<_DexCardPickerSheet> {
   final _searchCtrl = TextEditingController();
   List<Map<String, dynamic>> _results = [];
   bool _loading = false;
-  String _mode = 'search'; // 'search' | 'pokemon'
+  String _mode = 'search'; // 'search' | 'pokemon' | 'set'
+
+  // 系列圖鑑瀏覽
+  final _setSearchCtrl = TextEditingController();
+  List<Map<String, dynamic>> _sets = [];
+  bool _setsLoading = false;
+  String _setQuery = '';
+  String? _selSet;
+  String? _selSetName;
+  List<Map<String, dynamic>> _setCards = [];
+  bool _setCardsLoading = false;
 
   @override
   void dispose() {
     _searchCtrl.dispose();
+    _setSearchCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadSets() async {
+    if (_sets.isNotEmpty || _setsLoading) return;
+    setState(() => _setsLoading = true);
+    final s = await SupabaseService.getCachedSets();
+    if (mounted) setState(() { _sets = s; _setsLoading = false; });
+  }
+
+  Future<void> _openSet(String id, String name) async {
+    setState(() { _selSet = id; _selSetName = name; _setCardsLoading = true; _setCards = []; });
+    final cards = await SupabaseService.getCachedCardsForSet(id);
+    if (mounted) setState(() { _setCards = cards; _setCardsLoading = false; });
+  }
+
+  List<Map<String, dynamic>> get _filteredSets {
+    final q = _setQuery.trim().toLowerCase();
+    if (q.isEmpty) return _sets;
+    return _sets.where((s) =>
+        (s['name'] as String? ?? '').toLowerCase().contains(q) ||
+        (s['id'] as String? ?? '').toLowerCase().contains(q)).toList();
   }
 
   // 精靈圖鑑選到的卡（ApiCard）→ 刊登頁要的 Map
@@ -910,7 +1053,10 @@ class _DexCardPickerSheetState extends State<_DexCardPickerSheet> {
     final active = _mode == value;
     return Expanded(
       child: GestureDetector(
-        onTap: () => setState(() => _mode = value),
+        onTap: () {
+          setState(() => _mode = value);
+          if (value == 'set') _loadSets();
+        },
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 8),
           alignment: Alignment.center,
@@ -971,6 +1117,8 @@ class _DexCardPickerSheetState extends State<_DexCardPickerSheet> {
             _modeBtn('search', L.search),
             const SizedBox(width: 8),
             _modeBtn('pokemon', L.tabPokemonDex),
+            const SizedBox(width: 8),
+            _modeBtn('set', '系列圖鑑'),
           ]),
         ),
         const SizedBox(height: 12),
@@ -1026,14 +1174,102 @@ class _DexCardPickerSheetState extends State<_DexCardPickerSheet> {
                         );
                       }),
           ),
-        ] else
+        ] else if (_mode == 'pokemon')
           // 精靈圖鑑瀏覽選卡：選精靈 → 看牠的卡 → 點卡回傳
           Expanded(
             child: PokemonDexScreen(
               embedded: true,
               onCardPicked: (c) => Navigator.pop(context, _cardToMap(c)),
             ),
-          ),
+          )
+        else ...[
+          // 系列圖鑑瀏覽選卡：選系列 → 看該系列的卡 → 點卡回傳
+          if (_selSet == null) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: TextField(
+                controller: _setSearchCtrl,
+                onChanged: (v) => setState(() => _setQuery = v),
+                decoration: InputDecoration(
+                  hintText: '搜尋系列名稱',
+                  hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
+                  prefixIcon: const Icon(Icons.search, size: 18, color: Color(0xFF9CA3AF)),
+                  filled: true, fillColor: const Color(0xFFF9FAFB),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 0.5)),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 0.5)),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Expanded(child: _setsLoading
+                ? const Center(child: CircularProgressIndicator(color: Color(0xFFE8A52A), strokeWidth: 2))
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: _filteredSets.length,
+                    itemBuilder: (_, i) {
+                      final s = _filteredSets[i];
+                      return ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: const Icon(Icons.folder_outlined, size: 22, color: Color(0xFFE8A52A)),
+                        title: Text(s['name'] as String? ?? s['id'] as String? ?? '',
+                            style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
+                            maxLines: 1, overflow: TextOverflow.ellipsis),
+                        trailing: const Icon(Icons.chevron_right, size: 18, color: Color(0xFFD1D5DB)),
+                        onTap: () => _openSet(s['id'] as String, s['name'] as String? ?? ''),
+                      );
+                    })),
+          ] else ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Row(children: [
+                GestureDetector(
+                  onTap: () => setState(() { _selSet = null; _setCards = []; }),
+                  child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(Icons.chevron_left, size: 20, color: Color(0xFFE8A52A)),
+                    Text('系列', style: TextStyle(fontSize: 13, color: Color(0xFFE8A52A))),
+                  ]),
+                ),
+                const SizedBox(width: 8),
+                Expanded(child: Text(_selSetName ?? '',
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                    maxLines: 1, overflow: TextOverflow.ellipsis)),
+              ]),
+            ),
+            const SizedBox(height: 8),
+            Expanded(child: _setCardsLoading
+                ? const Center(child: CircularProgressIndicator(color: Color(0xFFE8A52A), strokeWidth: 2))
+                : _setCards.isEmpty
+                    ? const Center(child: Text('此系列暫無卡牌資料',
+                        style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 13)))
+                    : GridView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 3, crossAxisSpacing: 8, mainAxisSpacing: 8, childAspectRatio: 0.62),
+                        itemCount: _setCards.length,
+                        itemBuilder: (_, i) {
+                          final c = _setCards[i];
+                          final img = c['image_small'] as String?;
+                          return GestureDetector(
+                            onTap: () => Navigator.pop(context, c),
+                            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                              Expanded(child: (img != null && img.isNotEmpty)
+                                  ? ClipRRect(borderRadius: BorderRadius.circular(8),
+                                      child: Image.network(img, fit: BoxFit.contain,
+                                          errorBuilder: (_, __, ___) => const Icon(Icons.image_not_supported_outlined,
+                                              size: 24, color: Color(0xFFD1D5DB))))
+                                  : const Icon(Icons.style_outlined, size: 24, color: Color(0xFFD1D5DB))),
+                              const SizedBox(height: 3),
+                              Text('#${c['number'] ?? ''}',
+                                  style: const TextStyle(fontSize: 10, color: Color(0xFF6B7280)),
+                                  textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
+                            ]),
+                          );
+                        })),
+          ],
+        ],
       ]),
     );
   }
@@ -1044,14 +1280,15 @@ class _MeetupLocationPicker extends StatelessWidget {
   final List<String> selected;
   final ValueChanged<List<String>> onChanged;
 
-  static const _hkLocations = [
-    '中環', '金鐘', '灣仔', '銅鑼灣', '天后', '北角',
-    '油麻地', '旺角', '太子', '深水埗', '長沙灣', '荔枝角',
-    '尖沙咀', '紅磡', '黃埔', '九龍灣', '牛頭角', '觀塘',
-    '沙田', '大圍', '馬鞍山', '將軍澳', '調景嶺', '坑口',
-    '荃灣', '葵芳', '葵興', '青衣', '屯門', '元朗',
-    '天水圍', '上水', '粉嶺', '大埔', '火炭',
-  ];
+  // 面交地點分區
+  static const _hkRegions = <String, List<String>>{
+    '港島': ['中環', '金鐘', '灣仔', '銅鑼灣', '天后', '北角', '太古', '筲箕灣'],
+    '九龍': ['油麻地', '旺角', '太子', '深水埗', '長沙灣', '荔枝角',
+        '尖沙咀', '紅磡', '黃埔', '九龍灣', '牛頭角', '觀塘', '鑽石山', '黃大仙'],
+    '新界': ['沙田', '大圍', '馬鞍山', '將軍澳', '調景嶺', '坑口',
+        '荃灣', '葵芳', '葵興', '青衣', '屯門', '元朗', '天水圍',
+        '上水', '粉嶺', '大埔', '火炭'],
+  };
 
   const _MeetupLocationPicker({
     required this.selected,
@@ -1139,7 +1376,7 @@ class _LocationPickerSheet extends StatefulWidget {
 class _LocationPickerSheetState extends State<_LocationPickerSheet> {
   late final List<String> _selected;
 
-  static const _hkLocations = _MeetupLocationPicker._hkLocations;
+  static const _hkRegions = _MeetupLocationPicker._hkRegions;
 
   @override
   void initState() {
@@ -1175,39 +1412,52 @@ class _LocationPickerSheetState extends State<_LocationPickerSheet> {
           height: 320,
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _hkLocations.map((loc) {
-                final sel = _selected.contains(loc);
-                return GestureDetector(
-                  onTap: () => setState(() {
-                    if (sel) {
-                      _selected.remove(loc);
-                    } else {
-                      _selected.add(loc);
-                    }
-                  }),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 150),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: sel ? const Color(0xFFE8A52A) : const Color(0xFFF3F4F6),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: sel ? const Color(0xFFE8A52A) : const Color(0xFFE5E7EB),
-                      ),
-                    ),
-                    child: Text(
-                      loc,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: sel ? Colors.white : const Color(0xFF374151),
-                      ),
-                    ),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start,
+              children: _hkRegions.entries.map((region) {
+                return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4, bottom: 8),
+                    child: Text(region.key,
+                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700,
+                            color: Color(0xFF111827))),
                   ),
-                );
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: region.value.map((loc) {
+                      final sel = _selected.contains(loc);
+                      return GestureDetector(
+                        onTap: () => setState(() {
+                          if (sel) {
+                            _selected.remove(loc);
+                          } else {
+                            _selected.add(loc);
+                          }
+                        }),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 150),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: sel ? const Color(0xFFE8A52A) : const Color(0xFFF3F4F6),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: sel ? const Color(0xFFE8A52A) : const Color(0xFFE5E7EB),
+                            ),
+                          ),
+                          child: Text(
+                            loc,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: sel ? Colors.white : const Color(0xFF374151),
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 14),
+                ]);
               }).toList(),
             ),
           ),
