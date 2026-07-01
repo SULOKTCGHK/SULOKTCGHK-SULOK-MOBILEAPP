@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:image_cropper/image_cropper.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/card_model.dart';
 import '../services/listing_service.dart';
@@ -47,6 +48,25 @@ class _PostListingSheetState extends State<PostListingSheet> {
         _imageBytes.addAll(newBytes);
       });
     }
+  }
+
+  // 裁切某張圖片（讓用戶自訂位置/大小，顯示更精準）
+  Future<void> _cropImage(int i) async {
+    final cropped = await ImageCropper().cropImage(
+      sourcePath: _images[i].path,
+      uiSettings: [
+        IOSUiSettings(title: '裁切圖片', aspectRatioLockEnabled: false, resetAspectRatioEnabled: true),
+        AndroidUiSettings(toolbarTitle: '裁切圖片', lockAspectRatio: false,
+            toolbarColor: const Color(0xFFE8A52A), toolbarWidgetColor: const Color(0xFFFFFFFF)),
+      ],
+    );
+    if (cropped == null) return;
+    final bytes = await cropped.readAsBytes();
+    if (!mounted) return;
+    setState(() {
+      _images[i] = XFile(cropped.path);
+      _imageBytes[i] = bytes;
+    });
   }
 
   Future<List<String>> _uploadImages() async {
@@ -357,6 +377,19 @@ class _PostListingSheetState extends State<PostListingSheet> {
                                           decoration: const BoxDecoration(
                                             color: Colors.black54, shape: BoxShape.circle),
                                           child: const Icon(Icons.close, color: Colors.white, size: 12),
+                                        ),
+                                      ),
+                                    ),
+                                    // 裁切按鈕（調整位置/大小）
+                                    Positioned(
+                                      bottom: 2, right: 2,
+                                      child: GestureDetector(
+                                        onTap: () => _cropImage(i),
+                                        child: Container(
+                                          width: 20, height: 20,
+                                          decoration: const BoxDecoration(
+                                            color: Colors.black54, shape: BoxShape.circle),
+                                          child: const Icon(Icons.crop, color: Colors.white, size: 12),
                                         ),
                                       ),
                                     ),

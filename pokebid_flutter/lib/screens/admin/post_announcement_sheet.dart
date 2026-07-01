@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../utils/image_crop.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class PostAnnouncementSheet extends StatefulWidget {
@@ -43,19 +44,23 @@ class _PostAnnouncementSheetState extends State<PostAnnouncementSheet> {
   }
 
   Future<void> _pickCover() async {
-    final picker = ImagePicker();
-    final file = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+    final file = await pickAndCropImage(imageQuality: 85);
     if (file == null) return;
     final bytes = await file.readAsBytes();
     setState(() => _coverBytes = bytes);
   }
 
   Future<void> _pickBodyImages() async {
-    final picker = ImagePicker();
-    final files = await picker.pickMultiImage(imageQuality: 85);
+    final files = await ImagePicker().pickMultiImage(imageQuality: 85);
     if (files.isEmpty) return;
-    final bytesList = await Future.wait(files.map((f) => f.readAsBytes()));
-    setState(() => _bodyImageBytes.addAll(bytesList));
+    // 逐張裁切
+    for (final f in files) {
+      final cropped = await cropImagePath(f.path);
+      if (cropped == null) continue;
+      final bytes = await cropped.readAsBytes();
+      if (!mounted) return;
+      setState(() => _bodyImageBytes.add(bytes));
+    }
   }
 
   Future<String?> _uploadImage(Uint8List bytes, String filename) async {

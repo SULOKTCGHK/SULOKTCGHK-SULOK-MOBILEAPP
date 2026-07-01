@@ -52,6 +52,46 @@ class SupabaseService {
     }
   }
 
+  // ── Admin：新增/編輯 系列 與 卡片（cached_sets / cached_cards）──────────────
+  static Future<bool> saveCachedSet(Map<String, dynamic> row) async {
+    try {
+      await _client.from('cached_sets').upsert(row);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static Future<bool> saveCachedCard(Map<String, dynamic> row) async {
+    try {
+      await _client.from('cached_cards').upsert(row);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  // 重新分類：改系列的 series_id
+  static Future<bool> updateSetSeries(String setId, String seriesId) async {
+    try {
+      await _client.from('cached_sets').update({'series_id': seriesId}).eq('id', setId);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  // 把卡片移到別的系列（改 set_id + set_name）
+  static Future<bool> updateCardSet(String cardId, String setId, String setName) async {
+    try {
+      await _client.from('cached_cards')
+          .update({'set_id': setId, 'set_name': setName}).eq('id', cardId);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   /// 找出 image_small 為空（null）的卡片
   static Future<List<Map<String, dynamic>>> getCardsMissingImage({int limit = 100}) async {
     try {

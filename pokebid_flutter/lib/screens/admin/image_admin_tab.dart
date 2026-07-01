@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:image_picker/image_picker.dart';
 import '../../services/supabase_service.dart';
+import '../../utils/image_crop.dart';
+import '../../data/series_options.dart';
 import 'admin_set_cards_screen.dart';
 
 /// 後台圖片管理：像圖鑑一樣瀏覽系列 → 改 logo 或進去管理卡片圖
@@ -40,12 +41,14 @@ class _ImageAdminTabState extends State<ImageAdminTab> {
   }
 
   Future<void> _changeLogo(Map<String, dynamic> s) async {
-    final file = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 90);
+    final file = await pickAndCropImage(imageQuality: 90);
     if (file == null) return;
     setState(() => _busyId = s['id'] as String);
     final bytes = await file.readAsBytes();
     final ts = DateTime.now().millisecondsSinceEpoch;
-    final url = await SupabaseService.uploadAdminImage(bytes, 'sets/${s['id']}/logo_$ts.jpg');
+    final branch = setBranch(s['id'] as String, s['name'] as String? ?? '');
+    final cat = (s['series_id'] as String?)?.isNotEmpty == true ? s['series_id'] : 'uncategorized';
+    final url = await SupabaseService.uploadAdminImage(bytes, '$branch/$cat/${s['id']}/logo_$ts.jpg');
     final ok = url != null && await SupabaseService.setSetLogo(s['id'] as String, url);
     if (!mounted) return;
     setState(() => _busyId = null);
@@ -54,11 +57,81 @@ class _ImageAdminTabState extends State<ImageAdminTab> {
     if (ok) _load();
   }
 
+  // 新增 / 編輯系列（含分類 series_id）。existing 為 null = 新增
+  Future<void> _editSet(Map<String, dynamic>? existing) async {
+    final isNew = existing == null;
+    final idCtrl = TextEditingController(text: existing?['id'] as String? ?? '');
+    final nameCtrl = TextEditingController(text: existing?['name'] as String? ?? '');
+    String seriesId = (existing?['series_id'] as String?) ??
+        (kSeriesOptions.keys.isNotEmpty ? kSeriesOptions.keys.first : 'sv');
+    if (!kSeriesOptions.containsKey(seriesId)) seriesId = kSeriesOptions.keys.first;
+
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setD) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text(isNew ? '新增系列' : '編輯系列', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+          content: SingleChildScrollView(
+            child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+              TextField(controller: idCtrl, enabled: isNew,
+                  decoration: const InputDecoration(labelText: '系列 ID（唯一，如 m2-inferno-x-...）', isDense: true)),
+              const SizedBox(height: 10),
+              TextField(controller: nameCtrl,
+                  decoration: const InputDecoration(labelText: '系列名稱', isDense: true)),
+              const SizedBox(height: 14),
+              const Text('分類（歸到哪個系列）', style: TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
+              const SizedBox(height: 4),
+              DropdownButton<String>(
+                value: seriesId, isExpanded: true,
+                items: kSeriesOptions.entries.map((e) =>
+                    DropdownMenuItem(value: e.key, child: Text('${e.value}（${e.key}）', style: const TextStyle(fontSize: 13)))).toList(),
+                onChanged: (v) => setD(() => seriesId = v ?? seriesId),
+              ),
+            ]),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('取消')),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE8A52A)),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('儲存', style: TextStyle(color: Colors.white))),
+          ],
+        ),
+      ),
+    );
+    if (ok != true) return;
+    final id = idCtrl.text.trim();
+    if (id.isEmpty || nameCtrl.text.trim().isEmpty) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('請填 系列 ID 與名稱')));
+      return;
+    }
+    final row = {
+      'id': id,
+      'name': nameCtrl.text.trim(),
+      'series': kSeriesOptions[seriesId],
+      'series_id': seriesId,
+      'language': existing?['language'] ?? 'ja',
+      'cached_at': DateTime.now().millisecondsSinceEpoch,
+      if (existing?['logo_image'] != null) 'logo_image': existing!['logo_image'],
+    };
+    final saved = await SupabaseService.saveCachedSet(row);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(saved ? (isNew ? '已新增系列' : '已更新系列') : '儲存失敗（確認你是 admin）')));
+    if (saved) _load();
+  }
+
   void _onTapSet(Map<String, dynamic> s) {
     showModalBottomSheet(context: context, builder: (ctx) => SafeArea(
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         Padding(padding: const EdgeInsets.all(16),
           child: Text(s['name'] as String? ?? '', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700))),
+        ListTile(
+          leading: const Icon(Icons.edit_outlined, color: Color(0xFF16A34A)),
+          title: const Text('編輯系列資料 / 分類'),
+          onTap: () { Navigator.pop(ctx); _editSet(s); },
+        ),
         ListTile(
           leading: const Icon(Icons.image_outlined, color: Color(0xFFE8A52A)),
           title: const Text('更換系列 logo'),
@@ -70,7 +143,10 @@ class _ImageAdminTabState extends State<ImageAdminTab> {
           onTap: () {
             Navigator.pop(ctx);
             Navigator.push(context, MaterialPageRoute(builder: (_) =>
-                AdminSetCardsScreen(setId: s['id'] as String, setName: s['name'] as String? ?? '')));
+                AdminSetCardsScreen(
+                    setId: s['id'] as String,
+                    setName: s['name'] as String? ?? '',
+                    seriesId: s['series_id'] as String? ?? '')));
           },
         ),
         const SizedBox(height: 8),
@@ -104,6 +180,20 @@ class _ImageAdminTabState extends State<ImageAdminTab> {
               child: Text('只看缺logo',
                   style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700,
                       color: _onlyMissing ? Colors.white : const Color(0xFF6B7280))),
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: () => _editSet(null),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+              decoration: BoxDecoration(
+                  color: const Color(0xFF16A34A), borderRadius: BorderRadius.circular(10)),
+              child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                Icon(Icons.add, size: 15, color: Colors.white),
+                SizedBox(width: 2),
+                Text('系列', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white)),
+              ]),
             ),
           ),
         ]),

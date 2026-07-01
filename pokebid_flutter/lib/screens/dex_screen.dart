@@ -389,11 +389,11 @@ class _DexScreenState extends State<DexScreen> {
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
           child: Row(children: [
-            _branchCard('box',   '📦', L.branchBox,  L.branchBoxDesc),
+            _branchCard('box',   '📦', '擴充盒'),
             const SizedBox(width: 10),
-            _branchCard('deck',  '🎴', L.branchDeck,  L.branchDeckDesc),
+            _branchCard('deck',  '🎴', '禮盒'),
             const SizedBox(width: 10),
-            _branchCard('promo', '✨', 'PROMO', L.branchPromoDesc),
+            _branchCard('promo', '✨', '特典卡'),
           ]),
         ),
 
@@ -477,7 +477,7 @@ class _DexScreenState extends State<DexScreen> {
     ];
   }
 
-  Widget _branchCard(String key, String icon, String label, String desc) {
+  Widget _branchCard(String key, String icon, String label) {
     final active = _branch == key;
     // 每個分類用不同強調色
     final accent = key == 'box'
@@ -511,11 +511,6 @@ class _DexScreenState extends State<DexScreen> {
             Text(label,
                 style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700,
                     color: active ? Colors.white : const Color(0xFF1F2937))),
-            const SizedBox(height: 2),
-            Text(desc,
-                style: TextStyle(fontSize: 9.5,
-                    color: active ? Colors.white.withValues(alpha: 0.75) : const Color(0xFF9CA3AF)),
-                maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center),
           ]),
         ),
       ),
