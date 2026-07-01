@@ -487,6 +487,8 @@ class L {
   static String get noBoxData => _t('尚無卡盒資料', 'No box data yet');
   static String get noDeckData => _t('尚無牌組資料', 'No deck data yet');
   static String promoSeriesCount(int n) => _t('PROMO 系列（$n）', 'PROMO sets ($n)');
+  static String boxSetsCount(int n) => _t('擴充盒系列（$n）', 'Expansion boxes ($n)');
+  static String deckSetsCount(int n) => _t('禮盒系列（$n）', 'Gift boxes ($n)');
   static String get noPromoData => _t('尚無 PROMO 資料', 'No PROMO data yet');
   static String get seriesShort => _t('系列', 'Series');
   static String get newestFirst => _t('最新在前', 'Newest first');

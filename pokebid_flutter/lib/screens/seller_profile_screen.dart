@@ -33,6 +33,11 @@ class SellerProfileScreen extends StatefulWidget {
 
 class _SellerProfileScreenState extends State<SellerProfileScreen> {
   List<PokemonCard> _listings = [];
+  String _condFilter = 'all'; // 'all' | 'graded' | 'raw'
+  List<PokemonCard> get _shownListings => _condFilter == 'all'
+      ? _listings
+      : _listings.where((c) =>
+          _condFilter == 'graded' ? c.condition == 'Graded' : c.condition == 'Raw').toList();
   bool _loading = true;
   bool _following = false;
   int _followerCount = 0;
@@ -150,6 +155,27 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
 
   String _fmt(int p) => p.toString().replaceAllMapped(
       RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
+
+  Widget _condTab(String key, String label) {
+    final active = _condFilter == key;
+    final count = key == 'all'
+        ? _listings.length
+        : _listings.where((c) =>
+            key == 'graded' ? c.condition == 'Graded' : c.condition == 'Raw').length;
+    return GestureDetector(
+      onTap: () => setState(() => _condFilter = key),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        decoration: BoxDecoration(
+          color: active ? const Color(0xFFE8A52A) : const Color(0xFFF3F4F6),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Text('$label ($count)',
+            style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600,
+                color: active ? Colors.white : const Color(0xFF6B7280))),
+      ),
+    );
+  }
 
   bool get _isSelf => _myId == widget.sellerId;
 
@@ -365,15 +391,29 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
                 // ── Listings section header ─────────────────────────────
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 10),
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
                     child: Text(L.sellerListings(_listings.length),
                         style: const TextStyle(fontSize: 15,
                             fontWeight: FontWeight.w600, color: Color(0xFF111827))),
                   ),
                 ),
 
+                // ── 分類：全部 / 鑑定卡 / Raw ────────────────────────────
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+                    child: Row(children: [
+                      _condTab('all', '全部'),
+                      const SizedBox(width: 8),
+                      _condTab('graded', '鑑定卡'),
+                      const SizedBox(width: 8),
+                      _condTab('raw', 'Raw'),
+                    ]),
+                  ),
+                ),
+
                 // ── Listings grid ───────────────────────────────────────
-                _listings.isEmpty
+                _shownListings.isEmpty
                     ? SliverToBoxAdapter(
                         child: Padding(
                           padding: const EdgeInsets.symmetric(vertical: 40),
@@ -386,7 +426,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
                         sliver: SliverGrid(
                           delegate: SliverChildBuilderDelegate(
                             (_, i) {
-                              final card = _listings[i];
+                              final card = _shownListings[i];
                               return GestureDetector(
                                 onTap: () => Navigator.push(context,
                                     MaterialPageRoute(builder: (_) =>
@@ -394,18 +434,26 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
                                             isFavorited: false,
                                             onFavChanged: (_) {}))),
                                 child: _ListingGridItem(
-                                    card: card, formatPrice: _fmt),
+                                    card: card, formatPrice: _fmt,
+                                    compact: _condFilter == 'raw'),
                               );
                             },
-                            childCount: _listings.length,
+                            childCount: _shownListings.length,
                           ),
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            crossAxisSpacing: 10,
-                            mainAxisSpacing: 10,
-                            childAspectRatio: 0.72,
-                          ),
+                          // raw 分類：像圖鑑一行 4 張；其他 2 張
+                          gridDelegate: _condFilter == 'raw'
+                              ? const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 4,
+                                  crossAxisSpacing: 6,
+                                  mainAxisSpacing: 6,
+                                  childAspectRatio: 0.56,
+                                )
+                              : const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  crossAxisSpacing: 10,
+                                  mainAxisSpacing: 10,
+                                  childAspectRatio: 0.72,
+                                ),
                         ),
                       ),
               ],
@@ -466,8 +514,9 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
 class _ListingGridItem extends StatelessWidget {
   final PokemonCard card;
   final String Function(int) formatPrice;
+  final bool compact; // 4 欄 raw：縮小字級/間距
 
-  const _ListingGridItem({required this.card, required this.formatPrice});
+  const _ListingGridItem({required this.card, required this.formatPrice, this.compact = false});
 
   @override
   Widget build(BuildContext context) {
@@ -480,8 +529,8 @@ class _ListingGridItem extends StatelessWidget {
             blurRadius: 4, offset: const Offset(0, 2))],
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        // 圖片吃掉剩餘空間
         Expanded(
-          flex: 5,
           child: ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(11)),
             child: card.imageUrls.isNotEmpty
@@ -494,29 +543,28 @@ class _ListingGridItem extends StatelessWidget {
                 : _placeholder(),
           ),
         ),
-        Expanded(
-          flex: 3,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(8, 7, 8, 7),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                // 名字 + 分級標籤（同一行）
-                Row(children: [
-                  Flexible(child: Text(card.name,
-                      style: const TextStyle(fontSize: 12,
-                          fontWeight: FontWeight.w700, color: Color(0xFF111827)),
-                      maxLines: 1, overflow: TextOverflow.ellipsis)),
-                  const SizedBox(width: 5),
-                  _gradeChip(card.grade),
-                ]),
-                const SizedBox(height: 5),
-                Text('HK\$${formatPrice(card.price)}',
-                    style: const TextStyle(fontSize: 14,
-                        fontWeight: FontWeight.w800, color: Color(0xFF16A34A))),
-              ],
-            ),
+        // 資訊區：內容自適應高度（無多餘留白）
+        Padding(
+          padding: compact
+              ? const EdgeInsets.fromLTRB(5, 4, 5, 6)
+              : const EdgeInsets.fromLTRB(8, 6, 8, 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(children: [
+                Flexible(child: Text(card.name,
+                    style: TextStyle(fontSize: compact ? 10 : 12,
+                        fontWeight: FontWeight.w700, color: const Color(0xFF111827)),
+                    maxLines: 1, overflow: TextOverflow.ellipsis)),
+                const SizedBox(width: 4),
+                _gradeChip(card.grade),
+              ]),
+              SizedBox(height: compact ? 2 : 4),
+              Text('HK\$${formatPrice(card.price)}',
+                  style: TextStyle(fontSize: compact ? 11 : 14,
+                      fontWeight: FontWeight.w800, color: const Color(0xFF16A34A))),
+            ],
           ),
         ),
       ]),
@@ -524,14 +572,35 @@ class _ListingGridItem extends StatelessWidget {
   }
 
   Widget _gradeChip(String grade) {
-    final g = grade.toUpperCase();
-    final c = g.contains('10')
-        ? const Color(0xFFE8A52A)
-        : (g.contains('9') ? const Color(0xFF2980B9) : const Color(0xFF6B7280));
+    final g = grade.trim();
+    final gu = g.toUpperCase();
+    // raw 品相：A/B/C/流通品/Raw；鑑定卡：PSA/CGC 10/9…
+    const rawColors = {
+      'A': Color(0xFF16A34A),   // 綠
+      'B': Color(0xFF2980B9),   // 藍
+      'C': Color(0xFFE8A52A),   // 橙
+      '流通品': Color(0xFF6B7280), // 灰
+      'RAW': Color(0xFF6B7280),
+    };
+    final Color c;
+    final String label;
+    if (rawColors.containsKey(g) || rawColors.containsKey(gu)) {
+      c = rawColors[g] ?? rawColors[gu]!;
+      label = gu == 'RAW' ? 'Raw' : g; // 品相
+    } else if (gu.contains('10')) {
+      c = const Color(0xFFE8A52A);
+      label = grade;
+    } else if (gu.contains('9')) {
+      c = const Color(0xFF2980B9);
+      label = grade;
+    } else {
+      c = const Color(0xFF6B7280);
+      label = grade;
+    }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
       decoration: BoxDecoration(color: c.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(4)),
-      child: Text(grade,
+      child: Text(label,
           style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w700, color: c)),
     );
   }

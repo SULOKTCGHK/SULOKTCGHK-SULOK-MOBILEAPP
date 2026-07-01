@@ -39,36 +39,6 @@ class _DexScreenState extends State<DexScreen> {
   String? _branch;
   String? _selectedSeries;
 
-  // 系列前綴 → 顯示名稱
-  static const Map<String, String> _seriesNames = {
-    'm': 'Mega 系列',
-    'sv': '朱＆紫系列',
-    's': '劍＆盾系列',
-    'sp': '劍盾特別系列',
-    'sm': '太陽＆月亮系列',
-    'xy': 'XY 系列',
-    'cp': 'XY 概念包系列',
-    'bw': '黑＆白系列',
-    'dp': '鑽石＆珍珠系列',
-    'pt': '白金系列',
-    'l': 'LEGEND 系列',
-    'adv': 'ADV（紅寶石）系列',
-    // 老世代（依發售日分組）
-    'classic1': '初代系列',
-    'neo': 'Neo（金銀）系列',
-    'ecard': 'e卡系列',
-    'pcg': 'PCG（EX）系列',
-  };
-
-  // 前綴別名 → 正規化（把同世代的不同代號併成一組）
-  static const Map<String, String> _seriesAlias = {
-    'ptm': 'pt', 'pts': 'pt', 'ptr': 'pt',   // 白金 LV.X 收藏包
-    'll': 'l',                                // LEGEND（Lost Link）
-    'xyc': 'cp',                              // XY 概念包
-    'smp': 'sm', 'sml': 'sm', 'snp': 'sm',    // 太陽月亮 家庭/特別包
-    'sh': 's',                               // 劍盾 家庭包
-  };
-
   // 是否為 PROMO 系列（名稱含 promo）
   bool _isPromoSet(ApiSet s) =>
       s.name.toLowerCase().contains('promo') || s.id.toLowerCase().contains('-p-');
@@ -86,33 +56,6 @@ class _DexScreenState extends State<DexScreen> {
     return 'box';
   }
 
-  // 從 set id 推導系列 key（m5-abyss-eye → m, sv8a-... → sv）
-  String _seriesKey(ApiSet s) {
-    final id = s.id.toLowerCase().replaceAll('-pokemon-japan', '');
-    final first = id.split('-').first;
-    final pre = RegExp(r'^[a-z]+').firstMatch(first)?.group(0) ?? 'other';
-    final aliased = _seriesAlias[pre] ?? pre;
-    // 認得的世代代號 → 直接用；認不出 → 依發售日分老世代
-    if (_seriesNames.containsKey(aliased) && aliased != 'classic1' &&
-        aliased != 'neo' && aliased != 'ecard' && aliased != 'pcg') {
-      return aliased;
-    }
-    return _eraKeyFromDate(s.releaseDate);
-  }
-
-  // 未知前綴 → 用發售日 (YYYY-MM) 分老世代
-  String _eraKeyFromDate(String? date) {
-    if (date == null || date.length < 7) return 'other';
-    final d = date.substring(0, 7);
-    if (d.compareTo('1999-07') < 0) return 'classic1';
-    if (d.compareTo('2001-11') < 0) return 'neo';
-    if (d.compareTo('2003-07') < 0) return 'ecard';
-    if (d.compareTo('2007-01') < 0) return 'pcg';
-    return 'other';
-  }
-
-  String _seriesName(String key) => L.seriesName(key);
-
   List<ApiSet> _sortByDate(List<ApiSet> list) {
     list.sort((a, b) {
       final da = DateTime.tryParse(a.releaseDate?.replaceAll('/', '-') ?? '') ?? DateTime(0);
@@ -126,22 +69,6 @@ class _DexScreenState extends State<DexScreen> {
   List<ApiSet> get _boxSets => _sets.where((s) => _category(s) == 'box').toList();
   List<ApiSet> get _deckSets => _sets.where((s) => _category(s) == 'deck').toList();
   List<ApiSet> get _promoSets => _sortByDate(_sets.where((s) => _category(s) == 'promo').toList());
-
-  // 將一組 set 依系列分組，並依最新發售日排序
-  List<MapEntry<String, List<ApiSet>>> _seriesGroups(List<ApiSet> sets) {
-    final map = <String, List<ApiSet>>{};
-    for (final s in sets) {
-      map.putIfAbsent(_seriesKey(s), () => []).add(s);
-    }
-    final entries = map.entries.toList();
-    entries.sort((a, b) {
-      String latest(List<ApiSet> l) => l
-          .map((s) => s.releaseDate ?? '')
-          .fold('', (p, n) => n.compareTo(p) > 0 ? n : p);
-      return latest(b.value).compareTo(latest(a.value));
-    });
-    return entries;
-  }
 
   ApiCard _rowToCard(Map<String, dynamic> r) => ApiCard(
     id: r['id'] as String, name: r['name'] as String,
@@ -397,22 +324,21 @@ class _DexScreenState extends State<DexScreen> {
           ]),
         ),
 
-        if (_branch == 'promo') ..._buildPromoLevel()
-        else if (_branch == 'box') ..._buildSeriesBranch(_boxSets, L.noBoxData)
-        else if (_branch == 'deck') ..._buildSeriesBranch(_deckSets, L.noDeckData),
+        if (_branch == 'promo') ..._buildFlatLevel(_promoSets, L.promoSeriesCount(_promoSets.length), L.noPromoData)
+        else if (_branch == 'box') ..._buildFlatLevel(_sortByDate(_boxSets), L.boxSetsCount(_boxSets.length), L.noBoxData)
+        else if (_branch == 'deck') ..._buildFlatLevel(_sortByDate(_deckSets), L.deckSetsCount(_deckSets.length), L.noDeckData),
 
         const SizedBox(height: 100),
       ],
     );
   }
 
-  // PROMO：直接列出所有 promo 系列
-  List<Widget> _buildPromoLevel() {
-    final sets = _promoSets;
+  // 直接列出所有系列方格（擴充盒／禮盒／特典卡 統一排版）
+  List<Widget> _buildFlatLevel(List<ApiSet> sets, String header, String emptyMsg) {
     return [
-      _sectionHeader(L.promoSeriesCount(sets.length)),
+      _sectionHeader(header),
       if (sets.isEmpty)
-        _emptyHint(L.noPromoData)
+        _emptyHint(emptyMsg)
       else
         _setGrid(sets),
     ];
@@ -436,45 +362,6 @@ class _DexScreenState extends State<DexScreen> {
         );
       }),
     );
-  }
-
-  // 卡盒/牌組：先選系列，再列出該系列的彈
-  List<Widget> _buildSeriesBranch(List<ApiSet> branchSets, String emptyMsg) {
-    if (_selectedSeries == null) {
-      final groups = _seriesGroups(branchSets);
-      return [
-        _sectionHeader(L.selectSet),
-        if (groups.isEmpty)
-          _emptyHint(emptyMsg)
-        else
-          ...groups.map((e) => _SeriesTile(
-                name: _seriesName(e.key),
-                count: e.value.length,
-                latestDate: e.value.map((s) => s.releaseDate ?? '')
-                    .fold('', (p, n) => n.compareTo(p) > 0 ? n : p),
-                onTap: () => setState(() => _selectedSeries = e.key),
-              )),
-      ];
-    }
-    final sets = _sortByDate(branchSets.where((s) => _seriesKey(s) == _selectedSeries).toList());
-    return [
-      Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-        child: Row(children: [
-          GestureDetector(
-            onTap: () => setState(() => _selectedSeries = null),
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              const Icon(Icons.chevron_left, size: 18, color: Color(0xFFE8A52A)),
-              Text(L.seriesShort, style: const TextStyle(fontSize: 13, color: Color(0xFFE8A52A))),
-            ]),
-          ),
-          const SizedBox(width: 8),
-          Text(_seriesName(_selectedSeries!),
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF111827))),
-        ]),
-      ),
-      _setGrid(sets),
-    ];
   }
 
   Widget _branchCard(String key, String icon, String label) {
@@ -860,54 +747,6 @@ class _SetCard extends StatelessWidget {
   }
 }
 
-
-// ── Series Tile ───────────────────────────────────────────────────────────────
-
-class _SeriesTile extends StatelessWidget {
-  final String name;
-  final int count;
-  final String latestDate;
-  final VoidCallback onTap;
-
-  const _SeriesTile({required this.name, required this.count,
-      required this.latestDate, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white, borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFE5E7EB), width: 0.5),
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 4, offset: const Offset(0, 1))],
-        ),
-        child: Row(children: [
-          Container(
-            width: 44, height: 44,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFFE8A52A), Color(0xFFF5C842)],
-                begin: Alignment.topLeft, end: Alignment.bottomRight),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(Icons.folder_special, color: Colors.white, size: 22),
-          ),
-          const SizedBox(width: 12),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF111827))),
-            const SizedBox(height: 2),
-            Text(L.seriesGroupCount(count, latestDate.length >= 10 ? L.latestDateSuffix(latestDate.substring(0, 10)) : ''),
-                style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF))),
-          ])),
-          const Icon(Icons.chevron_right, color: Color(0xFF9CA3AF), size: 20),
-        ]),
-      ),
-    );
-  }
-}
 
 // ── Search Card Tile ──────────────────────────────────────────────────────────
 

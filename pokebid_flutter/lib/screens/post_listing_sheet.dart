@@ -9,6 +9,7 @@ import '../services/auth_service.dart';
 import '../services/supabase_service.dart';
 import '../i18n/strings.dart';
 import '../services/api_service.dart';
+import '../data/meetup_locations.dart';
 import 'pokemon_dex_screen.dart';
 
 class PostListingSheet extends StatefulWidget {
@@ -34,9 +35,29 @@ class _PostListingSheetState extends State<PostListingSheet> {
 
   bool _submitting = false;
   final List<String> _meetupLocations = [];
-  final List<XFile> _images = [];
+  final List<XFile> _images = [];       // 內文圖片
   final List<Uint8List> _imageBytes = [];
+  XFile? _coverImage;                    // 用戶自訂封面（可覆蓋圖鑑圖）
+  Uint8List? _coverBytes;
   final _picker = ImagePicker();
+
+  Future<void> _pickCover() async {
+    final x = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+    if (x == null) return;
+    final b = await x.readAsBytes();
+    if (!mounted) return;
+    setState(() { _coverImage = x; _coverBytes = b; });
+  }
+
+  Future<String> _uploadOne(XFile img) async {
+    final client = Supabase.instance.client;
+    final bytes = await img.readAsBytes();
+    final ext = img.name.split('.').last.toLowerCase();
+    final path = 'listings/${DateTime.now().millisecondsSinceEpoch}_${img.name}';
+    await client.storage.from('card-images').uploadBinary(
+      path, bytes, fileOptions: FileOptions(contentType: 'image/$ext', upsert: true));
+    return client.storage.from('card-images').getPublicUrl(path);
+  }
 
   Future<void> _pickImage() async {
     final picked = await _picker.pickMultiImage(imageQuality: 85, limit: 4);
@@ -89,6 +110,13 @@ class _PostListingSheetState extends State<PostListingSheet> {
   // 從圖鑑選卡（選填）
   Map<String, dynamic>? _selectedDexCard; // cached_cards 行
 
+  // raw 卡且有選圖鑑卡 → 用圖鑑圖片當預設封面
+  String? get _dexCoverUrl {
+    if (_cardCondition != 'raw') return null;
+    final u = _selectedDexCard?['image_small'] as String?;
+    return (u != null && u.isNotEmpty) ? u : null;
+  }
+
   // 表單
   final _nameCtrl = TextEditingController();
   final _priceCtrl = TextEditingController();
@@ -129,7 +157,7 @@ class _PostListingSheetState extends State<PostListingSheet> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => const _DexCardPickerSheet(),
+      builder: (_) => const DexCardPickerSheet(),
     );
     if (card == null || !mounted) return;
     setState(() {
@@ -228,11 +256,18 @@ class _PostListingSheetState extends State<PostListingSheet> {
     final price = int.tryParse(_priceCtrl.text);
     if (name.isEmpty) { _showError(L.errEnterName); return; }
     if (price == null || price < 1) { _showError(L.errEnterPrice); return; }
-    if (_images.isEmpty) { _showError('請至少上傳 1 張圖片'); return; }
+    // 封面：用戶自訂 > 圖鑑圖(raw)；內文圖片附在後面
+    final hasCover = _coverBytes != null || _dexCoverUrl != null;
+    if (!hasCover && _images.isEmpty) { _showError('請至少上傳 1 張圖片'); return; }
 
     setState(() => _submitting = true);
 
-    final imageUrls = await _uploadImages();
+    final coverUrl = _coverImage != null ? await _uploadOne(_coverImage!) : _dexCoverUrl;
+    final contentUrls = await _uploadImages();
+    final imageUrls = [
+      if (coverUrl != null) coverUrl, // 封面放最前
+      ...contentUrls,
+    ];
 
     final ok = await ListingService.insertListing(
       name: name,
@@ -335,6 +370,46 @@ class _PostListingSheetState extends State<PostListingSheet> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // 封面（raw 預設圖鑑圖，可換成自己的相片）
+                          if (_dexCoverUrl != null || _coverBytes != null) ...[
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF0FDF4),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: const Color(0xFFBBF7D0)),
+                              ),
+                              child: Row(children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(6),
+                                  child: _coverBytes != null
+                                      ? Image.memory(_coverBytes!, width: 48, height: 48, fit: BoxFit.cover)
+                                      : Image.network(_dexCoverUrl!, width: 48, height: 48, fit: BoxFit.cover),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                      _coverBytes != null ? '已用你的相片作封面' : '封面：圖鑑圖片',
+                                      style: const TextStyle(fontSize: 12, color: Color(0xFF15803D))),
+                                ),
+                                TextButton(
+                                  onPressed: _pickCover,
+                                  style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 8), minimumSize: Size.zero),
+                                  child: const Text('更改封面', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFFE8A52A))),
+                                ),
+                                if (_coverBytes != null)
+                                  GestureDetector(
+                                    onTap: () => setState(() { _coverImage = null; _coverBytes = null; }),
+                                    child: const Padding(padding: EdgeInsets.only(left: 2),
+                                        child: Icon(Icons.close, size: 16, color: Color(0xFF9CA3AF))),
+                                  ),
+                              ]),
+                            ),
+                            const SizedBox(height: 6),
+                            const Text('內文圖片（選填，最多 4 張）',
+                                style: TextStyle(fontSize: 11, color: Color(0xFF9CA3AF))),
+                            const SizedBox(height: 6),
+                          ],
                           if (_images.isNotEmpty) ...[
                             SizedBox(
                               height: 90,
@@ -1020,15 +1095,31 @@ class _DexCardChip extends StatelessWidget {
 }
 
 // 圖鑑選卡 bottom sheet
-class _DexCardPickerSheet extends StatefulWidget {
-  const _DexCardPickerSheet();
+class DexCardPickerSheet extends StatefulWidget {
+  final bool multiSelect; // true = 可多選，完成時回傳 List<Map>
+  const DexCardPickerSheet({super.key, this.multiSelect = false});
 
   @override
-  State<_DexCardPickerSheet> createState() => _DexCardPickerSheetState();
+  State<DexCardPickerSheet> createState() => DexCardPickerSheetState();
 }
 
-class _DexCardPickerSheetState extends State<_DexCardPickerSheet> {
+class DexCardPickerSheetState extends State<DexCardPickerSheet> {
   final _searchCtrl = TextEditingController();
+  final List<Map<String, dynamic>> _picked = []; // 多選模式已選的卡
+
+  String _keyOf(Map<String, dynamic> c) =>
+      (c['id'] as String?) ?? '${c['set_id']}-${c['number']}-${c['name']}';
+  bool _isPicked(Map<String, dynamic> c) => _picked.any((p) => _keyOf(p) == _keyOf(c));
+
+  // 點卡：單選 → 直接回傳；多選 → 加入/移除清單
+  void _pick(Map<String, dynamic> c) {
+    if (!widget.multiSelect) { Navigator.pop(context, c); return; }
+    setState(() {
+      final k = _keyOf(c);
+      final idx = _picked.indexWhere((p) => _keyOf(p) == k);
+      if (idx >= 0) { _picked.removeAt(idx); } else { _picked.add(c); }
+    });
+  }
   List<Map<String, dynamic>> _results = [];
   bool _loading = false;
   String _mode = 'search'; // 'search' | 'pokemon' | 'set'
@@ -1136,10 +1227,21 @@ class _DexCardPickerSheetState extends State<_DexCardPickerSheet> {
           child: Row(children: [
             Text(L.pickFromDexTitle, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
             const Spacer(),
-            GestureDetector(
-              onTap: () => Navigator.pop(context),
-              child: const Icon(Icons.close, color: Color(0xFF6B7280)),
-            ),
+            if (widget.multiSelect)
+              GestureDetector(
+                onTap: () => Navigator.pop(context, List<Map<String, dynamic>>.from(_picked)),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(color: const Color(0xFFE8A52A), borderRadius: BorderRadius.circular(8)),
+                  child: Text('完成 (${_picked.length})',
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white)),
+                ),
+              )
+            else
+              GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: const Icon(Icons.close, color: Color(0xFF6B7280)),
+              ),
           ]),
         ),
         const SizedBox(height: 12),
@@ -1191,8 +1293,17 @@ class _DexCardPickerSheetState extends State<_DexCardPickerSheet> {
                         final name = c['name'] as String? ?? '';
                         final setId = c['set_id'] as String? ?? '';
                         final number = c['number'] as String? ?? '';
-                        return ListTile(
-                          contentPadding: const EdgeInsets.symmetric(vertical: 4, horizontal: 0),
+                        final sel = widget.multiSelect && _isPicked(c);
+                        return Container(
+                          margin: const EdgeInsets.symmetric(vertical: 3),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: sel ? const Color(0xFFE74C3C) : Colors.transparent,
+                              width: sel ? 2 : 0),
+                          ),
+                          child: ListTile(
+                          contentPadding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
                           leading: img != null && img.isNotEmpty
                               ? ClipRRect(borderRadius: BorderRadius.circular(4),
                                   child: Image.network(img, width: 36, height: 50, fit: BoxFit.contain,
@@ -1203,8 +1314,12 @@ class _DexCardPickerSheetState extends State<_DexCardPickerSheet> {
                               maxLines: 1, overflow: TextOverflow.ellipsis),
                           subtitle: Text('$setId · $number',
                               style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280))),
-                          onTap: () => Navigator.pop(context, c),
-                        );
+                          trailing: widget.multiSelect
+                              ? Icon(sel ? Icons.check_circle : Icons.radio_button_unchecked,
+                                  size: 20, color: sel ? const Color(0xFFE74C3C) : const Color(0xFFD1D5DB))
+                              : null,
+                          onTap: () => _pick(c),
+                        ));
                       }),
           ),
         ] else if (_mode == 'pokemon')
@@ -1212,7 +1327,8 @@ class _DexCardPickerSheetState extends State<_DexCardPickerSheet> {
           Expanded(
             child: PokemonDexScreen(
               embedded: true,
-              onCardPicked: (c) => Navigator.pop(context, _cardToMap(c)),
+              onCardPicked: (c) => _pick(_cardToMap(c)),
+              isPicked: widget.multiSelect ? (c) => _isPicked(_cardToMap(c)) : null,
             ),
           )
         else ...[
@@ -1285,15 +1401,30 @@ class _DexCardPickerSheetState extends State<_DexCardPickerSheet> {
                         itemBuilder: (_, i) {
                           final c = _setCards[i];
                           final img = c['image_small'] as String?;
+                          final sel = widget.multiSelect && _isPicked(c);
                           return GestureDetector(
-                            onTap: () => Navigator.pop(context, c),
+                            onTap: () => _pick(c),
                             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                              Expanded(child: (img != null && img.isNotEmpty)
-                                  ? ClipRRect(borderRadius: BorderRadius.circular(8),
-                                      child: Image.network(img, fit: BoxFit.contain,
-                                          errorBuilder: (_, __, ___) => const Icon(Icons.image_not_supported_outlined,
-                                              size: 24, color: Color(0xFFD1D5DB))))
-                                  : const Icon(Icons.style_outlined, size: 24, color: Color(0xFFD1D5DB))),
+                              Expanded(child: Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: sel ? const Color(0xFFE74C3C) : Colors.transparent,
+                                    width: sel ? 2.5 : 0),
+                                ),
+                                clipBehavior: Clip.antiAlias,
+                                child: Stack(fit: StackFit.expand, children: [
+                                (img != null && img.isNotEmpty)
+                                    ? Image.network(img, fit: BoxFit.contain,
+                                        errorBuilder: (_, __, ___) => const Icon(Icons.image_not_supported_outlined,
+                                            size: 24, color: Color(0xFFD1D5DB)))
+                                    : const Icon(Icons.style_outlined, size: 24, color: Color(0xFFD1D5DB)),
+                                if (sel)
+                                  Positioned(right: 2, top: 2,
+                                      child: Container(
+                                        decoration: const BoxDecoration(color: Color(0xFFE74C3C), shape: BoxShape.circle),
+                                        child: const Icon(Icons.check, size: 14, color: Colors.white))),
+                              ]))),
                               const SizedBox(height: 3),
                               Text('#${c['number'] ?? ''}',
                                   style: const TextStyle(fontSize: 10, color: Color(0xFF6B7280)),
@@ -1314,14 +1445,7 @@ class _MeetupLocationPicker extends StatelessWidget {
   final ValueChanged<List<String>> onChanged;
 
   // 面交地點分區
-  static const _hkRegions = <String, List<String>>{
-    '港島': ['中環', '金鐘', '灣仔', '銅鑼灣', '天后', '北角', '太古', '筲箕灣'],
-    '九龍': ['油麻地', '旺角', '太子', '深水埗', '長沙灣', '荔枝角',
-        '尖沙咀', '紅磡', '黃埔', '九龍灣', '牛頭角', '觀塘', '鑽石山', '黃大仙'],
-    '新界': ['沙田', '大圍', '馬鞍山', '將軍澳', '調景嶺', '坑口',
-        '荃灣', '葵芳', '葵興', '青衣', '屯門', '元朗', '天水圍',
-        '上水', '粉嶺', '大埔', '火炭'],
-  };
+  static const _hkRegions = kMeetupRegions;
 
   const _MeetupLocationPicker({
     required this.selected,

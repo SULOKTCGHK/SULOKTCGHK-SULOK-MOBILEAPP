@@ -27,7 +27,8 @@ class PokemonDexScreen extends StatefulWidget {
   final ValueChanged<String?>? onSelectionChanged;
   // 選卡模式（刊登頁用）：點卡時回傳卡片而非進詳情頁
   final ValueChanged<ApiCard>? onCardPicked;
-  const PokemonDexScreen({super.key, this.embedded = false, this.onSelectionChanged, this.onCardPicked});
+  final bool Function(ApiCard)? isPicked; // 多選：回傳該卡是否已選（顯示紅框）
+  const PokemonDexScreen({super.key, this.embedded = false, this.onSelectionChanged, this.onCardPicked, this.isPicked});
 
   @override
   State<PokemonDexScreen> createState() => PokemonDexScreenState();
@@ -298,6 +299,7 @@ class PokemonDexScreenState extends State<PokemonDexScreen> {
       itemCount: _cards.length,
       itemBuilder: (_, i) {
         final card = _cards[i];
+        final picked = widget.isPicked?.call(card) ?? false;
         return GestureDetector(
           onTap: () {
             if (widget.onCardPicked != null) {
@@ -315,7 +317,9 @@ class PokemonDexScreenState extends State<PokemonDexScreen> {
           child: Container(
             decoration: BoxDecoration(
               color: Colors.white, borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFFEDEFF2), width: 0.5)),
+              border: Border.all(
+                  color: picked ? const Color(0xFFE74C3C) : const Color(0xFFEDEFF2),
+                  width: picked ? 2.5 : 0.5)),
             clipBehavior: Clip.antiAlias,
             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
               Expanded(

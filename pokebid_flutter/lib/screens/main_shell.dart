@@ -5,6 +5,7 @@ import 'splash_screen.dart';
 import 'home_screen.dart';
 import 'marketplace_screen.dart';
 import 'post_listing_sheet.dart';
+import 'batch_listing_sheet.dart';
 import 'dex_screen.dart';
 import 'profile_screen.dart';
 import '../models/card_model.dart';
@@ -49,24 +50,55 @@ class _MainShellState extends State<MainShell> {
   void _openPost() async {
     if (!await requireLogin(context, action: L.postProduct)) return;
     if (!mounted) return;
-    showModalBottomSheet(
+    // 先選單張或批量
+    final mode = await showModalBottomSheet<String>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => PostListingSheet(
-        onSubmit: (_) {
-          _loadListings(); // refresh from Supabase
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(L.listingPosted),
-              backgroundColor: const Color(0xFF16A34A),
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-          );
-        },
-      ),
+      builder: (ctx) => SafeArea(child: Column(mainAxisSize: MainAxisSize.min, children: [
+        const SizedBox(height: 8),
+        Container(width: 36, height: 4, decoration: BoxDecoration(color: const Color(0xFFD1D5DB), borderRadius: BorderRadius.circular(2))),
+        const SizedBox(height: 8),
+        ListTile(
+          leading: const Icon(Icons.add_box_outlined, color: Color(0xFFE8A52A)),
+          title: const Text('單張上架'),
+          onTap: () => Navigator.pop(ctx, 'single'),
+        ),
+        ListTile(
+          leading: const Icon(Icons.library_add_outlined, color: Color(0xFF16A34A)),
+          title: const Text('批量上架'),
+          subtitle: const Text('一次上架多張卡', style: TextStyle(fontSize: 12)),
+          onTap: () => Navigator.pop(ctx, 'batch'),
+        ),
+        const SizedBox(height: 8),
+      ])),
     );
+    if (mode == null || !mounted) return;
+
+    void done() {
+      _loadListings();
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(L.listingPosted),
+        backgroundColor: const Color(0xFF16A34A),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ));
+    }
+
+    if (mode == 'batch') {
+      showModalBottomSheet(
+        context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
+        builder: (_) => FractionallySizedBox(
+          heightFactor: 0.95,
+          child: BatchListingSheet(onDone: done),
+        ),
+      );
+    } else {
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (_) => PostListingSheet(onSubmit: (_) => done()),
+      );
+    }
   }
 
   @override
