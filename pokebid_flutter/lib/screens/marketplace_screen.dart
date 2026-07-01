@@ -41,7 +41,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     'CGC': ['10', '9.5', '9', '8.5', '8'],
     'SGC': ['10', '9.5', '9', '8.5', '8'],
     'ACE': ['10', '9', '8', '7'],
-    'Raw': ['A', 'B', 'C', '流通品'],
+    'Raw': ['Raw', 'A', 'B', 'C', '流通品'],
   };
 
   bool get _hasActiveFilters =>

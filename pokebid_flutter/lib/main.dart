@@ -137,6 +137,12 @@ class PokeBidApp extends StatelessWidget {
           return MaterialApp(
           title: 'TCGspot',
           debugShowCheckedModeBanner: false,
+          // 點畫面任何空白處收起鍵盤
+          builder: (context, child) => GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+            child: child,
+          ),
           navigatorKey: PushService.navigatorKey,
           locale: locale,
           supportedLocales: const [Locale('zh'), Locale('en')],
