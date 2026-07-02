@@ -4,6 +4,8 @@
 <dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>用於顯示附近的卡鋪並計算距離。</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>用於顯示附近的卡鋪並計算距離。</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>用於上傳卡片／商品／公告圖片。</string>
 	<key>NSCameraUsageDescription</key>
