@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -1136,6 +1137,7 @@ class DexCardPickerSheetState extends State<DexCardPickerSheet> {
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _searchCtrl.dispose();
     _setSearchCtrl.dispose();
     super.dispose();
@@ -1198,14 +1200,23 @@ class DexCardPickerSheetState extends State<DexCardPickerSheet> {
     );
   }
 
-  Future<void> _search(String q) async {
+  Timer? _searchDebounce;
+  int _searchSeq = 0; // 防競態：舊回應不可蓋掉新結果
+
+  void _search(String q) {
+    _searchDebounce?.cancel();
+    _searchSeq++;
     if (q.trim().length < 2) {
       setState(() => _results = []);
       return;
     }
     setState(() => _loading = true);
-    final res = await SupabaseService.searchCachedCards(q);
-    if (mounted) setState(() { _results = res; _loading = false; });
+    _searchDebounce = Timer(const Duration(milliseconds: 250), () async {
+      final seq = _searchSeq;
+      final res = await SupabaseService.searchCachedCards(q);
+      if (!mounted || seq != _searchSeq) return;
+      setState(() { _results = res; _loading = false; });
+    });
   }
 
   @override

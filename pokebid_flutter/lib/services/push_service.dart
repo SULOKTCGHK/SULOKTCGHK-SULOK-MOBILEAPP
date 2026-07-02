@@ -47,7 +47,7 @@ class PushService {
     const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosInit = DarwinInitializationSettings();
     await _localNotif.initialize(
-      const InitializationSettings(android: androidInit, iOS: iosInit),
+      settings: const InitializationSettings(android: androidInit, iOS: iosInit),
       // 前台顯示的本地通知被點擊
       onDidReceiveNotificationResponse: (resp) {
         if (resp.payload != null) {
@@ -61,8 +61,8 @@ class PushService {
       final notif = message.notification;
       if (notif == null) return;
       _localNotif.show(
-        notif.hashCode, notif.title, notif.body,
-        NotificationDetails(
+        id: notif.hashCode, title: notif.title, body: notif.body,
+        notificationDetails: NotificationDetails(
           android: AndroidNotificationDetails(
             _channel.id, _channel.name,
             channelDescription: _channel.description,
@@ -116,9 +116,16 @@ class PushService {
   static Future<void> _saveToken() async {
     if (!AuthService.isLoggedIn) return;
     try {
-      final token = Platform.isIOS
-          ? await _fcm.getAPNSToken().then((_) => _fcm.getToken())
-          : await _fcm.getToken();
+      // iOS：APNs 註冊是異步的，等它就緒（最多 ~15 秒）再拿 FCM token
+      if (Platform.isIOS) {
+        String? apns;
+        for (var i = 0; i < 10 && apns == null; i++) {
+          apns = await _fcm.getAPNSToken();
+          if (apns == null) await Future.delayed(const Duration(milliseconds: 1500));
+        }
+        if (apns == null) return; // 之後 onTokenRefresh 會補存
+      }
+      final token = await _fcm.getToken();
       if (token == null) return;
       await _client.from('profiles').update({
         'fcm_token': token,
@@ -127,6 +134,32 @@ class PushService {
     } catch (e, st) {
       CrashReporter.log(e, st, reason: 'FCM token 儲存失敗（推播將收不到）');
     }
+  }
+
+  /// 臨時診斷：逐環檢查推播鏈路，回傳可顯示的文字。
+  static Future<String> diagnose() async {
+    final b = StringBuffer();
+    b.writeln('登入: ${AuthService.isLoggedIn ? "✅ ${AuthService.userId}" : "❌ 未登入"}');
+    try {
+      final s = await _fcm.getNotificationSettings();
+      b.writeln('通知權限: ${s.authorizationStatus.name}');
+    } catch (e) { b.writeln('通知權限: ❌ $e'); }
+    String? apns;
+    try {
+      apns = await _fcm.getAPNSToken();
+      b.writeln('APNs token: ${apns != null ? "✅ ${apns.substring(0, 12)}…" : "❌ null"}');
+    } catch (e) { b.writeln('APNs token: ❌ $e'); }
+    try {
+      final t = await _fcm.getToken();
+      b.writeln('FCM token: ${t != null ? "✅ ${t.substring(0, 16)}…" : "❌ null"}');
+    } catch (e) { b.writeln('FCM token: ❌ $e'); }
+    if (AuthService.isLoggedIn) {
+      try {
+        await _saveToken();
+        b.writeln('寫入DB: 已嘗試（查 fcm_updated_at 確認）');
+      } catch (e) { b.writeln('寫入DB: ❌ $e'); }
+    }
+    return b.toString();
   }
 
   static Future<void> clearToken() async {

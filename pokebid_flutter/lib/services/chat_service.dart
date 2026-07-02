@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'auth_service.dart';
 import 'supabase_service.dart';
@@ -8,6 +9,7 @@ class ChatMessage {
   final String conversationId;
   final String senderId;
   final String content;
+  final String? imageUrl; // 圖片訊息
   final DateTime createdAt;
 
   ChatMessage({
@@ -15,6 +17,7 @@ class ChatMessage {
     required this.conversationId,
     required this.senderId,
     required this.content,
+    this.imageUrl,
     required this.createdAt,
   });
 
@@ -23,6 +26,7 @@ class ChatMessage {
     conversationId: row['conversation_id'] as String,
     senderId: row['sender_id'] as String,
     content: row['content'] as String,
+    imageUrl: row['image_url'] as String?,
     createdAt: DateTime.parse(row['created_at'] as String).toLocal(),
   );
 }
@@ -246,7 +250,41 @@ class ChatService {
       'content': content,
     });
 
-    // 通知對話的另一方
+    await _notifyOtherParty(conversationId, myId,
+        content.length > 40 ? '${content.substring(0, 40)}…' : content);
+  }
+
+  // ── Send an image message ─────────────────────────────────────────────────
+  static Future<void> sendImageMessage({
+    required String conversationId,
+    required Uint8List bytes,
+    required String fileName,
+  }) async {
+    final myId = AuthService.isLoggedIn
+        ? AuthService.userId
+        : await SupabaseService.getUserId();
+
+    // 上傳到 storage（chat 分類）
+    final path = 'chat/${conversationId}_${DateTime.now().millisecondsSinceEpoch}_$fileName';
+    await _client.storage.from('card-images').uploadBinary(
+      path, bytes,
+      fileOptions: const FileOptions(contentType: 'image/jpeg', upsert: true),
+    );
+    final url = _client.storage.from('card-images').getPublicUrl(path);
+
+    await _client.from('messages').insert({
+      'conversation_id': conversationId,
+      'sender_id': myId,
+      'content': '📷 圖片', // 對話列表預覽用
+      'image_url': url,
+    });
+
+    await _notifyOtherParty(conversationId, myId, '傳送了一張圖片 📷');
+  }
+
+  // 通知對話的另一方
+  static Future<void> _notifyOtherParty(
+      String conversationId, String myId, String preview) async {
     try {
       final conv = await _client
           .from('conversations')
@@ -263,7 +301,7 @@ class ChatService {
             userId: recipient,
             type: 'message',
             title: '$senderName 傳來訊息 💬',
-            body: content.length > 40 ? '${content.substring(0, 40)}…' : content,
+            body: preview,
             listingId: (conv['card_id'] as String?)?.isNotEmpty == true
                 ? conv['card_id'] as String?
                 : null,

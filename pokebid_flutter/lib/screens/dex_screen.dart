@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../widgets/no_image_placeholder.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -89,6 +90,7 @@ class _DexScreenState extends State<DexScreen> {
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _searchCtrl.dispose();
     super.dispose();
   }
@@ -134,19 +136,27 @@ class _DexScreenState extends State<DexScreen> {
     }
   }
 
-  Future<void> _search(String q) async {
+  Timer? _searchDebounce;
+  int _searchSeq = 0; // 防競態：慢的舊回應不可蓋掉新結果（如打 "sar" 時 "s"/"sa" 的回應後到）
+
+  void _search(String q) {
+    _searchDebounce?.cancel();
+    _searchSeq++; // 讓在途的舊查詢作廢
     if (q.trim().isEmpty) {
       setState(() { _searching = false; _searchResults = []; _searchLoading = false; });
       return;
     }
     setState(() { _searching = true; _searchLoading = true; });
-    final rows = await SupabaseService.searchCachedCards(q.trim());
-    if (mounted) {
+    // 停止輸入 250ms 才真正查詢
+    _searchDebounce = Timer(const Duration(milliseconds: 250), () async {
+      final seq = _searchSeq;
+      final rows = await SupabaseService.searchCachedCards(q.trim());
+      if (!mounted || seq != _searchSeq) return; // 已有更新的查詢 → 丟棄
       setState(() {
-      _searchResults = rows.map(_rowToCard).toList();
-      _searchLoading = false;
+        _searchResults = rows.map(_rowToCard).toList();
+        _searchLoading = false;
+      });
     });
-    }
   }
 
   String _fmt(int p) => p.toString().replaceAllMapped(

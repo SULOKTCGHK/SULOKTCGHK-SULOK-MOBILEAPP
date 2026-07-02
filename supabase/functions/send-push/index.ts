@@ -70,7 +70,19 @@ Deno.serve(async (req) => {
 
     const fcmJson = await fcmRes.json()
     console.log('[send-push] FCM status', fcmRes.status, JSON.stringify(fcmJson))
-    if (!fcmRes.ok) throw new Error(JSON.stringify(fcmJson))
+    if (!fcmRes.ok) {
+      // token 已失效（app 移除/重裝）→ 清掉，避免之後持續對死 token 發送
+      const errCode = fcmJson?.error?.details?.find((d: Record<string, unknown>) =>
+        String(d['@type']).includes('FcmError'))?.errorCode ?? fcmJson?.error?.status
+      if (errCode === 'UNREGISTERED' || errCode === 'NOT_FOUND') {
+        await adminClient.from('profiles')
+          .update({ fcm_token: null, fcm_updated_at: null })
+          .eq('id', user_id)
+        console.log('[send-push] cleared dead token for', user_id)
+        return new Response(JSON.stringify({ skipped: 'token_unregistered' }), { headers: CORS })
+      }
+      throw new Error(JSON.stringify(fcmJson))
+    }
 
     return new Response(JSON.stringify({ success: true, fcm: fcmJson }), { headers: CORS })
   } catch (e) {

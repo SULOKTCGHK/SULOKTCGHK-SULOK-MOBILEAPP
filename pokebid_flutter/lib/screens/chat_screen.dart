@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/card_model.dart';
 import '../services/chat_service.dart';
@@ -161,6 +163,30 @@ class _ChatScreenState extends State<ChatScreen> {
         ));
       });
       _scrollToBottom();
+    } finally {
+      if (mounted) setState(() => _sending = false);
+    }
+  }
+
+  // 傳送圖片（相簿選取 → 上傳 storage → 圖片訊息）
+  Future<void> _sendImage() async {
+    if (_conversationId == null || _sending) return;
+    final picked = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 80);
+    if (picked == null || !mounted) return;
+    setState(() => _sending = true);
+    try {
+      final bytes = await picked.readAsBytes();
+      await ChatService.sendImageMessage(
+        conversationId: _conversationId!,
+        bytes: bytes,
+        fileName: picked.name,
+      );
+      // Realtime 會把訊息推回來
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('圖片傳送失敗'), backgroundColor: Color(0xFFE74C3C)));
+      }
     } finally {
       if (mounted) setState(() => _sending = false);
     }
@@ -399,6 +425,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       final isMine = msg.senderId == _myId;
                       return _MessageBubble(
                         text: msg.content,
+                        imageUrl: msg.imageUrl,
                         time: _timeStr(msg.createdAt),
                         isMine: isMine,
                         sellerAvatar: widget.sellerAvatar,
@@ -421,6 +448,12 @@ class _ChatScreenState extends State<ChatScreen> {
               IconButton(
                 icon: const Icon(Icons.add_circle_outline, color: Color(0xFF9CA3AF)),
                 onPressed: _showQuickReplies,
+              ),
+              IconButton(
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 36),
+                icon: const Icon(Icons.photo_outlined, color: Color(0xFF9CA3AF)),
+                onPressed: _sendImage,
               ),
               Expanded(
                 child: Container(
@@ -517,12 +550,13 @@ class _ChatScreenState extends State<ChatScreen> {
 
 class _MessageBubble extends StatelessWidget {
   final String text;
+  final String? imageUrl;
   final String time;
   final bool isMine;
   final String sellerAvatar;
 
   const _MessageBubble({
-    required this.text, required this.time,
+    required this.text, this.imageUrl, required this.time,
     required this.isMine, required this.sellerAvatar,
   });
 
@@ -550,29 +584,61 @@ class _MessageBubble extends StatelessWidget {
           Column(
             crossAxisAlignment: isMine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
             children: [
-              Container(
-                constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.65),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                decoration: BoxDecoration(
-                  color: isMine ? const Color(0xFFE8A52A) : Colors.white,
-                  borderRadius: BorderRadius.only(
-                    topLeft: const Radius.circular(16),
-                    topRight: const Radius.circular(16),
-                    bottomLeft: Radius.circular(isMine ? 16 : 4),
-                    bottomRight: Radius.circular(isMine ? 4 : 16),
+              // 圖片訊息：直接顯示圖（點擊放大）；文字訊息：氣泡
+              if (imageUrl != null)
+                GestureDetector(
+                  onTap: () => showDialog(
+                    context: context,
+                    barrierColor: Colors.black87,
+                    builder: (ctx) => GestureDetector(
+                      onTap: () => Navigator.pop(ctx),
+                      child: InteractiveViewer(
+                        child: Center(child: CachedNetworkImage(imageUrl: imageUrl!)),
+                      ),
+                    ),
                   ),
-                  boxShadow: [BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 4, offset: const Offset(0, 2),
-                  )],
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(14),
+                    child: CachedNetworkImage(
+                      imageUrl: imageUrl!,
+                      width: MediaQuery.of(context).size.width * 0.55,
+                      fit: BoxFit.cover,
+                      placeholder: (_, __) => Container(
+                        width: MediaQuery.of(context).size.width * 0.55, height: 160,
+                        color: const Color(0xFFF3F4F6),
+                        child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                      ),
+                      errorWidget: (_, __, ___) => Container(
+                        width: 120, height: 90, color: const Color(0xFFF3F4F6),
+                        child: const Icon(Icons.broken_image_outlined, color: Color(0xFF9CA3AF)),
+                      ),
+                    ),
+                  ),
+                )
+              else
+                Container(
+                  constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.65),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: isMine ? const Color(0xFFE8A52A) : Colors.white,
+                    borderRadius: BorderRadius.only(
+                      topLeft: const Radius.circular(16),
+                      topRight: const Radius.circular(16),
+                      bottomLeft: Radius.circular(isMine ? 16 : 4),
+                      bottomRight: Radius.circular(isMine ? 4 : 16),
+                    ),
+                    boxShadow: [BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 4, offset: const Offset(0, 2),
+                    )],
+                  ),
+                  child: Text(text,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isMine ? Colors.white : const Color(0xFF111827),
+                        height: 1.4,
+                      )),
                 ),
-                child: Text(text,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: isMine ? Colors.white : const Color(0xFF111827),
-                      height: 1.4,
-                    )),
-              ),
               const SizedBox(height: 3),
               Text(time, style: const TextStyle(fontSize: 10, color: Color(0xFF9CA3AF))),
             ],

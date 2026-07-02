@@ -1439,6 +1439,21 @@ class _ProfileScreenState extends State<ProfileScreen>
           _arrowTile(icon: Icons.description_outlined, iconColor: const Color(0xFF6B7280),
               title: L.termsOfService, trailing: '', onTap: () => Navigator.push(context,
                   MaterialPageRoute(builder: (_) => LegalScreen.terms()))),
+          const Divider(height: 0.5, color: Color(0xFFF3F4F6)),
+          // TODO: 推播驗證完成後移除
+          _arrowTile(icon: Icons.notifications_active_outlined, iconColor: const Color(0xFF6B7280),
+              title: '推播診斷（臨時）', trailing: '', onTap: () async {
+                showDialog(context: context, barrierDismissible: false,
+                    builder: (_) => const Center(child: CircularProgressIndicator()));
+                final report = await PushService.diagnose();
+                if (!mounted) return;
+                Navigator.pop(context);
+                showDialog(context: context, builder: (_) => AlertDialog(
+                  title: const Text('推播診斷'),
+                  content: SelectableText(report, style: const TextStyle(fontSize: 13)),
+                  actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('關閉'))],
+                ));
+              }),
         ]),
 
         const SizedBox(height: 16),

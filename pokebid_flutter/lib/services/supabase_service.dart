@@ -242,27 +242,58 @@ class SupabaseService {
     return null;
   }
 
+  /// 稀有度縮寫 → cached_cards.rarity 全名（打 "sar"/"sr"/"mur" 可直接搜稀有度）
+  static const Map<String, String> _rarityCodes = {
+    'c': 'Common', 'u': 'Uncommon', 'r': 'Rare',
+    'rr': 'Double Rare', 'rrr': 'Triple Rare',
+    'sr': 'Super Rare', 'sar': 'Special Art Rare', 'ar': 'Art Rare',
+    'ur': 'Ultra Rare', 'hr': 'Hyper Rare',
+    'chr': 'Character Rare', 'csr': 'Character Super Rare',
+    's': 'Shiny Rare', 'ssr': 'Shiny Secret Rare',
+    'k': 'Radiant Rare',
+    'mur': 'Mega Ultra Rare', 'mar': 'Mega Attack Rare',
+    'holo': 'Holo Rare', 'promo': 'Promo',
+  };
+
   // 搜尋 cached_cards（上架時選卡用）
   // 支援任意順序 token：如 "DP-P 126" / "126 DP-P" / "126/DP-P" 都能找到
+  // 稀有度縮寫：如 "sar"、"皮卡丘 sr"、"m2 mur"、"sr ur"（多稀有度為 OR）
   static Future<List<Map<String, dynamic>>> searchCachedCards(String query) async {
     if (query.trim().isEmpty) return [];
-    // 拆 token（空格、斜線分隔），逗號會破壞 or() 語法故移除
+    // 拆 token（空格、斜線、逗號分隔）
     final tokens = query
         .trim()
-        .split(RegExp(r'[\s/]+'))
-        .map((t) => t.replaceAll(',', '').trim())
+        .split(RegExp(r'[\s/,]+'))
+        .map((t) => t.trim())
         .where((t) => t.isNotEmpty)
         .toList();
     if (tokens.isEmpty) return [];
     try {
-      // 每個 token 都必須命中 name / set_id / number 其中之一。
-      // 連續 .or() 會在伺服器端 AND 起來 → token 順序不影響（"m2 110" = "110 m2"），
-      // 也不會被單一 token 的數量上限截斷。
+      // 稀有度縮寫 token 歸成一組（彼此 OR：`sr ur` = SR 或 UR）
+      final rarityTokens =
+          tokens.where((t) => _rarityCodes.containsKey(t.toLowerCase())).toList();
+      final otherTokens =
+          tokens.where((t) => !_rarityCodes.containsKey(t.toLowerCase())).toList();
+
       var q = _client
           .from('cached_cards')
-          .select('id, name, number, set_id, image_small');
-      for (final t in tokens) {
-        q = q.or('name.ilike.%$t%,set_id.ilike.%$t%,number.ilike.%$t%');
+          .select('id, name, number, set_id, image_small, rarity');
+
+      if (rarityTokens.isNotEmpty) {
+        // 縮寫視為明確的稀有度意圖，只比對 rarity（避免 "mur" 混進 Murkrow 之類名稱雜訊）
+        final ors = [
+          for (final t in rarityTokens)
+            'rarity.eq."${_rarityCodes[t.toLowerCase()]}"',
+        ];
+        q = q.or(ors.join(','));
+      }
+      // 其餘 token 必須命中 name / set_id / number 其中之一。
+      // 連續 .or() 會在伺服器端 AND 起來 → token 順序不影響（"m2 110" = "110 m2"），
+      // 也不會被單一 token 的數量上限截斷。
+      // set_id 用前綴比對：打 "m2"/"sv4a"/"dp-p" 有效，
+      // 但 "charizard" 不會從 "sc-charizard-starter-…" 這類牌組 id 中段撈出整副牌。
+      for (final t in otherTokens) {
+        q = q.or('name.ilike.%$t%,set_id.ilike.$t%,number.ilike.%$t%');
       }
       final res = await q.order('set_id').limit(500);
       return (res as List).cast<Map<String, dynamic>>();

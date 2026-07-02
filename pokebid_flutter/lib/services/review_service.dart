@@ -80,7 +80,7 @@ class ReviewService {
         if (role != null) 'role': role,
       }, onConflict: 'reviewer_id,listing_id');
 
-      // 通知賣家
+      // 通知被評價者（sellerId 實為「被評的一方」：買家評賣家 or 賣家評買家，雙向皆通知）
       await NotificationService.create(
         userId: sellerId,
         type: 'review_received',
