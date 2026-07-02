@@ -38,3 +38,6 @@ Thumbs.db
 
 # 臨時診斷檔
 _diag*
+
+# Xcode 專案層的 SPM 快取（workspace 層的 Package.resolved 已入庫）
+**/Runner.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/
